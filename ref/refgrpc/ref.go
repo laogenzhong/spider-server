@@ -9,7 +9,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"spider-server/gen/spider/api"
 	"spider-server/logger"
 
 	"golang.org/x/net/http2"
@@ -60,9 +59,9 @@ var client = &http.Client{
 func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
 	// 使用非加密的 HTTP 协议访问 gRPC 服务
 	// 创建 HTTP/2 支持的 Transport
-
+	packReq := Req(reqpb)
 	// 构造 HTTP 请求
-	req, err := http.NewRequest("POST", url, bytes.NewReader(reqpb))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(packReq))
 	if err != nil {
 		// 使用 logger 记录错误
 		logger.Errorf("无法构造请求: %v", err)
@@ -114,16 +113,26 @@ func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
 	return &GrpcResp{responseData, resp.Trailer, resp.Header}
 }
 
-func Req() []byte {
-	// 构造请求消息并序列化为 protobuf 格式
-	reqMessage := &api.SyncRequest{}
-	serializedRequest, err := proto.Marshal(reqMessage)
-	if err != nil {
-		// 使用 logger 记录错误
-		logger.Errorf("序列化请求数据失败: %v", err)
+func Req(message any) []byte {
+	var serializedRequest []byte
+
+	switch v := message.(type) {
+	case []byte:
+		serializedRequest = v
+	case proto.Message:
+		var err error
+		serializedRequest, err = proto.Marshal(v)
+		if err != nil {
+			logger.Errorf("序列化请求数据失败: %v", err)
+			return nil
+		}
+	default:
+		logger.Errorf("不支持的请求数据类型: %T", message)
+		return nil
 	}
 
-	// 构造符合 gRPC 协议的请求数据
+	// 构造符合 gRPC 协议的请求数据：
+	// 1 字节压缩标志 + 4 字节消息长度 + protobuf 二进制消息。
 	var requestData bytes.Buffer
 
 	// 写入标志位（1 字节）
@@ -135,7 +144,7 @@ func Req() []byte {
 	binary.BigEndian.PutUint32(lengthBytes, msgLength)
 	requestData.Write(lengthBytes)
 
-	// 写入实际的消息数据
+	// 写入实际的 protobuf 二进制数据
 	requestData.Write(serializedRequest)
 	return requestData.Bytes()
 }

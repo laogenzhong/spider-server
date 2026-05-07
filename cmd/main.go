@@ -15,7 +15,7 @@ import (
 
 const gatewayAddr = ":19080"
 const grpcPort = ":18000"
-const gameHost = "192.168.3.49:18000"
+const gameHost = "localhost:18000"
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
