@@ -15,6 +15,7 @@ import (
 
 const gatewayAddr = ":19080"
 const grpcPort = ":18000"
+const gameHost = "192.168.3.49:18000"
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -48,11 +49,11 @@ func startGame() {
 }
 
 func startGateway() {
-	router := gateway.NewGatewayServer()
+	router := gateway.NewGatewayServer(gameHost)
 
 	server := &http.Server{
 		Addr:              gatewayAddr,
-		Handler:           router,
+		Handler:           router.Router(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"spider-server/gen/spider/api"
 	"spider-server/logger"
 
 	"golang.org/x/net/http2"
@@ -23,18 +24,6 @@ type GrpcResp struct {
 	Trailer http.Header
 	Header  http.Header
 }
-
-//func main() {
-//	reqDta := Req()
-//	gr, err := GrpcInvoke(url, reqDta, "")
-//	if err != nil {
-//		// 使用 logger 记录错误
-//		logger.Errorf("GrpcInvoke failed: %v", err)
-//		return
-//	}
-//	logger.Info("GrpcInvoke succeeded")
-//	fmt.Println(gr)
-//}
 
 func GrpcInvoke(url string, reqpb []byte, xsUid string) (*GrpcResp, error) {
 	defer func() {
@@ -83,12 +72,6 @@ func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
 	// 设置 gRPC 所需的 HTTP/2 头
 	req.Header.Set("Content-Type", "application/grpc")
 	req.Header.Set("TE", "trailers")
-	req.Header.Set("xs_uid", xsUid)
-	req.Header.Set("xs_appkey", "1")
-	req.Header.Set("xx-nonce", "11111111"+
-		"11111111"+
-		"11111111"+
-		"11111111")
 
 	// 发送请求
 	resp, err := client.Do(req)
@@ -133,7 +116,7 @@ func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
 
 func Req() []byte {
 	// 构造请求消息并序列化为 protobuf 格式
-	reqMessage := &pbservice.ProdRequest{ProdId: 1}
+	reqMessage := &api.SyncRequest{}
 	serializedRequest, err := proto.Marshal(reqMessage)
 	if err != nil {
 		// 使用 logger 记录错误

@@ -201,7 +201,7 @@ func buildBinaryRPCPayload(path string, headers []BinaryRPCHeader, body []byte) 
 }
 
 func exampleCallGateway() {
-	gatewayClient := NewGatewayClientWithSigner("http://192.168.3.40:19080", func(data []byte) (string, error) {
+	gatewayClient := NewGatewayClientWithSigner("http://192.168.3.49:19080", func(data []byte) (string, error) {
 		// 当前示例使用 sha256(canonicalSignContent)。
 		salt := "你的salt"
 		signData := append([]byte(salt), data...)
@@ -211,8 +211,8 @@ func exampleCallGateway() {
 
 	responseBody, err := gatewayClient.CallUnary(
 		context.Background(),
-		//"/room.api.RoomSyncApi/sync",
-		"/uc.SignApi/signIn",
+		"/room.api.RoomSyncApi/sync",
+		//"/uc.SignApi/signIn",
 		[]BinaryRPCHeader{},
 		&api.SyncRequest{},
 	)
