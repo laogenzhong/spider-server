@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/textproto"
 	"sort"
 	"spider-server/gen/spider/api"
 	"strconv"
@@ -23,6 +24,12 @@ import (
 type BinaryRPCHeader struct {
 	Key   string
 	Value string
+}
+
+type BinaryRPCResponse struct {
+	Trailer http.Header
+	Header  http.Header
+	Body    []byte
 }
 
 type RequestSignFunction func(data []byte) (string, error)
@@ -200,6 +207,46 @@ func buildBinaryRPCPayload(path string, headers []BinaryRPCHeader, body []byte) 
 	return buffer.Bytes(), nil
 }
 
+func parseBinaryRPCResponse(responseBody []byte) (*BinaryRPCResponse, error) {
+	parts := bytes.SplitN(responseBody, []byte("\r"), 3)
+	if len(parts) != 3 {
+		return nil, errors.New("invalid binary rpc response format: expected trailer\\rheader\\rbody")
+	}
+
+	return &BinaryRPCResponse{
+		Trailer: parseHTTPHeaderBinary(parts[0]),
+		Header:  parseHTTPHeaderBinary(parts[1]),
+		Body:    parts[2],
+	}, nil
+}
+
+func parseHTTPHeaderBinary(rawHeaders []byte) http.Header {
+	headers := make(http.Header)
+	lines := strings.Split(string(rawHeaders), "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		key, value, ok := strings.Cut(line, ":")
+		if !ok {
+			continue
+		}
+
+		key = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(key))
+		value = strings.TrimSpace(value)
+		if key == "" {
+			continue
+		}
+
+		headers.Add(key, value)
+	}
+
+	return headers
+}
+
 func exampleCallGateway() {
 	gatewayClient := NewGatewayClientWithSigner("http://192.168.3.49:19080", func(data []byte) (string, error) {
 		// 当前示例使用 sha256(canonicalSignContent)。
@@ -221,7 +268,25 @@ func exampleCallGateway() {
 		return
 	}
 
+	rpcResponse, err := parseBinaryRPCResponse(responseBody)
+	if err != nil {
+		log.Printf("parse gateway response failed: %v", err)
+		return
+	}
+
 	log.Printf("gateway response bytes: %d", len(responseBody))
+	log.Printf("gateway response trailer: %+v", rpcResponse.Trailer)
+	log.Printf("gateway response header: %+v", rpcResponse.Header)
+	log.Printf("gateway response body bytes: %d", len(rpcResponse.Body))
+
+	syncResponse := &api.SyncResponse{}
+	if err := proto.Unmarshal(rpcResponse.Body, syncResponse); err != nil {
+		log.Printf("unmarshal SyncResponse failed: %v", err)
+		return
+	}
+
+	log.Printf("sync response: %+v", syncResponse)
+	log.Printf("sync response time: %d", syncResponse.Time)
 }
 
 func main() {

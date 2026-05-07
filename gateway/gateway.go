@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
@@ -119,8 +120,33 @@ func (s *GatewayServer) buildBinaryRPCResponse(trailer http.Header, header http.
 	s.writeHTTPHeaderBinary(buffer, header)
 	buffer.WriteByte('\r')
 
-	buffer.Write(body)
+	protobufBody, err := s.unwrapGRPCBody(body)
+	if err != nil {
+		log.Printf("unwrap grpc response body failed, return raw body: %v", err)
+		buffer.Write(body)
+		return buffer.Bytes()
+	}
+
+	buffer.Write(protobufBody)
 	return buffer.Bytes()
+}
+
+func (s *GatewayServer) unwrapGRPCBody(body []byte) ([]byte, error) {
+	if len(body) < 5 {
+		return nil, fmt.Errorf("invalid grpc body: length %d < 5", len(body))
+	}
+
+	compressedFlag := body[0]
+	if compressedFlag != 0 {
+		return nil, fmt.Errorf("unsupported grpc compressed flag: %d", compressedFlag)
+	}
+
+	messageLength := binary.BigEndian.Uint32(body[1:5])
+	if len(body[5:]) < int(messageLength) {
+		return nil, fmt.Errorf("invalid grpc body: message length=%d, actual=%d", messageLength, len(body[5:]))
+	}
+
+	return body[5 : 5+messageLength], nil
 }
 
 func (s *GatewayServer) writeHTTPHeaderBinary(buffer *bytes.Buffer, headers http.Header) {
