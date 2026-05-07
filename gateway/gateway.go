@@ -1,4 +1,4 @@
-package main
+package gateway
 
 import (
 	"bytes"
@@ -11,8 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
-
-const gatewayAddr = ":19080"
 
 var wsUpgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -33,26 +31,7 @@ type BinaryRPCRequest struct {
 	Body    []byte
 }
 
-func main() {
-	router := newGatewayRouter()
-
-	server := &http.Server{
-		Addr:              gatewayAddr,
-		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	log.Printf("gateway server listening on %s", gatewayAddr)
-	log.Printf("http  endpoint: http://127.0.0.1%s/ping", gatewayAddr)
-	log.Printf("binary endpoint: http://127.0.0.1%s/r", gatewayAddr)
-	log.Printf("ws    endpoint: ws://127.0.0.1%s/ws", gatewayAddr)
-
-	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("gateway server failed: %v", err)
-	}
-}
-
-func newGatewayRouter() *gin.Engine {
+func NewGatewayServer() *gin.Engine {
 	router := gin.Default()
 
 	// 普通 HTTP JSON 接口。

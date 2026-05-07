@@ -2,42 +2,66 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
-	"net"
+	"net/http"
+	"os/signal"
+	"spider-server/game"
+	"spider-server/gateway"
+	"sync"
+	"syscall"
 	"time"
-
-	"google.golang.org/grpc"
-
-	pb "spider-server/gen/spider/api"
 )
 
-const grpcAddr = ":50051"
+const gatewayAddr = ":19080"
+const grpcPort = ":18000"
 
-// syncServer 实现 proto 中定义的 RoomSyncApi 服务。
-type syncServer struct {
-	pb.UnimplementedRoomSyncApiServer
+func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+	defer stop()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		startGame() // 这里用你已经写好的 game 启动方法
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		startGateway() // 这里用你已经写好的 gateway 启动方法
+	}()
+	// 阻塞 main，直到收到退出信号
+	<-ctx.Done()
+
+	log.Println("receive shutdown signal")
 }
 
-// Sync 实现 sync.proto 中的 rpc sync(SyncRequest) returns (SyncResponse)。
-func (s *syncServer) Sync(ctx context.Context, req *pb.SyncRequest) (*pb.SyncResponse, error) {
-	log.Printf("receive sync request: %+v", req)
-	return &pb.SyncResponse{
-		Time: uint64(time.Now().UnixMilli()),
-	}, nil
+func startGame() {
+	grpcServer := game.NewGRPCServer(grpcPort)
+	grpcServer.Init()
+	log.Println("start grpc server on", grpcPort)
+
+	if err := grpcServer.Start(); err != nil {
+		log.Fatalf("grpc server stopped: %v", err)
+	}
 }
 
-func main2() {
-	lis, err := net.Listen("tcp", grpcAddr)
-	if err != nil {
-		log.Fatalf("failed to listen on %s: %v", grpcAddr, err)
+func startGateway() {
+	router := gateway.NewGatewayServer()
+
+	server := &http.Server{
+		Addr:              gatewayAddr,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	grpcServer := grpc.NewServer()
-	pb.RegisterRoomSyncApiServer(grpcServer, &syncServer{})
+	log.Printf("gateway server listening on %s", gatewayAddr)
+	log.Printf("http  endpoint: http://127.0.0.1%s/ping", gatewayAddr)
+	log.Printf("binary endpoint: http://127.0.0.1%s/r", gatewayAddr)
+	log.Printf("ws    endpoint: ws://127.0.0.1%s/ws", gatewayAddr)
 
-	log.Printf("grpc server listening on %s", grpcAddr)
-
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve grpc server: %v", err)
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalf("gateway server failed: %v", err)
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package gateway
 
 import (
 	"io"
@@ -11,7 +11,7 @@ import (
 )
 
 func TestGatewayHTTP(t *testing.T) {
-	server := httptest.NewServer(newGatewayRouter())
+	server := httptest.NewServer(NewGatewayServer())
 	defer server.Close()
 
 	resp, err := http.Get(server.URL + "/")
@@ -36,7 +36,7 @@ func TestGatewayHTTP(t *testing.T) {
 }
 
 func TestGatewayWebSocket(t *testing.T) {
-	server := httptest.NewServer(newGatewayRouter())
+	server := httptest.NewServer(NewGatewayServer())
 	defer server.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
