@@ -114,11 +114,3 @@ func (s *GRPCServer) WaitForShutdown(ctx context.Context) error {
 	s.Stop()
 	return ctx.Err()
 }
-
-func (s *GRPCServer) Init() {
-	if err := s.Register(func(server *grpc.Server) {
-		pb.RegisterRoomSyncApiServer(server, &service.RoomSyncApi{})
-	}); err != nil {
-		log.Fatalf("register room sync grpc service failed: %v", err)
-	}
-}
