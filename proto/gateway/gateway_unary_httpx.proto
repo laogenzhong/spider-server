@@ -3,7 +3,7 @@ package gateway;
 
 option csharp_namespace = "Gateway.Protobuf.Uh";
 option cc_enable_arenas = true;
-option go_package = "gateway/protobuf/uhpb";
+option go_package = "gateway/uhpb";
 option java_outer_classname = "UnaryHttpxProto";
 option java_multiple_files = true;
 option objc_class_prefix = "GPU";

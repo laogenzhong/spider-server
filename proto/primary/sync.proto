@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package room.api;
+
+// 分号前面是 Go import 路径： import "spider-server/gen/room/api"
+// 分号后面是 Go package 名： package api  如果不写 ;包名，Go 会默认用导入路径最后一级作为包名：
+option go_package = "spider/api;api";
+
+service RoomSyncApi {
+  // 同步时间
+  rpc sync(SyncRequest) returns (SyncResponse);
+}
+
+message SyncRequest {
+
+}
+
+message SyncResponse {
+  uint64 time = 1;
+}

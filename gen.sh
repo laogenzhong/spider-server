@@ -27,10 +27,18 @@ else
 fi
 
 echo "Generating protobuf code ..."
+# 扫描所有 pb
+PROTO_FILES=$(find "$ROOT_DIR/proto" -type f -name "*.proto")
+
+if [ -z "$PROTO_FILES" ]; then
+  echo "No proto files found in $ROOT_DIR/proto"
+  exit 1
+fi
+
 protoc \
   --go_out="$GEN_DIR" \
   --go-grpc_out="$GEN_DIR" \
   --proto_path="$ROOT_DIR/proto" \
-  "$ROOT_DIR"/proto/gateway/*.proto
+  $PROTO_FILES
 
 echo "Done."
