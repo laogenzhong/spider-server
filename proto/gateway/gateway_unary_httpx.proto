@@ -1,0 +1,80 @@
+syntax = "proto3";
+package gateway;
+
+option csharp_namespace = "Gateway.Protobuf.Uh";
+option cc_enable_arenas = true;
+option go_package = "gateway/protobuf/uhpb";
+option java_outer_classname = "UnaryHttpxProto";
+option java_multiple_files = true;
+option objc_class_prefix = "GPU";
+
+message UnaryRequests {
+  uint64 request_id = 1;
+  oneof body {
+    // 用ws.send("") 代替
+    UnaryCommandPing ping = 2 [deprecated = true];
+    UnaryCommandAuth auth = 3;
+    UnaryCommandReconnect reconnect = 4;
+    UnaryRequest request = 5;
+  }
+
+  message UnaryRequest {
+    string path = 1;
+    UnaryBody body = 2;
+  }
+
+  message UnaryCommandPing {
+  }
+
+  message UnaryCommandAuth {
+    string appkey = 1;
+    string auth_token = 2;
+  }
+
+  message UnaryCommandReconnect {
+    string appkey = 1;
+    string reconnect_token = 2;
+  }
+}
+
+message UnaryResponses {
+  UnaryResponseContexts context = 1;
+  repeated UnaryResponseInitiatives stream = 2;
+
+  message UnaryResponseContexts {
+    uint64 request_id = 1;
+    int32 status_code = 2;
+    oneof body {
+      UnaryCommandPong pong = 3 [deprecated = true];
+      UnaryCommandAuth auth = 4;
+      UnaryCommandReconnect reconnect = 5;
+      UnaryBody response = 6;
+    }
+
+    message UnaryCommandPong {
+    }
+
+    message UnaryCommandAuth {
+      string reconnect_auth_token = 1;
+    }
+
+    message UnaryCommandReconnect {
+      string reconnect_auth_token = 1;
+    }
+  }
+
+  message UnaryResponseInitiatives {
+    string event_name = 1;
+    repeated UnaryBody body = 2;
+  }
+}
+
+message UnaryHeader {
+  string key = 1;
+  repeated string value = 2;
+}
+
+message UnaryBody {
+  repeated UnaryHeader headers = 1;
+  bytes body = 2;
+}

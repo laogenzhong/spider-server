@@ -1,0 +1,8 @@
+/.idea/
+/node/client/node_modules
+/node/client/dist/
+
+/vendor/
+*.log
+/bin/
+/gen/
