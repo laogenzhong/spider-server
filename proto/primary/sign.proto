@@ -1,0 +1,56 @@
+syntax = "proto3";
+// 登录
+// 注册
+// token
+// 剩下的就全是业务了
+
+package uc;
+
+import "google/protobuf/empty.proto";
+option go_package = "spider/api;api";
+
+/**
+   * 登录流程
+     注册（注册了serverId）   登录（返回jwtToken） -> token（重连返回jwtToken）  -> 选择serverId（调试进入多个服务器，返回jwtToken）
+     游客登录（返回jwtToken）  -> token（重连返回jwtToken）  -> 选择serverId（调试进入多个服务器，返回jwtToken）
+     jwtToken(登录gateway) 连接game登录服务器
+*/
+// 登录
+service SignApi {
+  // 注册
+  rpc signUpMixed(SignInRequest) returns (SignUpMixedResponse);
+  // 登录
+  rpc signIn(SignInRequest) returns (SignInResponse);
+  //  ucToken 重连
+  rpc token(TokenRequest) returns (SignInResponse);
+  // 退出登录
+  rpc signOut(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message SignInRequest {
+  string account = 1;
+  string pwd = 2;
+  SignInParams params = 3;
+}
+
+message TokenRequest {}
+
+message SignUpMixedResponse {
+  uint32 code = 1;
+}
+
+message SignInParams {
+  string uuid = 8;
+}
+
+message SignInResponse {
+  uint64 uid = 1;
+  // 用于请求 uc 用
+  string uc_token = 2;
+  // app name
+  string app_key = 11;
+  // gateway token
+  string jwt_token = 12;
+  // ws Url
+  string ws_url = 18;
+}
