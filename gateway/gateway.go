@@ -133,11 +133,14 @@ func (s *GatewayServer) buildBinaryRPCResponse(trailer http.Header, header http.
 
 func (s *GatewayServer) unwrapGRPCBody(body []byte) ([]byte, error) {
 	if len(body) < 5 {
+		// 固定五字节响应头
+		// 1 字节压缩标志 + 4 字节消息长度 + protobuf 数据
 		return nil, fmt.Errorf("invalid grpc body: length %d < 5", len(body))
 	}
 
 	compressedFlag := body[0]
 	if compressedFlag != 0 {
+		// 暂时不要压缩了，慢
 		return nil, fmt.Errorf("unsupported grpc compressed flag: %d", compressedFlag)
 	}
 
