@@ -94,3 +94,13 @@ func GetTokenFromContext(ctx context.Context) string {
 
 	return ""
 }
+
+func GetUser(ctx context.Context) *SessionUser {
+	token := GetIncomingValue(ctx, "xx-token")
+	if token != "" {
+		user, _ := SignSessionManager.FromToken(ctx, token)
+		return user
+	}
+
+	return nil
+}

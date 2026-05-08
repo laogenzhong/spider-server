@@ -18,8 +18,6 @@ type SignApi struct {
 
 const sessionAttachAccountKey = "account"
 
-var signSessionManager = session.NewSessionManager("spider-sign-session-secret", nil)
-
 func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.SignInResponse, error) {
 	account := req.GetAccount()
 	password := req.GetPwd()
@@ -44,7 +42,7 @@ func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.Sign
 		return session.Error(ctx, gamecode.SignPasswordWrong, &api.SignInResponse{})
 	}
 
-	token, _, err := signSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
+	token, _, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
 		sessionAttachAccountKey: user.Account,
 	})
 	if err != nil {
@@ -92,7 +90,7 @@ func (s *SignApi) Token(ctx context.Context, req *api.TokenRequest) (*api.SignIn
 		return session.Error(ctx, gamecode.SignTokenEmpty, &api.SignInResponse{})
 	}
 
-	user, err := signSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
+	user, err := session.SignSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
 	if err != nil {
 		return session.Error(ctx, gamecode.SignTokenInvalid, &api.SignInResponse{})
 	}
@@ -104,7 +102,7 @@ func (s *SignApi) Token(ctx context.Context, req *api.TokenRequest) (*api.SignIn
 	}
 
 	account, _ := user.GetAttachString(sessionAttachAccountKey)
-	newToken, _, err := signSessionManager.NewToken(ctx, uid, scopeID, map[string]string{
+	newToken, _, err := session.SignSessionManager.NewToken(ctx, uid, scopeID, map[string]string{
 		sessionAttachAccountKey: account,
 	})
 	if err != nil {
@@ -123,7 +121,7 @@ func (s *SignApi) SignOut(ctx context.Context, req *emptypb.Empty) (*emptypb.Emp
 		return session.Error(ctx, gamecode.SignTokenEmpty, &emptypb.Empty{})
 	}
 
-	user, err := signSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
+	user, err := session.SignSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
 	if err != nil {
 		return session.Error(ctx, gamecode.SignTokenInvalid, &emptypb.Empty{})
 	}
