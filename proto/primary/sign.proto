@@ -15,7 +15,7 @@ option go_package = "spider/api;api";
      游客登录（返回jwtToken）  -> token（重连返回jwtToken）  -> 选择serverId（调试进入多个服务器，返回jwtToken）
      jwtToken(登录gateway) 连接game登录服务器
 */
-// 登录
+// 登录 uc token 是 http 用的 jwt token 是 ws 用的
 service SignApi {
   // 注册
   rpc signUpMixed(SignInRequest) returns (SignUpMixedResponse);

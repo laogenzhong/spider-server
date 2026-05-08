@@ -31,7 +31,7 @@ func NewGRPCServer(addr string, registers ...GRPCServiceRegister) *GRPCServer {
 
 func (s *GRPCServer) Register(register GRPCServiceRegister) error {
 	if register == nil {
-		return errors.New("grpc service register is nil")
+		return errors.New("grpc router register is nil")
 	}
 
 	s.mu.Lock()

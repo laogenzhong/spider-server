@@ -3,14 +3,14 @@ package game
 import (
 	"google.golang.org/grpc"
 	"log"
-	"spider-server/game/service"
+	"spider-server/game/router"
 	pb "spider-server/gen/spider/api"
 )
 
 func (s *GRPCServer) Init() {
 	if err := s.Register(func(server *grpc.Server) {
-		pb.RegisterRoomSyncApiServer(server, &service.RoomSyncApi{})
+		pb.RegisterRoomSyncApiServer(server, &router.RoomSyncApi{})
 	}); err != nil {
-		log.Fatalf("register room sync grpc service failed: %v", err)
+		log.Fatalf("register room sync grpc router failed: %v", err)
 	}
 }
