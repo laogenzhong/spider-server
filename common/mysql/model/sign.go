@@ -1,4 +1,4 @@
-package model
+package mysqlmodel
 
 import (
 	"fmt"
@@ -79,22 +79,6 @@ func DeleteUserByID(id uint) error {
 }
 
 func ExampleCreateUser() error {
-	if err := mysql.InitDb(mysql.Config{
-		User:      "root",
-		Password:  "123456",
-		Host:      "127.0.0.1",
-		Port:      3306,
-		Database:  "spider",
-		ParseTime: true,
-	}); err != nil {
-		return err
-	}
-	defer mysql.Close()
-
-	if err := InitUserTable(); err != nil {
-		return err
-	}
-
 	user, err := CreateUser("test001", "123456")
 	if err != nil {
 		return err

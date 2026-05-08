@@ -1,12 +1,13 @@
-package config
+package mysqlconfig
 
 import (
 	"spider-server/common/mysql"
-	"spider-server/common/mysql/model"
+	mysqlmodel "spider-server/common/mysql/model"
 )
 
-func Init(cfg mysql.Config) {
-	err := mysql.InitAndAutoMigrate(cfg, &model.User{})
+func Init() {
+	cfg := mysql.Config{User: "root", Password: "root", Host: "localhost", Port: 3306, Database: "spider"}
+	err := mysql.InitAndAutoMigrate(cfg, &mysqlmodel.User{})
 	if err != nil {
 		return
 	}

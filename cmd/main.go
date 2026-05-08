@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os/signal"
+	mysqlconfig "spider-server/common/mysql/config"
 	"spider-server/game"
 	"spider-server/gateway"
 	"sync"
@@ -19,8 +20,9 @@ const gameHost = "localhost:18000"
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-
 	defer stop()
+
+	mysqlconfig.Init()
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {

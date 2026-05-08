@@ -5,8 +5,6 @@ import (
 	"errors"
 	"log"
 	"net"
-	"spider-server/game/service"
-	pb "spider-server/gen/spider/api"
 	"sync"
 
 	"google.golang.org/grpc"
