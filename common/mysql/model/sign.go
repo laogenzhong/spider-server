@@ -1,7 +1,8 @@
-package mysql
+package model
 
 import (
 	"fmt"
+	"spider-server/common/mysql"
 	"time"
 
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ type User struct {
 }
 
 func InitUserTable() error {
-	return AutoMigrate(&User{})
+	return mysql.AutoMigrate(&User{})
 }
 
 func CreateUser(account string, password string) (*User, error) {
@@ -33,7 +34,7 @@ func CreateUser(account string, password string) (*User, error) {
 		Password: password,
 	}
 
-	if err := Create(user); err != nil {
+	if err := mysql.Create(user); err != nil {
 		return nil, err
 	}
 
@@ -46,7 +47,7 @@ func GetUserByAccount(account string) (*User, error) {
 	}
 
 	user := &User{}
-	if err := First(user, "account = ?", account); err != nil {
+	if err := mysql.First(user, "account = ?", account); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +62,7 @@ func UpdateUserPasswordByID(id uint, password string) error {
 		return fmt.Errorf("password is empty")
 	}
 
-	db, err := DB()
+	db, err := mysql.DB()
 	if err != nil {
 		return err
 	}
@@ -74,11 +75,11 @@ func DeleteUserByID(id uint) error {
 		return fmt.Errorf("id is empty")
 	}
 
-	return Delete(&User{}, "id = ?", id)
+	return mysql.Delete(&User{}, "id = ?", id)
 }
 
 func ExampleCreateUser() error {
-	if err := Init(Config{
+	if err := mysql.InitDb(mysql.Config{
 		User:      "root",
 		Password:  "123456",
 		Host:      "127.0.0.1",
@@ -88,7 +89,7 @@ func ExampleCreateUser() error {
 	}); err != nil {
 		return err
 	}
-	defer Close()
+	defer mysql.Close()
 
 	if err := InitUserTable(); err != nil {
 		return err

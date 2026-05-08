@@ -3,6 +3,7 @@ package mysql
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -28,9 +29,14 @@ type Config struct {
 
 var db *gorm.DB
 
+var (
+	registeredModelsMu sync.RWMutex
+	registeredModels   []any
+)
+
 var ErrNotInitialized = errors.New("mysql is not initialized")
 
-func Init(cfg Config) error {
+func InitDb(cfg Config) error {
 	if cfg.Host == "" {
 		cfg.Host = "127.0.0.1"
 	}
@@ -89,6 +95,11 @@ func Init(cfg Config) error {
 	}
 
 	db = gormDB
+
+	if err := AutoMigrateRegisteredModels(); err != nil {
+		return fmt.Errorf("auto migrate registered models failed: %w", err)
+	}
+
 	return nil
 }
 
@@ -149,6 +160,43 @@ func AutoMigrate(models ...any) error {
 	return gormDB.AutoMigrate(models...)
 }
 
+func RegisterModels(models ...any) {
+	if len(models) == 0 {
+		return
+	}
+
+	registeredModelsMu.Lock()
+	defer registeredModelsMu.Unlock()
+
+	registeredModels = append(registeredModels, models...)
+}
+
+func RegisteredModels() []any {
+	registeredModelsMu.RLock()
+	defer registeredModelsMu.RUnlock()
+
+	models := make([]any, 0, len(registeredModels))
+	models = append(models, registeredModels...)
+	return models
+}
+
+func AutoMigrateRegisteredModels() error {
+	models := RegisteredModels()
+	if len(models) == 0 {
+		return nil
+	}
+
+	return AutoMigrate(models...)
+}
+
+func InitAndAutoMigrate(cfg Config, models ...any) error {
+	if len(models) > 0 {
+		RegisterModels(models...)
+	}
+
+	return InitDb(cfg)
+}
+
 func Create[T any](value *T) error {
 	gormDB, err := DB()
 	if err != nil {
@@ -170,7 +218,11 @@ func First[T any](dest *T, query any, args ...any) error {
 	if err != nil {
 		return err
 	}
-	return gormDB.First(dest, query, args...).Error
+
+	if query == nil {
+		return gormDB.First(dest).Error
+	}
+	return gormDB.Where(query, args...).First(dest).Error
 }
 
 func Find[T any](dest *[]T, query any, args ...any) error {
@@ -182,7 +234,7 @@ func Find[T any](dest *[]T, query any, args ...any) error {
 	if query == nil {
 		return gormDB.Find(dest).Error
 	}
-	return gormDB.Find(dest, query, args...).Error
+	return gormDB.Where(query, args...).Find(dest).Error
 }
 
 func Delete[T any](value *T, query any, args ...any) error {
@@ -190,7 +242,11 @@ func Delete[T any](value *T, query any, args ...any) error {
 	if err != nil {
 		return err
 	}
-	return gormDB.Delete(value, query, args...).Error
+
+	if query == nil {
+		return gormDB.Delete(value).Error
+	}
+	return gormDB.Where(query, args...).Delete(value).Error
 }
 
 func WithTx(fn func(tx *gorm.DB) error) error {
