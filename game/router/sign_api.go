@@ -6,17 +6,19 @@ import (
 	mysqlmodel "spider-server/common/mysql/model"
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
-	"time"
-
-	api "spider-server/gen/spider/api"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
+	api "spider-server/gen/spider/api"
 )
 
 type SignApi struct {
 	api.UnimplementedSignApiServer
 }
+
+const sessionAttachAccountKey = "account"
+
+var signSessionManager = session.NewSessionManager("spider-sign-session-secret", nil)
 
 func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.SignInResponse, error) {
 	account := req.GetAccount()
@@ -42,7 +44,18 @@ func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.Sign
 		return session.Error(ctx, gamecode.SignPasswordWrong, &api.SignInResponse{})
 	}
 
-	return &api.SignInResponse{}, nil
+	token, _, err := signSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
+		sessionAttachAccountKey: user.Account,
+	})
+	if err != nil {
+		return session.Error(ctx, gamecode.SignCreateTokenFailed, &api.SignInResponse{})
+	}
+
+	resp := &api.SignInResponse{}
+	resp.Uid = uint64(user.ID)
+	resp.UcToken = token
+
+	return resp, nil
 }
 
 func (s *SignApi) SignUpMixed(ctx context.Context, req *api.SignInRequest) (*api.SignUpMixedResponse, error) {
@@ -74,10 +87,50 @@ func (s *SignApi) SignUpMixed(ctx context.Context, req *api.SignInRequest) (*api
 }
 
 func (s *SignApi) Token(ctx context.Context, req *api.TokenRequest) (*api.SignInResponse, error) {
-	return &api.SignInResponse{}, nil
+	oldToken := session.GetTokenFromContext(ctx)
+	if oldToken == "" {
+		return session.Error(ctx, gamecode.SignTokenEmpty, &api.SignInResponse{})
+	}
+
+	user, err := signSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
+	if err != nil {
+		return session.Error(ctx, gamecode.SignTokenInvalid, &api.SignInResponse{})
+	}
+
+	uid := user.UIDOrDefault()
+	scopeID, err := user.ScopeID()
+	if err != nil {
+		return session.Error(ctx, gamecode.SignTokenInvalid, &api.SignInResponse{})
+	}
+
+	account, _ := user.GetAttachString(sessionAttachAccountKey)
+	newToken, _, err := signSessionManager.NewToken(ctx, uid, scopeID, map[string]string{
+		sessionAttachAccountKey: account,
+	})
+	if err != nil {
+		return session.Error(ctx, gamecode.SignRefreshTokenFailed, &api.SignInResponse{})
+	}
+
+	resp := &api.SignInResponse{}
+	resp.Uid = uid
+	resp.UcToken = newToken
+	return resp, nil
 }
 
 func (s *SignApi) SignOut(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
-	_ = time.Now()
+	oldToken := session.GetTokenFromContext(ctx)
+	if oldToken == "" {
+		return session.Error(ctx, gamecode.SignTokenEmpty, &emptypb.Empty{})
+	}
+
+	user, err := signSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
+	if err != nil {
+		return session.Error(ctx, gamecode.SignTokenInvalid, &emptypb.Empty{})
+	}
+
+	if err := user.Logout(ctx); err != nil {
+		return session.Error(ctx, gamecode.SignLogoutFailed, &emptypb.Empty{})
+	}
+
 	return &emptypb.Empty{}, nil
 }

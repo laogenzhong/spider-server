@@ -21,4 +21,19 @@ const (
 
 	// SignPasswordWrong 密码错误。
 	SignPasswordWrong int = 10007
+
+	// SignCreateTokenFailed 创建 token 失败。
+	SignCreateTokenFailed int = 10008
+
+	// SignTokenEmpty token 为空。
+	SignTokenEmpty int = 10009
+
+	// SignTokenInvalid token 无效或已过期。
+	SignTokenInvalid int = 10010
+
+	// SignRefreshTokenFailed 刷新 token 失败。
+	SignRefreshTokenFailed int = 10011
+
+	// SignLogoutFailed 退出登录失败。
+	SignLogoutFailed int = 10012
 )

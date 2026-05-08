@@ -85,3 +85,12 @@ func Error[T any](ctx context.Context, value int, data T) (T, error) {
 	}
 	return data, nil
 }
+
+func GetTokenFromContext(ctx context.Context) string {
+	token := GetIncomingValue(ctx, "xx-token")
+	if token != "" {
+		return token
+	}
+
+	return ""
+}
