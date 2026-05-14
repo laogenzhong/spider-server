@@ -3,9 +3,9 @@ package router
 import (
 	"context"
 	"errors"
-	mysqlmodel "spider-server/common/mysql/model"
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
+	"spider-server/mysql/model"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"

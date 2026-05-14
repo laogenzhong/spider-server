@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	mysqlmodel "spider-server/common/mysql/model"
+	"spider-server/mysql/model"
 	"strconv"
 	"time"
 

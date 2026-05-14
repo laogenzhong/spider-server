@@ -1,6 +1,16 @@
 package gamecode
 
 const (
+
+	// MdNull 没有 md
+	MdNull int = 4109
+
+	// SessionNull 没有 session
+	SessionNull int = 4110
+
+	// SessionExpire Session 过期
+	SessionExpire int = 4111
+
 	// SignAccountEmpty 账号为空。
 	SignAccountEmpty int = 10001
 

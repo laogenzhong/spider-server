@@ -86,6 +86,14 @@ func Error[T any](ctx context.Context, value int, data T) (T, error) {
 	return data, nil
 }
 
+func Error2(ctx context.Context, value int) (any, error) {
+	strV := strconv.Itoa(value)
+	if err := grpc.SetTrailer(ctx, metadata.Pairs("status_code", strV)); err != nil {
+		return nil, status.Error(codes.InvalidArgument, "set err err")
+	}
+	return nil, nil
+}
+
 func GetTokenFromContext(ctx context.Context) string {
 	token := GetIncomingValue(ctx, "xx-token")
 	if token != "" {
@@ -95,7 +103,7 @@ func GetTokenFromContext(ctx context.Context) string {
 	return ""
 }
 
-func GetUser(ctx context.Context) *SessionUser {
+func FindUser(ctx context.Context) *SessionUser {
 	token := GetIncomingValue(ctx, "xx-token")
 	if token != "" {
 		user, _ := SignSessionManager.FromToken(ctx, token)
@@ -103,4 +111,24 @@ func GetUser(ctx context.Context) *SessionUser {
 	}
 
 	return nil
+}
+
+type userContextKey struct{}
+
+func WithUser(ctx context.Context, user *SessionUser) context.Context {
+	return context.WithValue(ctx, userContextKey{}, user)
+}
+
+// 虽然这两个 userContextKey{} 是两个新创建的空对象，但它们的类型和值都相同，所以可以匹配上。
+// 1. 不占额外空间
+//2. 不容易冲突
+//3. 只能在当前包里直接使用
+//4. Go 官方文档也推荐不要用普通 string 作为 context key
+
+// 字符串容易冲突
+
+func GetUser(ctx context.Context) *SessionUser {
+	user, _ := ctx.Value(userContextKey{}).(*SessionUser)
+	return user
+
 }

@@ -11,6 +11,7 @@ func (s *GRPCServer) Init() {
 	if err := s.Register(func(server *grpc.Server) {
 		pb.RegisterRoomSyncApiServer(server, &router.RoomSyncApi{})
 		pb.RegisterSignApiServer(server, &router.SignApi{})
+		pb.RegisterWeightRecordServiceServer(server, &router.WeightApi{})
 	}); err != nil {
 		log.Fatalf("register room sync grpc router failed: %v", err)
 	}

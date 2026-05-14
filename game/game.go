@@ -23,8 +23,10 @@ type GRPCServer struct {
 
 func NewGRPCServer(addr string, registers ...GRPCServiceRegister) *GRPCServer {
 	return &GRPCServer{
-		addr:      addr,
-		server:    grpc.NewServer(),
+		addr: addr,
+		server: grpc.NewServer(
+			grpc.UnaryInterceptor(authUnaryInterceptor),
+		),
 		registers: registers,
 	}
 }

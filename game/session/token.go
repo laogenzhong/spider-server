@@ -422,11 +422,8 @@ func (u *SessionUser) Check() error {
 
 // UID 获取当前登录用户 ID。
 // 如果当前是匿名用户，返回 ErrSessionAnonymous。
-func (u *SessionUser) UID() (uint64, error) {
-	if err := u.Check(); err != nil {
-		return 0, err
-	}
-	return u.entity.UID, nil
+func (u *SessionUser) UID() uint64 {
+	return u.entity.UID
 }
 
 // UIDOrDefault 获取用户 ID；如果未登录或为空，返回 0，不返回错误。

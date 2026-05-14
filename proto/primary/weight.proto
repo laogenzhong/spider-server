@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package health;
+
+option go_package = "spider/api;api";
+
+// 体重记录模型
+// 注意：weight 是体重 * 10 后的整数
+// 例如：70.5kg 存为 705
+// satiety 是摄入状态评分，范围 0-10，不是具体 kcal
+message WeightRecord {
+  // 服务端记录 ID
+  uint64 id = 1;
+
+  // 用户 ID，服务端可从 token/session 获取，客户端一般不需要传
+  uint64 uid = 2;
+
+  // 记录日期，格式 yyyy-MM-dd，例如 2026-05-14
+  string record_date = 3;
+
+  // 体重 * 10，例如 70.5kg = 705
+  int32 weight = 4;
+
+  // 摄入状态评分，0-10
+  int32 satiety = 5;
+
+  // 创建时间，毫秒时间戳
+  int64 created_at = 6;
+
+  // 更新时间，毫秒时间戳
+  int64 updated_at = 7;
+}
+
+// 新增体重记录
+// 通常用于某一天没有记录时创建
+message CreateWeightRecordRequest {
+  // 记录日期，格式 yyyy-MM-dd
+  string record_date = 1;
+
+  // 体重 * 10，例如 70.5kg = 705
+  int32 weight = 2;
+
+  // 摄入状态评分，0-10
+  int32 satiety = 3;
+}
+
+message CreateWeightRecordResponse {
+  WeightRecord record = 1;
+}
+
+// 修改体重记录
+// 支持按 id 修改，也支持按 record_date 修改
+// 建议客户端有 id 时优先传 id；没有 id 时传 record_date
+message UpdateWeightRecordRequest {
+  uint64 id = 1;
+
+  // 当 id 为空时，用 record_date 定位记录
+  string record_date = 2;
+
+  // 体重 * 10，例如 70.5kg = 705
+  int32 weight = 3;
+
+  // 摄入状态评分，0-10
+  int32 satiety = 4;
+}
+
+message UpdateWeightRecordResponse {
+  WeightRecord record = 1;
+}
+
+// 删除体重记录
+// 支持按 id 删除，也支持按 record_date 删除
+message DeleteWeightRecordRequest {
+  uint64 id = 1;
+
+  // 当 id 为空时，用 record_date 删除
+  string record_date = 2;
+}
+
+message DeleteWeightRecordResponse {
+  bool success = 1;
+}
+
+// 查询某一天的体重记录
+message GetWeightRecordRequest {
+  // 记录日期，格式 yyyy-MM-dd
+  string record_date = 1;
+}
+
+message GetWeightRecordResponse {
+  // 是否存在当天记录
+  bool exists = 1;
+
+  // exists = true 时有值
+  WeightRecord record = 2;
+}
+
+// 查询日期范围内的体重记录
+message ListWeightRecordsRequest {
+  // 开始日期，格式 yyyy-MM-dd，包含当天
+  string start_date = 1;
+
+  // 结束日期，格式 yyyy-MM-dd，包含当天
+  string end_date = 2;
+}
+
+message ListWeightRecordsResponse {
+  repeated WeightRecord records = 1;
+}
+
+// 获取最近一条体重记录
+// 用于客户端当天没有记录时继承最近体重
+message GetLatestWeightRecordRequest {
+}
+
+message GetLatestWeightRecordResponse {
+  bool exists = 1;
+  WeightRecord record = 2;
+}
+
+// 体重服务
+service WeightRecordService {
+  // 新增记录
+  rpc CreateWeightRecord(CreateWeightRecordRequest) returns (CreateWeightRecordResponse);
+
+  // 修改记录
+  rpc UpdateWeightRecord(UpdateWeightRecordRequest) returns (UpdateWeightRecordResponse);
+
+  // 删除记录
+  rpc DeleteWeightRecord(DeleteWeightRecordRequest) returns (DeleteWeightRecordResponse);
+
+  // 查询某天记录
+  rpc GetWeightRecord(GetWeightRecordRequest) returns (GetWeightRecordResponse);
+
+  // 查询范围记录
+  rpc ListWeightRecords(ListWeightRecordsRequest) returns (ListWeightRecordsResponse);
+
+  // 查询最近一条记录
+  rpc GetLatestWeightRecord(GetLatestWeightRecordRequest) returns (GetLatestWeightRecordResponse);
+}

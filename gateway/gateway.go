@@ -79,7 +79,7 @@ func (s *GatewayServer) httpHandler(c *gin.Context) {
 		return
 	}
 
-	log.Printf("http rpc receive binary request, path=%s, bytes=%d", c.Request.URL.Path, len(requestBody))
+	//log.Printf("http rpc receive binary request, path=%s, bytes=%d", c.Request.URL.Path, len(requestBody))
 
 	responseBody, code := s.handleBinaryRPC(requestBody)
 	if code != http.StatusOK {

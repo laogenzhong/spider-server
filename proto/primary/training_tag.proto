@@ -1,0 +1,308 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+// TrainingTagType 表示训练标签的来源类型。
+enum TrainingTagType {
+  // 未知标签类型，作为默认值，避免 proto3 enum 默认值直接落到有效业务类型。
+  TRAINING_TAG_TYPE_UNKNOWN = 0;
+
+  // 系统默认标签，例如 胸、肩、背、腿、手臂、腹。
+  TRAINING_TAG_TYPE_SYSTEM = 1;
+
+  // 用户自定义标签，由用户在客户端自行新增。
+  TRAINING_TAG_TYPE_CUSTOM = 2;
+}
+
+// TrainingTag 表示一个可被用户选择的训练标签定义。
+message TrainingTag {
+  // 标签 ID，由服务端生成。
+  uint64 id = 1;
+
+  // 用户 ID；系统默认标签可以为 0，用户自定义标签为实际 uid。
+  uint64 uid = 2;
+
+  // 标签名称，例如 胸、肩、背、腿、手臂、腹。
+  string name = 3;
+
+  // 标签类型，用于区分系统默认标签和用户自定义标签。
+  TrainingTagType type = 4;
+
+  // 排序值，越小越靠前。
+  int32 sort_order = 5;
+
+  // 是否启用；禁用后通常不在默认标签列表中展示。
+  bool enabled = 6;
+
+  // 创建时间，毫秒时间戳。
+  int64 created_at = 7;
+
+  // 更新时间，毫秒时间戳。
+  int64 updated_at = 8;
+}
+
+// WorkoutTagBinding 表示某次训练与某个训练标签之间的绑定关系。
+message WorkoutTagBinding {
+  // 绑定记录 ID，由服务端生成。
+  uint64 id = 1;
+
+  // 用户 ID，通常由服务端从 token/session 中获取。
+  uint64 uid = 2;
+
+  // HealthKit workout uuid，对应 iOS 侧 WorkoutModel.healthKitUUID。
+  string workout_uuid = 3;
+
+  // 训练开始时间，毫秒时间戳。
+  int64 workout_start_at = 4;
+
+  // 训练结束时间，毫秒时间戳。
+  int64 workout_end_at = 5;
+
+  // 训练类型，例如 传统力量训练、跑步、步行。
+  string workout_type = 6;
+
+  // 标签 ID，对应 TrainingTag.id。
+  uint64 tag_id = 7;
+
+  // 标签名称冗余字段，方便客户端直接展示，避免额外查询标签表。
+  string tag_name = 8;
+
+  // 创建时间，毫秒时间戳。
+  int64 created_at = 9;
+
+  // 更新时间，毫秒时间戳。
+  int64 updated_at = 10;
+}
+
+// CreateTrainingTagRequest 表示新建用户自定义训练标签的请求。
+message CreateTrainingTagRequest {
+  // 标签名称，例如 上胸、臀腿、二头。
+  string name = 1;
+
+  // 排序值，越小越靠前；客户端不传时服务端可使用默认排序。
+  int32 sort_order = 2;
+}
+
+// CreateTrainingTagResponse 表示新建训练标签后的返回结果。
+message CreateTrainingTagResponse {
+  // 新建成功后的标签完整信息。
+  TrainingTag tag = 1;
+}
+
+// UpdateTrainingTagRequest 表示修改训练标签的请求。
+message UpdateTrainingTagRequest {
+  // 要修改的标签 ID。
+  uint64 id = 1;
+
+  // 修改后的标签名称。
+  string name = 2;
+
+  // 修改后的排序值，越小越靠前。
+  int32 sort_order = 3;
+
+  // 修改后的启用状态。
+  bool enabled = 4;
+}
+
+// UpdateTrainingTagResponse 表示修改训练标签后的返回结果。
+message UpdateTrainingTagResponse {
+  // 修改成功后的标签完整信息。
+  TrainingTag tag = 1;
+}
+
+// DeleteTrainingTagRequest 表示删除训练标签的请求。
+message DeleteTrainingTagRequest {
+  // 要删除的标签 ID。
+  uint64 id = 1;
+}
+
+// DeleteTrainingTagResponse 表示删除训练标签后的返回结果。
+message DeleteTrainingTagResponse {
+  // 是否删除成功。
+  bool success = 1;
+}
+
+// ListTrainingTagsRequest 表示获取当前用户可用标签列表的请求。
+message ListTrainingTagsRequest {
+  // 是否只返回启用标签；true 表示过滤 disabled 标签。
+  bool only_enabled = 1;
+}
+
+// ListTrainingTagsResponse 表示当前用户可用标签列表的返回结果。
+message ListTrainingTagsResponse {
+  // 标签列表，通常包含系统默认标签和用户自定义标签。
+  repeated TrainingTag tags = 1;
+}
+
+// ReorderTrainingTagsRequest 表示批量调整标签排序的请求。
+message ReorderTrainingTagsRequest {
+  // 标签排序项列表，服务端按 id 更新 sort_order。
+  repeated TrainingTagSortItem items = 1;
+}
+
+// TrainingTagSortItem 表示单个标签的排序更新项。
+message TrainingTagSortItem {
+  // 标签 ID。
+  uint64 id = 1;
+
+  // 新的排序值，越小越靠前。
+  int32 sort_order = 2;
+}
+
+// ReorderTrainingTagsResponse 表示批量调整标签排序后的返回结果。
+message ReorderTrainingTagsResponse {
+  // 更新排序后的标签列表。
+  repeated TrainingTag tags = 1;
+}
+
+// SaveWorkoutTagsRequest 表示保存某次训练标签绑定关系的请求。
+message SaveWorkoutTagsRequest {
+  // HealthKit workout uuid，优先用它定位某次训练。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳，用于展示和兜底定位。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳，用于展示和兜底定位。
+  int64 workout_end_at = 3;
+
+  // 训练类型，例如 传统力量训练、跑步、步行。
+  string workout_type = 4;
+
+  // 当前训练绑定的完整标签 ID 列表；服务端可按覆盖式保存处理。
+  repeated uint64 tag_ids = 5;
+}
+
+// SaveWorkoutTagsResponse 表示保存某次训练标签后的返回结果。
+message SaveWorkoutTagsResponse {
+  // 保存后的训练标签绑定列表。
+  repeated WorkoutTagBinding bindings = 1;
+}
+
+// GetWorkoutTagsRequest 表示查询某次训练标签绑定的请求。
+message GetWorkoutTagsRequest {
+  // HealthKit workout uuid，优先用它查询某次训练标签。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底查询。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底查询。
+  int64 workout_end_at = 3;
+}
+
+// GetWorkoutTagsResponse 表示查询某次训练标签绑定后的返回结果。
+message GetWorkoutTagsResponse {
+  // 当前训练绑定的标签列表。
+  repeated WorkoutTagBinding bindings = 1;
+}
+
+// DeleteWorkoutTagsRequest 表示删除某次训练全部标签绑定的请求。
+message DeleteWorkoutTagsRequest {
+  // HealthKit workout uuid，优先用它定位某次训练。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底定位。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底定位。
+  int64 workout_end_at = 3;
+}
+
+// DeleteWorkoutTagsResponse 表示删除某次训练全部标签后的返回结果。
+message DeleteWorkoutTagsResponse {
+  // 是否删除成功。
+  bool success = 1;
+}
+
+// ListDailyWorkoutTagsRequest 表示查询某一天所有训练标签的请求。
+message ListDailyWorkoutTagsRequest {
+  // 日期字符串，格式 yyyy-MM-dd，例如 2026-05-14。
+  string record_date = 1;
+}
+
+// DailyWorkoutTags 表示某一天内单次训练及其标签绑定列表。
+message DailyWorkoutTags {
+  // HealthKit workout uuid。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳。
+  int64 workout_end_at = 3;
+
+  // 训练类型，例如 传统力量训练、跑步、步行。
+  string workout_type = 4;
+
+  // 当前训练绑定的标签列表。
+  repeated WorkoutTagBinding bindings = 5;
+}
+
+// ListDailyWorkoutTagsResponse 表示某一天所有训练标签的返回结果。
+message ListDailyWorkoutTagsResponse {
+  // 当天所有训练及其标签绑定列表。
+  repeated DailyWorkoutTags workouts = 1;
+}
+
+// ListRangeWorkoutTagsRequest 表示查询一段日期内训练标签摘要的请求。
+message ListRangeWorkoutTagsRequest {
+  // 开始日期，格式 yyyy-MM-dd，包含当天。
+  string start_date = 1;
+
+  // 结束日期，格式 yyyy-MM-dd，包含当天。
+  string end_date = 2;
+}
+
+// DailyTrainingTagSummary 表示某一天训练标签的聚合摘要。
+message DailyTrainingTagSummary {
+  // 日期字符串，格式 yyyy-MM-dd。
+  string record_date = 1;
+
+  // 当天出现过的标签名称列表，用于日历和历史页快速展示。
+  repeated string tag_names = 2;
+
+  // 当天出现过的标签 ID 列表，用于客户端需要按 ID 统计或筛选的场景。
+  repeated uint64 tag_ids = 3;
+}
+
+// ListRangeWorkoutTagsResponse 表示一段日期内训练标签摘要的返回结果。
+message ListRangeWorkoutTagsResponse {
+  // 按天聚合后的训练标签摘要列表。
+  repeated DailyTrainingTagSummary days = 1;
+}
+
+// TrainingTagService 提供训练标签库管理和训练标签绑定管理能力。
+service TrainingTagService {
+  // 新建用户自定义训练标签。
+  rpc CreateTrainingTag(CreateTrainingTagRequest) returns (CreateTrainingTagResponse);
+
+  // 修改训练标签名称、排序或启用状态。
+  rpc UpdateTrainingTag(UpdateTrainingTagRequest) returns (UpdateTrainingTagResponse);
+
+  // 删除训练标签。
+  rpc DeleteTrainingTag(DeleteTrainingTagRequest) returns (DeleteTrainingTagResponse);
+
+  // 获取当前用户可用的训练标签列表。
+  rpc ListTrainingTags(ListTrainingTagsRequest) returns (ListTrainingTagsResponse);
+
+  // 批量调整训练标签排序。
+  rpc ReorderTrainingTags(ReorderTrainingTagsRequest) returns (ReorderTrainingTagsResponse);
+
+  // 保存某次训练绑定的完整标签列表。
+  rpc SaveWorkoutTags(SaveWorkoutTagsRequest) returns (SaveWorkoutTagsResponse);
+
+  // 获取某次训练绑定的标签列表。
+  rpc GetWorkoutTags(GetWorkoutTagsRequest) returns (GetWorkoutTagsResponse);
+
+  // 删除某次训练绑定的全部标签。
+  rpc DeleteWorkoutTags(DeleteWorkoutTagsRequest) returns (DeleteWorkoutTagsResponse);
+
+  // 获取某一天内所有训练及其标签。
+  rpc ListDailyWorkoutTags(ListDailyWorkoutTagsRequest) returns (ListDailyWorkoutTagsResponse);
+
+  // 获取一段日期内按天聚合的训练标签摘要。
+  rpc ListRangeWorkoutTags(ListRangeWorkoutTagsRequest) returns (ListRangeWorkoutTagsResponse);
+}

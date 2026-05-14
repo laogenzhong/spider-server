@@ -2,7 +2,7 @@ package mysqlmodel
 
 import (
 	"fmt"
-	"spider-server/common/mysql/config"
+	"spider-server/mysql/config"
 	"time"
 
 	"gorm.io/gorm"
