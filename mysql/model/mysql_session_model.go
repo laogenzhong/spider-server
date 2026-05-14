@@ -46,10 +46,11 @@ func CreateOrUpdateUserSession(uid uint64, scopeID uint64, attach string, expire
 			{Name: "uid"},
 			{Name: "scope_id"},
 		},
-		DoUpdates: clause.AssignmentColumns([]string{
-			"attach",
-			"expires_at",
-			"updated_at",
+		DoUpdates: clause.Assignments(map[string]any{
+			"attach":     attach,
+			"expires_at": expiresAt,
+			"deleted_at": nil,
+			"updated_at": time.Now(),
 		}),
 	}).Create(session).Error
 
@@ -57,7 +58,7 @@ func CreateOrUpdateUserSession(uid uint64, scopeID uint64, attach string, expire
 		return nil, err
 	}
 
-	return session, nil
+	return GetUserSession(uid, scopeID)
 }
 
 func CreateUserSession(uid uint64, scopeID uint64, attach string, expiresAt *time.Time) (*UserSession, error) {
@@ -85,7 +86,11 @@ func GetUserSession(uid uint64, scopeID uint64) (*UserSession, error) {
 	}
 
 	session := &UserSession{}
-	if err := config.First(session, "uid = ? AND scope_id = ?", uid, scopeID); err != nil {
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Where("uid = ? AND scope_id = ?", uid, scopeID).First(session).Error; err != nil {
 		return nil, err
 	}
 

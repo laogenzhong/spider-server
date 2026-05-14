@@ -127,7 +127,8 @@ func (s *SignApi) SignOut(ctx context.Context, req *emptypb.Empty) (*emptypb.Emp
 
 	user, err := session.SignSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
 	if err != nil {
-		return session.Error(ctx, gamecode.SignTokenInvalid, &emptypb.Empty{})
+		return &emptypb.Empty{}, nil
+		//return session.Error(ctx, gamecode.SignTokenInvalid, &emptypb.Empty{})
 	}
 
 	if err := user.Logout(ctx); err != nil {
