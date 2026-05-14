@@ -313,7 +313,7 @@ func NewSessionManager(secret string, store SessionStore) *SessionManager {
 	return &SessionManager{
 		tokenService: NewTokenService(secret),
 		store:        store,
-		defaultTTL:   time.Hour,
+		defaultTTL:   365 * 24 * time.Hour,
 	}
 }
 
