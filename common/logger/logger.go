@@ -34,7 +34,7 @@ var closer = func() error {
 }
 
 func init() {
-	fmt.Println("init。。。。")
+	fmt.Println("init log 。。。。")
 	logCfg := Config{Level: "info", Path: "stdout"}
 	newLogger := log.New()
 	// 如果是终端输出，使用带颜色的文本格式；否则用JSON格式
