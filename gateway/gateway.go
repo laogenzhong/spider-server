@@ -103,12 +103,26 @@ func (s *GatewayServer) handleBinaryRPC(requestBody []byte) ([]byte, int) {
 	url := fmt.Sprintf("http://%s/%s", s.host, path)
 	log.Printf("grpc invoke url: %s", url)
 
-	resp, err := refgrpc.GrpcInvoke(url, rpcRequest.Body, "0")
+	header := s.binaryRPCHeadersToHTTPHeader(rpcRequest.Headers)
+	resp, err := refgrpc.GrpcInvoke(url, rpcRequest.Body, header)
 	if err != nil {
 		return nil, http.StatusInternalServerError
 	}
 
 	return s.buildBinaryRPCResponse(resp.Trailer, resp.Header, resp.Body), http.StatusOK
+}
+
+func (s *GatewayServer) binaryRPCHeadersToHTTPHeader(headers []BinaryRPCHeader) http.Header {
+	result := make(http.Header)
+	for _, header := range headers {
+		key := strings.TrimSpace(header.Key)
+		if key == "" {
+			continue
+		}
+
+		result[key] = append(result[key], strings.TrimSpace(header.Value))
+	}
+	return result
 }
 
 func (s *GatewayServer) buildBinaryRPCResponse(trailer http.Header, header http.Header, body []byte) []byte {

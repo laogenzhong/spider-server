@@ -24,7 +24,7 @@ type GrpcResp struct {
 	Header  http.Header
 }
 
-func GrpcInvoke(url string, reqpb []byte, xsUid string) (*GrpcResp, error) {
+func GrpcInvoke(url string, reqpb []byte, header http.Header) (*GrpcResp, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// 使用 logger 记录 panic
@@ -33,7 +33,7 @@ func GrpcInvoke(url string, reqpb []byte, xsUid string) (*GrpcResp, error) {
 	}()
 
 	// 调用 clientGrpcHttp2 函数
-	gr := clientGrpcHttp2(url, reqpb, xsUid)
+	gr := clientGrpcHttp2(url, reqpb, header)
 
 	// 如果没有发生 panic，正常返回结果
 	if gr == nil {
@@ -56,7 +56,7 @@ var client = &http.Client{
 	},
 }
 
-func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
+func clientGrpcHttp2(url string, reqpb []byte, header http.Header) *GrpcResp {
 	// 使用非加密的 HTTP 协议访问 gRPC 服务
 	// 创建 HTTP/2 支持的 Transport
 	packReq := Req(reqpb)
@@ -72,6 +72,14 @@ func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
 	req.Header.Set("Content-Type", "application/grpc")
 	req.Header.Set("TE", "trailers")
 
+	for key, values := range header {
+		if key == "" {
+			continue
+		}
+
+		req.Header[key] = append(req.Header[key], values...)
+	}
+
 	// 发送请求
 	resp, err := client.Do(req)
 	if err != nil {
@@ -81,7 +89,7 @@ func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
 	}
 
 	defer resp.Body.Close()
-	logger.Info("发送请求成功")
+	//logger.Info("发送请求成功")
 
 	// 读取响应数据
 	responseData, err := io.ReadAll(resp.Body)
@@ -90,25 +98,25 @@ func clientGrpcHttp2(url string, reqpb []byte, xsUid string) *GrpcResp {
 		logger.Printf("无法读取响应: %v", err)
 	}
 
-	logger.Info("读取响应成功")
+	//logger.Info("读取响应成功")
 
 	// 读取 Trailers
-	logger.Info("响应 Trailers:")
-	for key, values := range resp.Trailer {
-		for _, value := range values {
-			logger.Printf("%s: %s \n", key, value)
-		}
-	}
-
-	// 读取 Headers
-	logger.Info("响应 Headers:")
-	for key, values := range resp.Header {
-		for _, value := range values {
-			logger.Printf("%s: %s \n", key, value)
-		}
-	}
-
-	logger.Info("响应数据: %s", responseData)
+	//logger.Info("响应 Trailers:")
+	//for key, values := range resp.Trailer {
+	//	for _, value := range values {
+	//		logger.Printf("%s: %s \n", key, value)
+	//	}
+	//}
+	//
+	//// 读取 Headers
+	//logger.Info("响应 Headers:")
+	//for key, values := range resp.Header {
+	//	for _, value := range values {
+	//		logger.Printf("%s: %s \n", key, value)
+	//	}
+	//}
+	//
+	//logger.Info("响应数据: %s", responseData)
 
 	return &GrpcResp{responseData, resp.Trailer, resp.Header}
 }

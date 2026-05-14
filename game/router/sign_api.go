@@ -32,7 +32,11 @@ func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.Sign
 
 	user, err := mysqlmodel.GetUserByAccount(account)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return session.Error(ctx, gamecode.SignAccountNotFound, &api.SignInResponse{})
+		_, err = mysqlmodel.CreateUser(account, password)
+		user, err = mysqlmodel.GetUserByAccount(account)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return session.Error(ctx, gamecode.SignAccountNotFound, &api.SignInResponse{})
+		}
 	}
 	if err != nil {
 		return session.Error(ctx, gamecode.SignQueryAccountFailed, &api.SignInResponse{})

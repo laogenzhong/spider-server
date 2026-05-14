@@ -6,7 +6,7 @@ import (
 )
 
 func Init() {
-	cfg := mysql.Config{User: "root", Password: "root", Host: "localhost", Port: 3306, Database: "spider"}
+	cfg := mysql.Config{User: "root", Password: "root", Host: "localhost", Port: 3306, Database: "spider", ParseTime: true}
 	err := mysql.InitAndAutoMigrate(cfg, &mysqlmodel.User{})
 	if err != nil {
 		return
