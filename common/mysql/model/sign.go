@@ -2,7 +2,7 @@ package mysqlmodel
 
 import (
 	"fmt"
-	"spider-server/common/mysql"
+	"spider-server/common/mysql/config"
 	"time"
 
 	"gorm.io/gorm"
@@ -18,7 +18,7 @@ type User struct {
 }
 
 func InitUserTable() error {
-	return mysql.AutoMigrate(&User{})
+	return config.AutoMigrate(&User{})
 }
 
 func CreateUser(account string, password string) (*User, error) {
@@ -34,7 +34,7 @@ func CreateUser(account string, password string) (*User, error) {
 		Password: password,
 	}
 
-	if err := mysql.Create(user); err != nil {
+	if err := config.Create(user); err != nil {
 		return nil, err
 	}
 
@@ -47,7 +47,7 @@ func GetUserByAccount(account string) (*User, error) {
 	}
 
 	user := &User{}
-	if err := mysql.First(user, "account = ?", account); err != nil {
+	if err := config.First(user, "account = ?", account); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func UpdateUserPasswordByID(id uint, password string) error {
 		return fmt.Errorf("password is empty")
 	}
 
-	db, err := mysql.DB()
+	db, err := config.DB()
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func DeleteUserByID(id uint) error {
 		return fmt.Errorf("id is empty")
 	}
 
-	return mysql.Delete(&User{}, "id = ?", id)
+	return config.Delete(&User{}, "id = ?", id)
 }
 
 func ExampleCreateUser() error {

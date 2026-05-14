@@ -307,7 +307,8 @@ type SessionManager struct {
 // store: 会话存储实现；传 nil 时默认使用内存存储 MemorySessionStore。
 func NewSessionManager(secret string, store SessionStore) *SessionManager {
 	if store == nil {
-		store = NewMemorySessionStore()
+		//store = NewMemorySessionStore()
+		store = NewMySQLSessionStore()
 	}
 	return &SessionManager{
 		tokenService: NewTokenService(secret),

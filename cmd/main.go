@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os/signal"
-	mysqlconfig "spider-server/common/mysql/config"
+	mysqlconfig "spider-server/common/mysql"
 	"spider-server/game"
 	"spider-server/gateway"
 	"sync"
