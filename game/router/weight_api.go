@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"errors"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
@@ -10,7 +9,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 )
 
 // WeightApi 实现体重记录相关 gRPC 接口。
@@ -30,8 +28,10 @@ func NewWeightApi() *WeightApi {
 	return &WeightApi{}
 }
 
-// CreateWeightRecord 新增某一天的体重记录。
-func (a *WeightApi) CreateWeightRecord(ctx context.Context, req *pb.CreateWeightRecordRequest) (*pb.CreateWeightRecordResponse, error) {
+// SaveWeightRecord 保存某一天的体重记录。
+//
+// 按 uid + record_date 判断：当天没有记录就新增，当天已有记录就修改。
+func (a *WeightApi) SaveWeightRecord(ctx context.Context, req *pb.SaveWeightRecordRequest) (*pb.SaveWeightRecordResponse, error) {
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetRecordDate() == "" {
@@ -46,39 +46,10 @@ func (a *WeightApi) CreateWeightRecord(ctx context.Context, req *pb.CreateWeight
 
 	record, err := mysqlmodel.CreateWeightRecord(uid, req.GetRecordDate(), req.GetWeight(), req.GetSatiety())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "创建体重记录失败：%v", err)
+		return nil, status.Errorf(codes.Internal, "保存体重记录失败：%v", err)
 	}
 
-	return &pb.CreateWeightRecordResponse{
-		Record: convertWeightRecord(record),
-	}, nil
-}
-
-// UpdateWeightRecord 修改体重记录。
-//
-// 优先使用 id 定位记录；如果 id 为空，则使用 record_date 定位当前用户当天记录。
-func (a *WeightApi) UpdateWeightRecord(ctx context.Context, req *pb.UpdateWeightRecordRequest) (*pb.UpdateWeightRecordResponse, error) {
-	uid := session.GetUser(ctx).UID()
-
-	if req.GetId() == 0 && req.GetRecordDate() == "" {
-		return nil, status.Error(codes.InvalidArgument, "id 和 record_date 不能同时为空")
-	}
-	if req.GetWeight() <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "weight 必须大于 0")
-	}
-	if req.GetSatiety() < 0 || req.GetSatiety() > 10 {
-		return nil, status.Error(codes.InvalidArgument, "satiety 必须在 0-10 之间")
-	}
-
-	record, err := mysqlmodel.UpdateWeightRecord(uid, req.GetId(), req.GetRecordDate(), req.GetWeight(), req.GetSatiety())
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "体重记录不存在")
-	}
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "修改体重记录失败：%v", err)
-	}
-
-	return &pb.UpdateWeightRecordResponse{
+	return &pb.SaveWeightRecordResponse{
 		Record: convertWeightRecord(record),
 	}, nil
 }
@@ -109,10 +80,10 @@ func (a *WeightApi) GetWeightRecord(ctx context.Context, req *pb.GetWeightRecord
 	}
 
 	record, err := mysqlmodel.GetWeightRecordByDate(uid, req.GetRecordDate())
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return &pb.GetWeightRecordResponse{Exists: false}, nil
-	}
 	if err != nil {
+		if err.Error() == "record not found" {
+			return &pb.GetWeightRecordResponse{Exists: false}, nil
+		}
 		return nil, status.Errorf(codes.Internal, "查询体重记录失败：%v", err)
 	}
 
@@ -148,10 +119,10 @@ func (a *WeightApi) GetLatestWeightRecord(ctx context.Context, req *pb.GetLatest
 	uid := session.GetUser(ctx).UID()
 
 	record, err := mysqlmodel.GetLatestWeightRecord(uid)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return &pb.GetLatestWeightRecordResponse{Exists: false}, nil
-	}
 	if err != nil {
+		if err.Error() == "record not found" {
+			return &pb.GetLatestWeightRecordResponse{Exists: false}, nil
+		}
 		return nil, status.Errorf(codes.Internal, "查询最近体重记录失败：%v", err)
 	}
 

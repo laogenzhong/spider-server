@@ -31,9 +31,9 @@ message WeightRecord {
   int64 updated_at = 7;
 }
 
-// 新增体重记录
-// 通常用于某一天没有记录时创建
-message CreateWeightRecordRequest {
+// 保存体重记录
+// 按 uid + record_date 判断：当天没有记录就新增，当天已有记录就修改
+message SaveWeightRecordRequest {
   // 记录日期，格式 yyyy-MM-dd
   string record_date = 1;
 
@@ -44,27 +44,7 @@ message CreateWeightRecordRequest {
   int32 satiety = 3;
 }
 
-message CreateWeightRecordResponse {
-  WeightRecord record = 1;
-}
-
-// 修改体重记录
-// 支持按 id 修改，也支持按 record_date 修改
-// 建议客户端有 id 时优先传 id；没有 id 时传 record_date
-message UpdateWeightRecordRequest {
-  uint64 id = 1;
-
-  // 当 id 为空时，用 record_date 定位记录
-  string record_date = 2;
-
-  // 体重 * 10，例如 70.5kg = 705
-  int32 weight = 3;
-
-  // 摄入状态评分，0-10
-  int32 satiety = 4;
-}
-
-message UpdateWeightRecordResponse {
+message SaveWeightRecordResponse {
   WeightRecord record = 1;
 }
 
@@ -120,11 +100,8 @@ message GetLatestWeightRecordResponse {
 
 // 体重服务
 service WeightRecordService {
-  // 新增记录
-  rpc CreateWeightRecord(CreateWeightRecordRequest) returns (CreateWeightRecordResponse);
-
-  // 修改记录
-  rpc UpdateWeightRecord(UpdateWeightRecordRequest) returns (UpdateWeightRecordResponse);
+  // 保存记录：当天没有记录就新增，当天已有记录就修改
+  rpc SaveWeightRecord(SaveWeightRecordRequest) returns (SaveWeightRecordResponse);
 
   // 删除记录
   rpc DeleteWeightRecord(DeleteWeightRecordRequest) returns (DeleteWeightRecordResponse);
