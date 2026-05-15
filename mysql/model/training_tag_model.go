@@ -8,6 +8,7 @@ import (
 	"spider-server/mysql/config"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // TrainingTag 表示用户可选择的训练标签定义。
@@ -35,15 +36,17 @@ type TrainingTag struct {
 // 1. 优先使用 WorkoutUUID 定位某次训练。
 // 2. 为了兼容旧数据或兜底匹配，同时保存 WorkoutStartAt / WorkoutEndAt / WorkoutType。
 // 3. TagName 冗余保存，避免标签后续被删除或改名后历史训练无法展示。
-// 4. 同一用户、同一 workout、同一 tag 只允许绑定一次。
+// 4. 同一用户、同一 WorkoutKey、同一 tag 只允许绑定一次。
+// 5. WorkoutKey 优先使用 WorkoutUUID；WorkoutUUID 为空时，使用 start/end/type 生成兜底 key。
 type WorkoutTagBinding struct {
 	ID             uint64         `gorm:"primaryKey;autoIncrement"`
-	UID            uint64         `gorm:"not null;index;uniqueIndex:idx_uid_workout_tag"`
-	WorkoutUUID    string         `gorm:"type:varchar(128);not null;index;uniqueIndex:idx_uid_workout_tag"`
+	UID            uint64         `gorm:"not null;index;uniqueIndex:idx_uid_workout_key_tag"`
+	WorkoutKey     string         `gorm:"type:varchar(256);not null;index;uniqueIndex:idx_uid_workout_key_tag"`
+	WorkoutUUID    string         `gorm:"type:varchar(128);not null;index"`
 	WorkoutStartAt int64          `gorm:"not null;index"`
 	WorkoutEndAt   int64          `gorm:"not null;index"`
 	WorkoutType    string         `gorm:"type:varchar(64);not null"`
-	TagID          uint64         `gorm:"not null;index;uniqueIndex:idx_uid_workout_tag"`
+	TagID          uint64         `gorm:"not null;index;uniqueIndex:idx_uid_workout_key_tag"`
 	TagName        string         `gorm:"type:varchar(64);not null"`
 	RecordDate     string         `gorm:"type:varchar(20);not null;index"`
 	CreatedAt      time.Time      `gorm:"not null"`
@@ -154,15 +157,21 @@ func DeleteTrainingTag(uid uint64, id uint64) error {
 		return err
 	}
 
-	result := db.Where("uid = ? AND id = ?", uid, id).Delete(&TrainingTag{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		result := tx.Where("uid = ? AND id = ?", uid, id).Delete(&TrainingTag{})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
 
-	return nil
+		if err := tx.Where("uid = ? AND tag_id = ?", uid, id).Delete(&WorkoutTagBinding{}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 // GetTrainingTagByID 根据 id 查询标签。
@@ -242,6 +251,11 @@ func ReorderTrainingTags(uid uint64, items []TrainingTagSortItem) ([]*TrainingTa
 }
 
 // SaveWorkoutTags 覆盖式保存某次训练绑定的完整标签列表。
+//
+// 保存规则：
+// 1. 同一个 uid + workout_key + tag_id 已存在时更新绑定信息。
+// 2. 如果旧绑定被软删除，本次保存会恢复 deleted_at。
+// 3. 本次没有传入的旧 tag 绑定会被删除。
 func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string, tagIDs []uint64) ([]*WorkoutTagBinding, error) {
 	if uid == 0 {
 		return nil, fmt.Errorf("uid is empty")
@@ -256,23 +270,23 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 	}
 
 	recordDate := recordDateFromMillis(workoutStartAt)
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt, workoutType)
+	uniqueTagIDs := uniqueUint64s(tagIDs)
 
 	err = db.Transaction(func(tx *gorm.DB) error {
-		deleteQuery := tx.Where("uid = ?", uid)
-		if workoutUUID != "" {
-			deleteQuery = deleteQuery.Where("workout_uuid = ?", workoutUUID)
-		} else {
-			deleteQuery = deleteQuery.Where("workout_start_at = ? AND workout_end_at = ?", workoutStartAt, workoutEndAt)
+		deleteQuery := tx.Where("uid = ? AND workout_key = ?", uid, workoutKey)
+		if len(uniqueTagIDs) > 0 {
+			deleteQuery = deleteQuery.Where("tag_id NOT IN ?", uniqueTagIDs)
 		}
 		if err := deleteQuery.Delete(&WorkoutTagBinding{}).Error; err != nil {
 			return err
 		}
 
-		if len(tagIDs) == 0 {
+		if len(uniqueTagIDs) == 0 {
 			return nil
 		}
 
-		tags, err := listTrainingTagsByIDs(tx, uid, tagIDs)
+		tags, err := listTrainingTagsByIDs(tx, uid, uniqueTagIDs)
 		if err != nil {
 			return err
 		}
@@ -281,14 +295,16 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 			tagMap[tag.ID] = tag
 		}
 
-		for _, tagID := range uniqueUint64s(tagIDs) {
+		bindings := make([]*WorkoutTagBinding, 0, len(uniqueTagIDs))
+		for _, tagID := range uniqueTagIDs {
 			tag := tagMap[tagID]
 			if tag == nil {
 				return fmt.Errorf("tag not found: %d", tagID)
 			}
 
-			binding := &WorkoutTagBinding{
+			bindings = append(bindings, &WorkoutTagBinding{
 				UID:            uid,
+				WorkoutKey:     workoutKey,
 				WorkoutUUID:    workoutUUID,
 				WorkoutStartAt: workoutStartAt,
 				WorkoutEndAt:   workoutEndAt,
@@ -296,13 +312,26 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 				TagID:          tag.ID,
 				TagName:        tag.Name,
 				RecordDate:     recordDate,
-			}
-			if err := tx.Create(binding).Error; err != nil {
-				return err
-			}
+			})
 		}
 
-		return nil
+		return tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "uid"},
+				{Name: "workout_key"},
+				{Name: "tag_id"},
+			},
+			DoUpdates: clause.Assignments(map[string]any{
+				"workout_uuid":     workoutUUID,
+				"workout_start_at": workoutStartAt,
+				"workout_end_at":   workoutEndAt,
+				"workout_type":     workoutType,
+				"tag_name":         gorm.Expr("VALUES(tag_name)"),
+				"record_date":      recordDate,
+				"deleted_at":       nil,
+				"updated_at":       time.Now(),
+			}),
+		}).Create(&bindings).Error
 	})
 	if err != nil {
 		return nil, err
@@ -320,6 +349,8 @@ func GetWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workou
 		return nil, fmt.Errorf("workout identity is empty")
 	}
 
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt, "")
+
 	db, err := config.DB()
 	if err != nil {
 		return nil, err
@@ -329,7 +360,7 @@ func GetWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workou
 	if workoutUUID != "" {
 		query = query.Where("workout_uuid = ?", workoutUUID)
 	} else {
-		query = query.Where("workout_start_at = ? AND workout_end_at = ?", workoutStartAt, workoutEndAt)
+		query = query.Where("workout_key = ?", workoutKey)
 	}
 
 	var bindings []*WorkoutTagBinding
@@ -348,6 +379,8 @@ func DeleteWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, wor
 		return fmt.Errorf("workout identity is empty")
 	}
 
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt, "")
+
 	db, err := config.DB()
 	if err != nil {
 		return err
@@ -357,7 +390,7 @@ func DeleteWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, wor
 	if workoutUUID != "" {
 		query = query.Where("workout_uuid = ?", workoutUUID)
 	} else {
-		query = query.Where("workout_start_at = ? AND workout_end_at = ?", workoutStartAt, workoutEndAt)
+		query = query.Where("workout_key = ?", workoutKey)
 	}
 
 	return query.Delete(&WorkoutTagBinding{}).Error
@@ -474,10 +507,17 @@ func groupBindingsByWorkout(bindings []*WorkoutTagBinding) []*DailyWorkoutTags {
 }
 
 func workoutBindingKey(binding *WorkoutTagBinding) string {
-	if binding.WorkoutUUID != "" {
-		return binding.WorkoutUUID
+	if binding.WorkoutKey != "" {
+		return binding.WorkoutKey
 	}
-	return fmt.Sprintf("%d_%d_%s", binding.WorkoutStartAt, binding.WorkoutEndAt, binding.WorkoutType)
+	return buildWorkoutKey(binding.WorkoutUUID, binding.WorkoutStartAt, binding.WorkoutEndAt, binding.WorkoutType)
+}
+
+func buildWorkoutKey(workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string) string {
+	if workoutUUID != "" {
+		return "uuid:" + workoutUUID
+	}
+	return fmt.Sprintf("time:%d_%d_%s", workoutStartAt, workoutEndAt, workoutType)
 }
 
 func recordDateFromMillis(millis int64) string {
