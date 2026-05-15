@@ -8,21 +8,19 @@ import (
 
 func Init() {
 	cfg := config.Config{User: "root", Password: "root", Host: "localhost", Port: 3306, Database: "spider", ParseTime: true}
-	err := config.InitAndAutoMigrate(cfg, &mysqlmodel2.User{})
-	if err != nil {
-		log.Fatal(err)
-		return
+
+	models := []any{
+		&mysqlmodel2.User{},
+		&mysqlmodel2.UserSession{},
+		&mysqlmodel2.WeightRecord{},
+		&mysqlmodel2.TrainingTag{},
+		&mysqlmodel2.WorkoutTagBinding{},
 	}
 
-	err = config.InitAndAutoMigrate(cfg, &mysqlmodel2.UserSession{})
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	err = config.InitAndAutoMigrate(cfg, &mysqlmodel2.WeightRecord{})
-	if err != nil {
-		log.Fatal(err)
-		return
+	for _, model := range models {
+		if err := config.InitAndAutoMigrate(cfg, model); err != nil {
+			log.Fatal(err)
+			return
+		}
 	}
 }
