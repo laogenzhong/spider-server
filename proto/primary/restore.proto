@@ -1,0 +1,206 @@
+syntax = "proto3";
+
+package api;
+
+import "primary/training_tag.proto";
+import "primary/weight.proto";
+
+option go_package = "spider/api;api";
+
+// RestoreDataType 表示客户端同步时需要拉取的数据类型。
+enum RestoreDataType {
+  // 未知数据类型。
+  RESTORE_DATA_TYPE_UNKNOWN = 0;
+
+  // 体重记录。
+  RESTORE_DATA_TYPE_WEIGHT_RECORDS = 1;
+
+  // 训练标签定义，包括系统默认标签和用户自定义标签。
+  RESTORE_DATA_TYPE_TRAINING_TAGS = 2;
+
+  // 训练和标签的绑定关系。
+  RESTORE_DATA_TYPE_WORKOUT_TAG_BINDINGS = 3;
+}
+
+// RestorePlanRequest 表示获取客户端数据同步计划的请求。
+message RestorePlanRequest {
+  // 客户端本地保存的同步快照时间，毫秒时间戳。
+  // 传 0 表示全量恢复：服务端返回从最早数据到当前快照的数据。
+  // 传非 0 表示增量同步：服务端返回 (start_snapshot_id, 当前快照] 之间变更的数据。
+  int64 start_snapshot_id = 1;
+
+  // 客户端期望每批最多拉取多少条；服务端可以按数据类型修正为自己的批大小。
+  uint32 preferred_batch_size = 2;
+}
+
+// RestoreTask 表示一个需要客户端分批拉取的数据任务。
+message RestoreTask {
+  // 本次恢复任务 ID；客户端后续按 task_id 拉取批次。
+  string task_id = 1;
+
+  // 数据类型。
+  RestoreDataType data_type = 2;
+
+  // 本任务覆盖的开始日期，格式 yyyy-MM-dd；没有日期维度的数据可以为空。
+  string start_date = 3;
+
+  // 本任务覆盖的结束日期，格式 yyyy-MM-dd；没有日期维度的数据可以为空。
+  string end_date = 4;
+
+  // 本任务需要同步的数据总条数。
+  uint64 total_count = 5;
+
+  // 服务端确认的每批拉取数量。
+  uint32 batch_size = 6;
+
+  // 总批次数；客户端拉到 batch_index = total_batches - 1 后即可结束该任务。
+  uint32 total_batches = 7;
+
+  // 建议客户端从哪个批次开始拉取，通常为 0。
+  uint32 start_batch_index = 8;
+}
+
+// RestorePlanResponse 表示服务端计算出的数据同步计划。
+message RestorePlanResponse {
+  // 客户端传入的起始同步快照时间。
+  int64 start_snapshot_id = 1;
+
+  // 服务端本次生成的结束同步快照时间；客户端拉完所有任务后保存它。
+  int64 end_snapshot_id = 2;
+
+  // start_snapshot_id 到 end_snapshot_id 之间是否没有任何变更。
+  bool is_latest = 3;
+
+  // 需要客户端拉取的任务列表。
+  repeated RestoreTask tasks = 4;
+
+  // 所有任务合计需要同步的数据总条数。
+  uint64 total_count = 5;
+}
+
+// RestoreBatchRequest 表示拉取某个同步任务的一批数据。
+message RestoreBatchRequest {
+  // RestorePlanResponse.start_snapshot_id。
+  int64 start_snapshot_id = 1;
+
+  // RestorePlanResponse.end_snapshot_id。
+  int64 end_snapshot_id = 2;
+
+  // RestoreTask.task_id。
+  string task_id = 3;
+
+  // 要拉取的批次序号，从 0 开始。
+  uint32 batch_index = 4;
+
+  // RestoreTask.batch_size；客户端不传时服务端使用默认批大小。
+  uint32 batch_size = 5;
+}
+
+// WeightRecordSyncItem 表示一条体重记录的同步项。
+message WeightRecordSyncItem {
+  // 体重记录。
+  health.WeightRecord record = 1;
+
+  // true 表示该记录已被服务端删除，客户端应删除本地对应记录。
+  bool deleted = 2;
+
+  // 删除时间，毫秒时间戳；deleted = true 时有效。
+  int64 deleted_at = 3;
+
+  // 本记录最近变更时间，毫秒时间戳。
+  int64 changed_at = 4;
+}
+
+// TrainingTagSyncItem 表示一条训练标签定义的同步项。
+message TrainingTagSyncItem {
+  // 训练标签定义。
+  TrainingTag tag = 1;
+
+  // true 表示该标签已被服务端删除，客户端应删除或禁用本地对应标签。
+  bool deleted = 2;
+
+  // 删除时间，毫秒时间戳；deleted = true 时有效。
+  int64 deleted_at = 3;
+
+  // 本记录最近变更时间，毫秒时间戳。
+  int64 changed_at = 4;
+}
+
+// WorkoutTagBindingSyncItem 表示一条训练标签绑定关系的同步项。
+message WorkoutTagBindingSyncItem {
+  // 训练标签绑定关系。
+  WorkoutTagBinding binding = 1;
+
+  // true 表示该绑定已被服务端删除，客户端应删除本地对应绑定。
+  bool deleted = 2;
+
+  // 删除时间，毫秒时间戳；deleted = true 时有效。
+  int64 deleted_at = 3;
+
+  // 本记录最近变更时间，毫秒时间戳。
+  int64 changed_at = 4;
+}
+
+// WeightRecordRestoreBatch 表示一批体重记录同步项。
+message WeightRecordRestoreBatch {
+  // 体重记录同步项列表。
+  repeated WeightRecordSyncItem items = 1;
+}
+
+// TrainingTagRestoreBatch 表示一批训练标签定义同步项。
+message TrainingTagRestoreBatch {
+  // 训练标签定义同步项列表。
+  repeated TrainingTagSyncItem items = 1;
+}
+
+// WorkoutTagBindingRestoreBatch 表示一批训练标签绑定关系同步项。
+message WorkoutTagBindingRestoreBatch {
+  // 训练标签绑定关系同步项列表。
+  repeated WorkoutTagBindingSyncItem items = 1;
+}
+
+// RestoreBatchResponse 表示某个同步任务的一批数据。
+message RestoreBatchResponse {
+  // 数据类型，方便客户端分发到不同本地表。
+  RestoreDataType data_type = 1;
+
+  // 当前批次序号。
+  uint32 batch_index = 2;
+
+  // 当前批次实际返回条数。
+  uint32 batch_count = 3;
+
+  // 当前任务总条数。
+  uint64 total_count = 4;
+
+  // 当前任务总批次数。
+  uint32 total_batches = 5;
+
+  // 是否还有下一批。
+  bool has_more = 6;
+
+  // 下一批序号；has_more = true 时有效。
+  uint32 next_batch_index = 7;
+
+  // 本批次所属起始同步快照时间。
+  int64 start_snapshot_id = 8;
+
+  // 本批次所属结束同步快照时间。
+  int64 end_snapshot_id = 9;
+
+  // 当前批次数据。
+  oneof payload {
+    WeightRecordRestoreBatch weight_records = 20;
+    TrainingTagRestoreBatch training_tags = 21;
+    WorkoutTagBindingRestoreBatch workout_tag_bindings = 22;
+  }
+}
+
+// ClientRestoreService 提供客户端重新登录、本地数据重建和增量同步能力。
+service ClientRestoreService {
+  // 获取数据同步计划。
+  rpc GetRestorePlan(RestorePlanRequest) returns (RestorePlanResponse);
+
+  // 按同步计划分批拉取数据。
+  rpc FetchRestoreBatch(RestoreBatchRequest) returns (RestoreBatchResponse);
+}

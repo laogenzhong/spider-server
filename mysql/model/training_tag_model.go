@@ -219,6 +219,108 @@ func ListTrainingTags(uid uint64, onlyEnabled bool) ([]*TrainingTag, error) {
 	return tags, nil
 }
 
+// CountTrainingTags 统计当前用户可恢复的训练标签定义数量。
+func CountTrainingTags(uid uint64) (uint64, error) {
+	if uid == 0 {
+		return 0, fmt.Errorf("uid is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return 0, err
+	}
+
+	var count int64
+	if err := db.Model(&TrainingTag{}).
+		Where("uid = 0 OR uid = ?", uid).
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return uint64(count), nil
+}
+
+// ListTrainingTagsPage 分页查询当前用户可恢复的训练标签定义。
+func ListTrainingTagsPage(uid uint64, limit int, offset int) ([]*TrainingTag, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if limit <= 0 {
+		return nil, fmt.Errorf("limit must be greater than 0")
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("offset must be greater than or equal to 0")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var tags []*TrainingTag
+	if err := db.Where("uid = 0 OR uid = ?", uid).
+		Order("sort_order ASC, id ASC").
+		Limit(limit).
+		Offset(offset).
+		Find(&tags).Error; err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
+// CountTrainingTagChanges 统计指定快照窗口内需要同步的训练标签定义数量。
+func CountTrainingTagChanges(uid uint64, startSnapshotID int64, endSnapshotID int64) (uint64, error) {
+	if uid == 0 {
+		return 0, fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 {
+		return 0, fmt.Errorf("end_snapshot_id is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return 0, err
+	}
+
+	var count int64
+	if err := trainingTagChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Model(&TrainingTag{}).
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return uint64(count), nil
+}
+
+// ListTrainingTagChangesPage 分页查询指定快照窗口内需要同步的训练标签定义。
+func ListTrainingTagChangesPage(uid uint64, startSnapshotID int64, endSnapshotID int64, limit int, offset int) ([]*TrainingTag, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 {
+		return nil, fmt.Errorf("end_snapshot_id is empty")
+	}
+	if limit <= 0 {
+		return nil, fmt.Errorf("limit must be greater than 0")
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("offset must be greater than or equal to 0")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var tags []*TrainingTag
+	if err := trainingTagChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Order(trainingTagChangedAtSQL() + " ASC, sort_order ASC, id ASC").
+		Limit(limit).
+		Offset(offset).
+		Find(&tags).Error; err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
 // ReorderTrainingTags 批量调整当前用户自定义标签排序。
 func ReorderTrainingTags(uid uint64, items []TrainingTagSortItem) ([]*TrainingTag, error) {
 	if uid == 0 {
@@ -464,6 +566,182 @@ func ListRangeWorkoutTags(uid uint64, startDate string, endDate string) ([]*Dail
 		return days[i].RecordDate < days[j].RecordDate
 	})
 	return days, nil
+}
+
+// CountWorkoutTagBindings 统计当前用户可恢复的训练标签绑定数量和日期范围。
+func CountWorkoutTagBindings(uid uint64) (uint64, string, string, error) {
+	if uid == 0 {
+		return 0, "", "", fmt.Errorf("uid is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return 0, "", "", err
+	}
+
+	var count int64
+	if err := db.Model(&WorkoutTagBinding{}).Where("uid = ?", uid).Count(&count).Error; err != nil {
+		return 0, "", "", err
+	}
+	if count == 0 {
+		return 0, "", "", nil
+	}
+
+	var bounds struct {
+		StartDate string
+		EndDate   string
+	}
+	if err := db.Model(&WorkoutTagBinding{}).
+		Select("MIN(record_date) AS start_date, MAX(record_date) AS end_date").
+		Where("uid = ?", uid).
+		Scan(&bounds).Error; err != nil {
+		return 0, "", "", err
+	}
+
+	return uint64(count), bounds.StartDate, bounds.EndDate, nil
+}
+
+// ListWorkoutTagBindingsPage 分页查询当前用户可恢复的训练标签绑定。
+func ListWorkoutTagBindingsPage(uid uint64, limit int, offset int) ([]*WorkoutTagBinding, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if limit <= 0 {
+		return nil, fmt.Errorf("limit must be greater than 0")
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("offset must be greater than or equal to 0")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var bindings []*WorkoutTagBinding
+	if err := db.Where("uid = ?", uid).
+		Order("record_date ASC, workout_start_at ASC, id ASC").
+		Limit(limit).
+		Offset(offset).
+		Find(&bindings).Error; err != nil {
+		return nil, err
+	}
+	return bindings, nil
+}
+
+// CountWorkoutTagBindingChanges 统计指定快照窗口内需要同步的训练标签绑定数量和日期范围。
+func CountWorkoutTagBindingChanges(uid uint64, startSnapshotID int64, endSnapshotID int64) (uint64, string, string, error) {
+	if uid == 0 {
+		return 0, "", "", fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 {
+		return 0, "", "", fmt.Errorf("end_snapshot_id is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return 0, "", "", err
+	}
+
+	var count int64
+	if err := workoutTagBindingChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Model(&WorkoutTagBinding{}).
+		Count(&count).Error; err != nil {
+		return 0, "", "", err
+	}
+	if count == 0 {
+		return 0, "", "", nil
+	}
+
+	var bounds struct {
+		StartDate string
+		EndDate   string
+	}
+	if err := workoutTagBindingChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Model(&WorkoutTagBinding{}).
+		Select("MIN(record_date) AS start_date, MAX(record_date) AS end_date").
+		Scan(&bounds).Error; err != nil {
+		return 0, "", "", err
+	}
+
+	return uint64(count), bounds.StartDate, bounds.EndDate, nil
+}
+
+// ListWorkoutTagBindingChangesPage 分页查询指定快照窗口内需要同步的训练标签绑定。
+func ListWorkoutTagBindingChangesPage(uid uint64, startSnapshotID int64, endSnapshotID int64, limit int, offset int) ([]*WorkoutTagBinding, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 {
+		return nil, fmt.Errorf("end_snapshot_id is empty")
+	}
+	if limit <= 0 {
+		return nil, fmt.Errorf("limit must be greater than 0")
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("offset must be greater than or equal to 0")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var bindings []*WorkoutTagBinding
+	if err := workoutTagBindingChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Order(workoutTagBindingChangedAtSQL() + " ASC, record_date ASC, workout_start_at ASC, id ASC").
+		Limit(limit).
+		Offset(offset).
+		Find(&bindings).Error; err != nil {
+		return nil, err
+	}
+	return bindings, nil
+}
+
+func trainingTagChangesQuery(db *gorm.DB, uid uint64, startSnapshotID int64, endSnapshotID int64) *gorm.DB {
+	endTime := time.UnixMilli(endSnapshotID)
+	query := db.Unscoped().Where("uid = 0 OR uid = ?", uid)
+	if startSnapshotID <= 0 {
+		return query.Where("created_at <= ? AND (deleted_at IS NULL OR deleted_at > ?)", endTime, endTime)
+	}
+
+	startTime := time.UnixMilli(startSnapshotID)
+	return query.Where(
+		"(created_at > ? AND created_at <= ?) OR (updated_at > ? AND updated_at <= ?) OR (deleted_at IS NOT NULL AND deleted_at > ? AND deleted_at <= ?)",
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+	)
+}
+
+func workoutTagBindingChangesQuery(db *gorm.DB, uid uint64, startSnapshotID int64, endSnapshotID int64) *gorm.DB {
+	endTime := time.UnixMilli(endSnapshotID)
+	query := db.Unscoped().Where("uid = ?", uid)
+	if startSnapshotID <= 0 {
+		return query.Where("created_at <= ? AND (deleted_at IS NULL OR deleted_at > ?)", endTime, endTime)
+	}
+
+	startTime := time.UnixMilli(startSnapshotID)
+	return query.Where(
+		"(created_at > ? AND created_at <= ?) OR (updated_at > ? AND updated_at <= ?) OR (deleted_at IS NOT NULL AND deleted_at > ? AND deleted_at <= ?)",
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+	)
+}
+
+func trainingTagChangedAtSQL() string {
+	return "GREATEST(updated_at, COALESCE(deleted_at, updated_at))"
+}
+
+func workoutTagBindingChangedAtSQL() string {
+	return "GREATEST(updated_at, COALESCE(deleted_at, updated_at))"
 }
 
 func listTrainingTagsByIDs(tx *gorm.DB, uid uint64, tagIDs []uint64) ([]*TrainingTag, error) {
