@@ -37,7 +37,7 @@ type TrainingTag struct {
 // 2. 为了兼容旧数据或兜底匹配，同时保存 WorkoutStartAt / WorkoutEndAt / WorkoutType。
 // 3. TagName 冗余保存，避免标签后续被删除或改名后历史训练无法展示。
 // 4. 同一用户、同一 WorkoutKey、同一 tag 只允许绑定一次。
-// 5. WorkoutKey 优先使用 WorkoutUUID；WorkoutUUID 为空时，使用 start/end/type 生成兜底 key。
+// 5. WorkoutKey 优先使用 WorkoutUUID；WorkoutUUID 为空时，使用 start/end 生成兜底 key。
 type WorkoutTagBinding struct {
 	ID             uint64         `gorm:"primaryKey;autoIncrement"`
 	UID            uint64         `gorm:"not null;index;uniqueIndex:idx_uid_workout_key_tag"`
@@ -270,7 +270,7 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 	}
 
 	recordDate := recordDateFromMillis(workoutStartAt)
-	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt, workoutType)
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
 	uniqueTagIDs := uniqueUint64s(tagIDs)
 
 	err = db.Transaction(func(tx *gorm.DB) error {
@@ -349,7 +349,7 @@ func GetWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workou
 		return nil, fmt.Errorf("workout identity is empty")
 	}
 
-	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt, "")
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
 
 	db, err := config.DB()
 	if err != nil {
@@ -379,7 +379,7 @@ func DeleteWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, wor
 		return fmt.Errorf("workout identity is empty")
 	}
 
-	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt, "")
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
 
 	db, err := config.DB()
 	if err != nil {
@@ -510,14 +510,14 @@ func workoutBindingKey(binding *WorkoutTagBinding) string {
 	if binding.WorkoutKey != "" {
 		return binding.WorkoutKey
 	}
-	return buildWorkoutKey(binding.WorkoutUUID, binding.WorkoutStartAt, binding.WorkoutEndAt, binding.WorkoutType)
+	return buildWorkoutKey(binding.WorkoutUUID, binding.WorkoutStartAt, binding.WorkoutEndAt)
 }
 
-func buildWorkoutKey(workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string) string {
+func buildWorkoutKey(workoutUUID string, workoutStartAt int64, workoutEndAt int64) string {
 	if workoutUUID != "" {
 		return "uuid:" + workoutUUID
 	}
-	return fmt.Sprintf("time:%d_%d_%s", workoutStartAt, workoutEndAt, workoutType)
+	return fmt.Sprintf("time:%d_%d", workoutStartAt, workoutEndAt)
 }
 
 func recordDateFromMillis(millis int64) string {
