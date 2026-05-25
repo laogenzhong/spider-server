@@ -10,7 +10,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 )
 
 const (
@@ -276,23 +275,4 @@ func restoreTotalBatches(totalCount uint64, batchSize uint32) uint32 {
 		return 0
 	}
 	return uint32((totalCount + uint64(batchSize) - 1) / uint64(batchSize))
-}
-
-func isDeletedInSnapshot(deletedAt gorm.DeletedAt, endSnapshotID int64) bool {
-	return deletedAt.Valid && deletedAt.Time.UnixMilli() <= endSnapshotID
-}
-
-func deletedAtMillis(deletedAt gorm.DeletedAt, endSnapshotID int64) int64 {
-	if !isDeletedInSnapshot(deletedAt, endSnapshotID) {
-		return 0
-	}
-	return deletedAt.Time.UnixMilli()
-}
-
-func changedAtMillis(updatedAt time.Time, deletedAt gorm.DeletedAt, endSnapshotID int64) int64 {
-	changedAt := updatedAt.UnixMilli()
-	if isDeletedInSnapshot(deletedAt, endSnapshotID) && deletedAt.Time.UnixMilli() > changedAt {
-		return deletedAt.Time.UnixMilli()
-	}
-	return changedAt
 }
