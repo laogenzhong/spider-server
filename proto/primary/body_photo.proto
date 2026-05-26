@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+// BodyPhotoKind 表示照片记录类型。
+enum BodyPhotoKind {
+  BODY_PHOTO_KIND_UNKNOWN = 0;
+  BODY_PHOTO_KIND_BODY = 1;
+  BODY_PHOTO_KIND_DIET = 2;
+}
+
+// BodyPhotoRecord 表示一条 App 内照片索引记录。
+// 注意：这里不保存图片二进制，只保存 iOS 照片库 localIdentifier 及展示元数据。
+message BodyPhotoRecord {
+  // 服务端记录 ID。
+  uint64 id = 1;
+
+  // 用户 ID，服务端可从 token/session 获取。
+  uint64 uid = 2;
+
+  // 客户端本地记录 UUID，用于幂等保存。
+  string client_record_id = 3;
+
+  // iOS Photo Library localIdentifier。
+  string photo_library_asset_id = 4;
+
+  // 类型：体型/饮食。
+  BodyPhotoKind kind = 5;
+
+  // 照片记录日期，毫秒时间戳。
+  int64 record_at = 6;
+
+  // 体重，单位斤；没有记录时为 0。
+  double weight = 7;
+
+  // 备注。
+  string note = 8;
+
+  // 客户端本地缓存文件名，仅用于客户端展示恢复。
+  string file_name = 9;
+
+  // 创建时间，毫秒时间戳。
+  int64 created_at = 10;
+
+  // 更新时间，毫秒时间戳。
+  int64 updated_at = 11;
+}
+
+// 新增/更新照片索引。
+message SaveBodyPhotoRequest {
+  BodyPhotoRecord record = 1;
+}
+
+message SaveBodyPhotoResponse {
+  BodyPhotoRecord record = 1;
+}
+
+// 删除照片索引。支持优先按服务端 id 删除，也支持按 client_record_id 兜底。
+message DeleteBodyPhotoRequest {
+  uint64 id = 1;
+  string client_record_id = 2;
+}
+
+message DeleteBodyPhotoResponse {
+  bool success = 1;
+}
+
+// BodyPhotoService 只负责照片索引增删改；全量/增量恢复复用 ClientRestoreService。
+service BodyPhotoService {
+  rpc SaveBodyPhoto(SaveBodyPhotoRequest) returns (SaveBodyPhotoResponse);
+  rpc DeleteBodyPhoto(DeleteBodyPhotoRequest) returns (DeleteBodyPhotoResponse);
+}

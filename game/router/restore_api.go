@@ -19,6 +19,7 @@ const (
 	restoreTaskWeightRecords      = "weight_records"
 	restoreTaskTrainingTags       = "training_tags"
 	restoreTaskWorkoutTagBindings = "workout_tag_bindings"
+	restoreTaskBodyPhotos         = "body_photos"
 )
 
 // ClientRestoreApi 实现客户端本地数据全量恢复和增量同步相关 gRPC 接口。
@@ -40,7 +41,7 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 	}
 
 	batchSize := normalizeRestoreBatchSize(req.GetPreferredBatchSize())
-	tasks := make([]*pb.RestoreTask, 0, 3)
+	tasks := make([]*pb.RestoreTask, 0, 4)
 	var totalCount uint64
 
 	weightCount, weightStartDate, weightEndDate, err := mysqlmodel.CountWeightRecordChanges(uid, startSnapshotID, endSnapshotID)
@@ -89,6 +90,22 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 			batchSize,
 		))
 		totalCount += bindingCount
+	}
+
+	photoCount, photoStartDate, photoEndDate, err := mysqlmodel.CountBodyPhotoRecordChanges(uid, startSnapshotID, endSnapshotID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "统计照片索引同步数据失败：%v", err)
+	}
+	if photoCount > 0 {
+		tasks = append(tasks, buildRestoreTask(
+			restoreTaskBodyPhotos,
+			pb.RestoreDataType_RESTORE_DATA_TYPE_BODY_PHOTOS,
+			photoStartDate,
+			photoEndDate,
+			photoCount,
+			batchSize,
+		))
+		totalCount += photoCount
 	}
 
 	return &pb.RestorePlanResponse{
@@ -219,6 +236,39 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		)
 		resp.Payload = &pb.RestoreBatchResponse_WorkoutTagBindings{
 			WorkoutTagBindings: &pb.WorkoutTagBindingRestoreBatch{Items: items},
+		}
+		return resp, nil
+
+	case restoreTaskBodyPhotos:
+		count, _, _, err := mysqlmodel.CountBodyPhotoRecordChanges(uid, startSnapshotID, endSnapshotID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "统计照片索引同步数据失败：%v", err)
+		}
+		records, err := mysqlmodel.ListBodyPhotoRecordChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "拉取照片索引同步数据失败：%v", err)
+		}
+		items := make([]*pb.BodyPhotoSyncItem, 0, len(records))
+		for _, record := range records {
+			items = append(items, &pb.BodyPhotoSyncItem{
+				Record:    convertBodyPhotoRecord(record),
+				Deleted:   isDeletedInSnapshot(record.DeletedAt, endSnapshotID),
+				DeletedAt: deletedAtMillis(record.DeletedAt, endSnapshotID),
+				ChangedAt: changedAtMillis(record.UpdatedAt, record.DeletedAt, endSnapshotID),
+			})
+		}
+
+		resp := buildRestoreBatchResponse(
+			pb.RestoreDataType_RESTORE_DATA_TYPE_BODY_PHOTOS,
+			req.GetBatchIndex(),
+			uint32(len(items)),
+			count,
+			batchSize,
+			startSnapshotID,
+			endSnapshotID,
+		)
+		resp.Payload = &pb.RestoreBatchResponse_BodyPhotos{
+			BodyPhotos: &pb.BodyPhotoRestoreBatch{Items: items},
 		}
 		return resp, nil
 	}

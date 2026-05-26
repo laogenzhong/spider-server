@@ -4,6 +4,7 @@ package api;
 
 import "primary/training_tag.proto";
 import "primary/weight.proto";
+import "primary/body_photo.proto";
 
 option go_package = "spider/api;api";
 
@@ -20,6 +21,9 @@ enum RestoreDataType {
 
   // 训练和标签的绑定关系。
   RESTORE_DATA_TYPE_WORKOUT_TAG_BINDINGS = 3;
+
+  // 体型/饮食照片索引。
+  RESTORE_DATA_TYPE_BODY_PHOTOS = 4;
 }
 
 // RestorePlanRequest 表示获取客户端数据同步计划的请求。
@@ -141,6 +145,21 @@ message WorkoutTagBindingSyncItem {
   int64 changed_at = 4;
 }
 
+// BodyPhotoSyncItem 表示一条照片索引同步项。
+message BodyPhotoSyncItem {
+  // 照片索引。
+  BodyPhotoRecord record = 1;
+
+  // true 表示该照片索引已被服务端删除，客户端应删除本地对应索引。
+  bool deleted = 2;
+
+  // 删除时间，毫秒时间戳；deleted = true 时有效。
+  int64 deleted_at = 3;
+
+  // 本记录最近变更时间，毫秒时间戳。
+  int64 changed_at = 4;
+}
+
 // WeightRecordRestoreBatch 表示一批体重记录同步项。
 message WeightRecordRestoreBatch {
   // 体重记录同步项列表。
@@ -157,6 +176,12 @@ message TrainingTagRestoreBatch {
 message WorkoutTagBindingRestoreBatch {
   // 训练标签绑定关系同步项列表。
   repeated WorkoutTagBindingSyncItem items = 1;
+}
+
+// BodyPhotoRestoreBatch 表示一批照片索引同步项。
+message BodyPhotoRestoreBatch {
+  // 照片索引同步项列表。
+  repeated BodyPhotoSyncItem items = 1;
 }
 
 // RestoreBatchResponse 表示某个同步任务的一批数据。
@@ -193,6 +218,7 @@ message RestoreBatchResponse {
     WeightRecordRestoreBatch weight_records = 20;
     TrainingTagRestoreBatch training_tags = 21;
     WorkoutTagBindingRestoreBatch workout_tag_bindings = 22;
+    BodyPhotoRestoreBatch body_photos = 23;
   }
 }
 
