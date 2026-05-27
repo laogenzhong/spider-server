@@ -16,6 +16,9 @@ func Init() {
 		&mysqlmodel2.TrainingTag{},
 		&mysqlmodel2.WorkoutTagBinding{},
 		&mysqlmodel2.BodyPhotoRecord{},
+		&mysqlmodel2.FriendProfileRecord{},
+		&mysqlmodel2.FriendRequestRecord{},
+		&mysqlmodel2.FriendRelationRecord{},
 	}
 
 	for _, model := range models {

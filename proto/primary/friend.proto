@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+// FriendProfile 表示好友列表和朋友资料页展示的用户资料。
+// 该结构既可用于展示好友，也可用于返回当前用户的朋友资料。
+message FriendProfile {
+  // 用户服务内部 uid。
+  uint64 uid = 1;
+  // 用户对外展示/搜索用的好友 ID。
+  string user_id = 2;
+  // 用户展示昵称，可由用户在“我的-朋友资料”里修改。
+  string nickname = 3;
+  // 客户端内置 SF Symbols 头像名，例如 person.fill。
+  string avatar_symbol = 4;
+  // 用户个人简介。
+  string bio = 5;
+  // 用户自定义训练计划标题。
+  string plan_title = 6;
+  // 用户自定义训练计划说明。
+  string plan_description = 7;
+  // 该用户是否向好友公开训练数据。
+  bool training_data_visible = 8;
+  // 公开训练数据中的连续训练天数。
+  int32 spark_days = 9;
+  // 公开训练数据中的近 7 天训练摘要。
+  repeated FriendTrainingDaySummary recent_training_days = 10;
+  // 好友关系创建时间，Unix 毫秒。
+  int64 created_at = 11;
+}
+
+// FriendRequest 表示一条好友申请。
+message FriendRequest {
+  // 好友申请 ID，处理申请时传回该 ID。
+  string id = 1;
+  // 申请发起人的 uid。
+  uint64 from_uid = 2;
+  // 申请发起人的对外好友 ID。
+  string from_user_id = 3;
+  // 申请发起人的展示昵称。
+  string nickname = 4;
+  // 申请发起人的内置头像名。
+  string avatar_symbol = 5;
+  // 申请附带文案。
+  string message = 6;
+  // 当前申请状态。
+  FriendRequestStatus status = 7;
+  // 申请创建时间，Unix 毫秒。
+  int64 created_at = 8;
+  // 申请处理时间，未处理时为 0。
+  int64 handled_at = 9;
+}
+
+enum FriendRequestStatus {
+  // 未知状态，客户端按未处理展示以外的兜底状态处理。
+  FRIEND_REQUEST_STATUS_UNKNOWN = 0;
+  // 待处理。
+  FRIEND_REQUEST_STATUS_PENDING = 1;
+  // 已同意。
+  FRIEND_REQUEST_STATUS_ACCEPTED = 2;
+  // 已拒绝。
+  FRIEND_REQUEST_STATUS_REJECTED = 3;
+}
+
+// FriendTrainingTagStat 表示某一天内一个训练标签或默认训练名称的热量统计。
+message FriendTrainingTagStat {
+  // 标签名称；如果训练没有标签，客户端会使用训练默认名称。
+  string name = 1;
+  // 该标签或训练名称对应的消耗热量，单位 kcal。
+  double calories = 2;
+}
+
+// FriendTrainingDaySummary 表示好友近七天中的某一天训练摘要。
+message FriendTrainingDaySummary {
+  // 日期，格式 yyyy-MM-dd，按用户本地日历聚合。
+  string record_date = 1;
+  // 当天训练标签/默认训练名称的热量拆分。
+  repeated FriendTrainingTagStat tags = 2;
+  // 当天总消耗热量，单位 kcal。
+  double calories = 3;
+}
+
+// MyTrainingPublicSnapshot 表示当前用户公开给好友看的训练摘要。
+message MyTrainingPublicSnapshot {
+  // 当前用户是否公开训练数据。
+  bool visible = 1;
+  // 连续训练天数。
+  int32 spark_days = 2;
+  // 近 7 天训练摘要。
+  repeated FriendTrainingDaySummary recent_training_days = 3;
+  // 快照生成/更新时间，Unix 毫秒。
+  int64 updated_at = 4;
+}
+
+// ListFriendsRequest 请求当前用户的好友列表。
+message ListFriendsRequest {}
+
+// ListFriendsResponse 返回好友列表以及当前用户训练数据公开状态。
+message ListFriendsResponse {
+  // 好友列表，客户端按昵称首字母分组展示。
+  repeated FriendProfile friends = 1;
+  // 当前用户是否已公开自己的训练数据。
+  bool my_training_data_visible = 2;
+}
+
+// AddFriendRequest 通过好友 ID 发起好友申请。
+message AddFriendRequest {
+  // 对方的好友 ID，不是 uid。
+  string friend_user_id = 1;
+}
+
+// AddFriendResponse 返回好友申请提交结果。
+message AddFriendResponse {
+  // 是否提交成功。
+  bool success = 1;
+  // 服务端返回的展示文案，例如“申请已发送”。
+  string message = 2;
+}
+
+// ListFriendRequestsRequest 请求当前用户收到的好友申请列表。
+message ListFriendRequestsRequest {}
+
+// ListFriendRequestsResponse 返回好友申请列表。
+message ListFriendRequestsResponse {
+  // 好友申请列表，可包含已处理申请；客户端只对 pending 展示红点。
+  repeated FriendRequest requests = 1;
+}
+
+// HandleFriendRequestRequest 处理一条好友申请。
+message HandleFriendRequestRequest {
+  // 好友申请 ID。
+  string request_id = 1;
+  // true 表示同意，false 表示拒绝。
+  bool accept = 2;
+}
+
+// HandleFriendRequestResponse 返回处理结果。
+message HandleFriendRequestResponse {
+  // 是否处理成功。
+  bool success = 1;
+}
+
+// UpdateTrainingDataVisibilityRequest 设置当前用户是否公开训练数据。
+message UpdateTrainingDataVisibilityRequest {
+  // true 表示公开，false 表示关闭公开。
+  bool visible = 1;
+  // 同步公开状态时附带当前训练快照；关闭公开时可传 visible=false 的空快照。
+  MyTrainingPublicSnapshot snapshot = 2;
+}
+
+// UpdateTrainingDataVisibilityResponse 返回服务端最终保存的公开状态。
+message UpdateTrainingDataVisibilityResponse {
+  // 服务端最终确认的公开状态。
+  bool visible = 1;
+}
+
+// UploadMyTrainingPublicSnapshotRequest 上传当前用户最新公开训练快照。
+// 用于公开状态已打开后，训练或标签变化时更新好友可见数据。
+message UploadMyTrainingPublicSnapshotRequest {
+  // 最新训练快照。
+  MyTrainingPublicSnapshot snapshot = 1;
+}
+
+// UploadMyTrainingPublicSnapshotResponse 返回快照上传结果。
+message UploadMyTrainingPublicSnapshotResponse {
+  // 是否上传成功。
+  bool success = 1;
+}
+
+// GetFriendEntryStatusRequest 请求好友入口轻量状态。
+// 该接口用于进入 app/记录页时决定好友按钮是否显示红点或蓝点，不拉完整好友列表。
+message GetFriendEntryStatusRequest {}
+
+// GetFriendEntryStatusResponse 返回好友入口状态。
+message GetFriendEntryStatusResponse {
+  // 是否存在未处理好友申请，用于红点。
+  bool has_pending_request = 1;
+  // 未处理好友申请数量。
+  int32 pending_request_count = 2;
+  // 当前用户是否公开训练数据；客户端结合本地更新时间判断是否显示蓝点。
+  bool my_training_data_visible = 3;
+}
+
+// GetMyFriendProfileRequest 请求当前用户自己的朋友资料。
+message GetMyFriendProfileRequest {}
+
+// GetMyFriendProfileResponse 返回当前用户自己的朋友资料。
+message GetMyFriendProfileResponse {
+  // 当前用户资料；朋友查看该用户资料时也使用同类字段展示。
+  FriendProfile profile = 1;
+}
+
+// UpdateMyFriendProfileRequest 修改当前用户自己的朋友资料。
+message UpdateMyFriendProfileRequest {
+  // 展示昵称。
+  string nickname = 1;
+  // 客户端内置头像名。
+  string avatar_symbol = 2;
+  // 个人简介。
+  string bio = 3;
+  // 训练计划标题。
+  string plan_title = 4;
+  // 训练计划说明。
+  string plan_description = 5;
+}
+
+// UpdateMyFriendProfileResponse 返回服务端最终保存的朋友资料。
+message UpdateMyFriendProfileResponse {
+  // 更新后的当前用户资料。
+  FriendProfile profile = 1;
+}
+
+service FriendService {
+  // 获取好友列表。
+  rpc ListFriends(ListFriendsRequest) returns (ListFriendsResponse);
+  // 通过好友 ID 发送好友申请。
+  rpc AddFriend(AddFriendRequest) returns (AddFriendResponse);
+  // 获取当前用户收到的好友申请。
+  rpc ListFriendRequests(ListFriendRequestsRequest) returns (ListFriendRequestsResponse);
+  // 同意或拒绝好友申请。
+  rpc HandleFriendRequest(HandleFriendRequestRequest) returns (HandleFriendRequestResponse);
+  // 设置当前用户训练数据是否公开。
+  rpc UpdateTrainingDataVisibility(UpdateTrainingDataVisibilityRequest) returns (UpdateTrainingDataVisibilityResponse);
+  // 上传当前用户公开训练快照。
+  rpc UploadMyTrainingPublicSnapshot(UploadMyTrainingPublicSnapshotRequest) returns (UploadMyTrainingPublicSnapshotResponse);
+  // 获取好友入口红点/蓝点所需的轻量状态。
+  rpc GetFriendEntryStatus(GetFriendEntryStatusRequest) returns (GetFriendEntryStatusResponse);
+  // 获取当前用户自己的朋友资料。
+  rpc GetMyFriendProfile(GetMyFriendProfileRequest) returns (GetMyFriendProfileResponse);
+  // 修改当前用户自己的朋友资料。
+  rpc UpdateMyFriendProfile(UpdateMyFriendProfileRequest) returns (UpdateMyFriendProfileResponse);
+}
