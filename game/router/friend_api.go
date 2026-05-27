@@ -28,14 +28,14 @@ func (a *FriendApi) ListFriends(ctx context.Context, req *pb.ListFriendsRequest)
 		return nil, status.Errorf(codes.Internal, "获取当前用户朋友资料失败：%v", err)
 	}
 
-	profiles, relationCreatedAt, err := mysqlmodel.ListFriendProfiles(uid)
+	profiles, _, err := mysqlmodel.ListFriendProfiles(uid)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "获取好友列表失败：%v", err)
 	}
 
-	friends := make([]*pb.FriendProfile, 0, len(profiles))
+	friends := make([]*pb.FriendListItem, 0, len(profiles))
 	for _, profile := range profiles {
-		friends = append(friends, convertFriendProfile(profile, relationCreatedAt[profile.UID]))
+		friends = append(friends, convertFriendListItem(profile))
 	}
 
 	return &pb.ListFriendsResponse{
@@ -167,6 +167,40 @@ func (a *FriendApi) GetFriendEntryStatus(ctx context.Context, req *pb.GetFriendE
 	}, nil
 }
 
+// GetFriendProfile 获取某个好友的完整资料。
+func (a *FriendApi) GetFriendProfile(ctx context.Context, req *pb.GetFriendProfileRequest) (*pb.GetFriendProfileResponse, error) {
+	uid := session.GetUser(ctx).UID()
+	friendUID := req.GetUid()
+
+	if friendUID == 0 {
+		return nil, status.Error(codes.InvalidArgument, "uid 不能为空")
+	}
+
+	profiles, relationCreatedAt, err := mysqlmodel.ListFriendProfiles(uid)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "获取好友列表失败：%v", err)
+	}
+
+	var target *mysqlmodel.FriendProfileRecord
+	var createdAt int64
+
+	for _, profile := range profiles {
+		if profile.UID == friendUID {
+			target = profile
+			createdAt = relationCreatedAt[profile.UID]
+			break
+		}
+	}
+
+	if target == nil {
+		return nil, status.Error(codes.NotFound, "好友不存在")
+	}
+
+	return &pb.GetFriendProfileResponse{
+		Profile: convertFriendProfile(target, createdAt),
+	}, nil
+}
+
 // GetMyFriendProfile 获取当前用户自己的朋友资料。
 func (a *FriendApi) GetMyFriendProfile(ctx context.Context, req *pb.GetMyFriendProfileRequest) (*pb.GetMyFriendProfileResponse, error) {
 	uid := session.GetUser(ctx).UID()
@@ -202,29 +236,48 @@ func (a *FriendApi) UpdateMyFriendProfile(ctx context.Context, req *pb.UpdateMyF
 	}, nil
 }
 
-func convertFriendProfile(profile *mysqlmodel.FriendProfileRecord, relationCreatedAt int64) *pb.FriendProfile {
+func convertFriendListItem(profile *mysqlmodel.FriendProfileRecord) *pb.FriendListItem {
 	if profile == nil {
 		return nil
 	}
+
 	sparkDays := int32(0)
-	var recentTrainingDays []*pb.FriendTrainingDaySummary
 	if profile.TrainingDataVisible {
 		sparkDays = profile.SparkDays
-		recentTrainingDays = friendTrainingDaysToPB(mysqlmodel.ParseFriendTrainingDays(profile.RecentTrainingJSON))
 	}
 
-	return &pb.FriendProfile{
+	return &pb.FriendListItem{
 		Uid:                 profile.UID,
 		UserId:              profile.UserID,
 		Nickname:            profile.Nickname,
 		AvatarSymbol:        profile.AvatarSymbol,
 		Bio:                 profile.Bio,
-		PlanTitle:           profile.PlanTitle,
-		PlanDescription:     profile.PlanDescription,
 		TrainingDataVisible: profile.TrainingDataVisible,
 		SparkDays:           sparkDays,
-		RecentTrainingDays:  recentTrainingDays,
-		CreatedAt:           relationCreatedAt,
+		SnapshotUpdatedAt:   profile.SnapshotUpdatedAt,
+	}
+}
+
+func convertFriendProfile(profile *mysqlmodel.FriendProfileRecord, relationCreatedAt int64) *pb.FriendProfile {
+	if profile == nil {
+		return nil
+	}
+	var recentTrainingDays []*pb.FriendTrainingDaySummary
+	if profile.TrainingDataVisible {
+		recentTrainingDays = friendTrainingDaysToPB(mysqlmodel.ParseFriendTrainingDays(profile.RecentTrainingJSON))
+	}
+
+	return &pb.FriendProfile{
+		Uid:                profile.UID,
+		UserId:             profile.UserID,
+		Nickname:           profile.Nickname,
+		AvatarSymbol:       profile.AvatarSymbol,
+		Bio:                profile.Bio,
+		PlanTitle:          profile.PlanTitle,
+		PlanDescription:    profile.PlanDescription,
+		RecentTrainingDays: recentTrainingDays,
+		CreatedAt:          relationCreatedAt,
+		SnapshotUpdatedAt:  profile.SnapshotUpdatedAt,
 	}
 }
 

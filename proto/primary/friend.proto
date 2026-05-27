@@ -4,6 +4,27 @@ package api;
 
 option go_package = "spider/api;api";
 
+// FriendListItem 表示好友列表中的轻量好友信息。
+// 仅用于好友列表展示，不包含详细训练数据。
+message FriendListItem {
+  // 用户服务内部 uid。
+  uint64 uid = 1;
+  // 用户对外展示/搜索用的好友 ID。
+  string user_id = 2;
+  // 用户展示昵称。
+  string nickname = 3;
+  // 客户端内置 SF Symbols 头像名。
+  string avatar_symbol = 4;
+  // 用户个人简介。
+  string bio = 5;
+  // 是否公开训练数据。
+  bool training_data_visible = 6;
+  // 连续训练天数。
+  int32 spark_days = 7;
+  // 快照更新时间，Unix 毫秒。
+  int64 snapshot_updated_at = 8;
+}
+
 // FriendProfile 表示好友列表和朋友资料页展示的用户资料。
 // 该结构既可用于展示好友，也可用于返回当前用户的朋友资料。
 message FriendProfile {
@@ -21,14 +42,12 @@ message FriendProfile {
   string plan_title = 6;
   // 用户自定义训练计划说明。
   string plan_description = 7;
-  // 该用户是否向好友公开训练数据。
-  bool training_data_visible = 8;
-  // 公开训练数据中的连续训练天数。
-  int32 spark_days = 9;
   // 公开训练数据中的近 7 天训练摘要。
-  repeated FriendTrainingDaySummary recent_training_days = 10;
+  repeated FriendTrainingDaySummary recent_training_days = 8;
   // 好友关系创建时间，Unix 毫秒。
-  int64 created_at = 11;
+  int64 created_at = 9;
+  // 更新时间，Unix 毫秒。
+  int64 snapshot_updated_at = 10;
 }
 
 // FriendRequest 表示一条好友申请。
@@ -100,7 +119,7 @@ message ListFriendsRequest {}
 // ListFriendsResponse 返回好友列表以及当前用户训练数据公开状态。
 message ListFriendsResponse {
   // 好友列表，客户端按昵称首字母分组展示。
-  repeated FriendProfile friends = 1;
+  repeated FriendListItem friends = 1;
   // 当前用户是否已公开自己的训练数据。
   bool my_training_data_visible = 2;
 }
@@ -192,6 +211,18 @@ message GetMyFriendProfileResponse {
   FriendProfile profile = 1;
 }
 
+// GetFriendProfileRequest 请求某个好友的完整朋友资料。
+message GetFriendProfileRequest {
+  // 对方 uid。
+  uint64 uid = 1;
+}
+
+// GetFriendProfileResponse 返回好友完整资料和训练数据。
+message GetFriendProfileResponse {
+  // 好友完整资料。
+  FriendProfile profile = 1;
+}
+
 // UpdateMyFriendProfileRequest 修改当前用户自己的朋友资料。
 message UpdateMyFriendProfileRequest {
   // 展示昵称。
@@ -227,6 +258,8 @@ service FriendService {
   rpc UploadMyTrainingPublicSnapshot(UploadMyTrainingPublicSnapshotRequest) returns (UploadMyTrainingPublicSnapshotResponse);
   // 获取好友入口红点/蓝点所需的轻量状态。
   rpc GetFriendEntryStatus(GetFriendEntryStatusRequest) returns (GetFriendEntryStatusResponse);
+  // 获取某个好友的完整资料和训练数据。
+  rpc GetFriendProfile(GetFriendProfileRequest) returns (GetFriendProfileResponse);
   // 获取当前用户自己的朋友资料。
   rpc GetMyFriendProfile(GetMyFriendProfileRequest) returns (GetMyFriendProfileResponse);
   // 修改当前用户自己的朋友资料。
