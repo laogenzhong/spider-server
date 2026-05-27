@@ -69,7 +69,7 @@ message FriendTrainingTagStat {
   // 标签名称；如果训练没有标签，客户端会使用训练默认名称。
   string name = 1;
   // 该标签或训练名称对应的消耗热量，单位 kcal。
-  double calories = 2;
+  string calories = 2;
 }
 
 // FriendTrainingDaySummary 表示好友近七天中的某一天训练摘要。
@@ -79,7 +79,7 @@ message FriendTrainingDaySummary {
   // 当天训练标签/默认训练名称的热量拆分。
   repeated FriendTrainingTagStat tags = 2;
   // 当天总消耗热量，单位 kcal。
-  double calories = 3;
+  string calories = 3;
 }
 
 // MyTrainingPublicSnapshot 表示当前用户公开给好友看的训练摘要。

@@ -64,15 +64,15 @@ type FriendRelationRecord struct {
 
 // FriendTrainingTagStatRecord 表示公开训练摘要中的标签热量。
 type FriendTrainingTagStatRecord struct {
-	Name     string  `json:"name"`
-	Calories float64 `json:"calories"`
+	Name     string `json:"name"`
+	Calories string `json:"calories"`
 }
 
 // FriendTrainingDaySummaryRecord 表示公开训练摘要中的某一天。
 type FriendTrainingDaySummaryRecord struct {
 	RecordDate string                        `json:"record_date"`
 	Tags       []FriendTrainingTagStatRecord `json:"tags"`
-	Calories   float64                       `json:"calories"`
+	Calories   string                        `json:"calories"`
 }
 
 func EnsureFriendProfile(uid uint64) (*FriendProfileRecord, error) {
@@ -418,10 +418,11 @@ func ParseFriendTrainingDays(raw string) []FriendTrainingDaySummaryRecord {
 
 func defaultFriendProfile(uid uint64) *FriendProfileRecord {
 	return &FriendProfileRecord{
-		UID:          uid,
-		UserID:       fmt.Sprintf("SP%06d", uid),
-		Nickname:     fmt.Sprintf("用户%d", uid),
-		AvatarSymbol: "person.fill",
+		UID:                uid,
+		UserID:             fmt.Sprintf("SP%06d", uid),
+		Nickname:           fmt.Sprintf("用户%d", uid),
+		AvatarSymbol:       "person.fill",
+		RecentTrainingJSON: "[]",
 	}
 }
 
