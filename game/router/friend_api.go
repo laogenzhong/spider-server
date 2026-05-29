@@ -33,9 +33,18 @@ func (a *FriendApi) ListFriends(ctx context.Context, req *pb.ListFriendsRequest)
 		return nil, status.Errorf(codes.Internal, "获取好友列表失败：%v", err)
 	}
 
+	remarks, err := mysqlmodel.GetFriendRemarks(uid)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "获取好友备注失败：%v", err)
+	}
+
 	friends := make([]*pb.FriendListItem, 0, len(profiles))
 	for _, profile := range profiles {
-		friends = append(friends, convertFriendListItem(profile))
+		item := convertFriendListItem(profile)
+		if remark, ok := remarks[profile.UID]; ok {
+			item.Remark = remark
+		}
+		friends = append(friends, item)
 	}
 
 	return &pb.ListFriendsResponse{
@@ -213,6 +222,26 @@ func (a *FriendApi) GetMyFriendProfile(ctx context.Context, req *pb.GetMyFriendP
 	return &pb.GetMyFriendProfileResponse{
 		Profile: convertFriendProfile(profile, profile.CreatedAt.UnixMilli()),
 	}, nil
+}
+
+// UpdateFriendRemark 修改好友备注名。
+func (a *FriendApi) UpdateFriendRemark(ctx context.Context, req *pb.UpdateFriendRemarkRequest) (*pb.UpdateFriendRemarkResponse, error) {
+	uid := session.GetUser(ctx).UID()
+	friendUID := req.GetUid()
+
+	if friendUID == 0 {
+		return nil, status.Error(codes.InvalidArgument, "uid 不能为空")
+	}
+
+	err := mysqlmodel.UpdateFriendRemark(uid, friendUID, req.GetRemark())
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, status.Error(codes.NotFound, "好友不存在")
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "更新好友备注失败：%v", err)
+	}
+
+	return &pb.UpdateFriendRemarkResponse{Success: true}, nil
 }
 
 // UpdateMyFriendProfile 修改当前用户自己的朋友资料。

@@ -62,6 +62,17 @@ type FriendRelationRecord struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+// FriendRemarkRecord 表示用户给好友设置的备注名。
+type FriendRemarkRecord struct {
+	ID        uint64         `gorm:"primaryKey;autoIncrement"`
+	UID       uint64         `gorm:"not null;uniqueIndex:idx_remark_uid_friend_uid"`
+	FriendUID uint64         `gorm:"not null;uniqueIndex:idx_remark_uid_friend_uid"`
+	Remark    string         `gorm:"type:varchar(64);not null;default:''"`
+	CreatedAt time.Time      `gorm:"not null"`
+	UpdatedAt time.Time      `gorm:"not null"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
 // FriendTrainingTagStatRecord 表示公开训练摘要中的标签热量。
 type FriendTrainingTagStatRecord struct {
 	Name     string `json:"name"`
@@ -473,4 +484,59 @@ func marshalFriendTrainingDays(days []FriendTrainingDaySummaryRecord) (string, e
 		return "", err
 	}
 	return string(data), nil
+}
+
+// UpdateFriendRemark 更新好友备注名，remark 为空时清除备注。
+func UpdateFriendRemark(uid uint64, friendUID uint64, remark string) error {
+	if uid == 0 || friendUID == 0 {
+		return fmt.Errorf("uid is empty")
+	}
+
+	isFriend, err := IsFriend(uid, friendUID)
+	if err != nil {
+		return err
+	}
+	if !isFriend {
+		return gorm.ErrRecordNotFound
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return err
+	}
+
+	record := &FriendRemarkRecord{UID: uid, FriendUID: friendUID, Remark: remark}
+	return db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "uid"},
+			{Name: "friend_uid"},
+		},
+		DoUpdates: clause.Assignments(map[string]any{
+			"remark":     remark,
+			"updated_at": time.Now(),
+		}),
+	}).Create(record).Error
+}
+
+// GetFriendRemarks 获取用户所有好友备注，返回 friendUID -> remark 映射。
+func GetFriendRemarks(uid uint64) (map[uint64]string, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var remarks []FriendRemarkRecord
+	if err := db.Where("uid = ? AND remark != ''", uid).Find(&remarks).Error; err != nil {
+		return nil, err
+	}
+
+	result := make(map[uint64]string, len(remarks))
+	for _, r := range remarks {
+		result[r.FriendUID] = r.Remark
+	}
+	return result, nil
 }

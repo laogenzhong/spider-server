@@ -23,6 +23,8 @@ message FriendListItem {
   int32 spark_days = 7;
   // 快照更新时间，Unix 毫秒。
   int64 snapshot_updated_at = 8;
+  // 当前用户给该好友设置的备注名，仅自己可见。
+  string remark = 9;
 }
 
 // FriendProfile 表示好友列表和朋友资料页展示的用户资料。
@@ -243,6 +245,20 @@ message UpdateMyFriendProfileResponse {
   FriendProfile profile = 1;
 }
 
+// UpdateFriendRemarkRequest 修改好友备注名。
+message UpdateFriendRemarkRequest {
+  // 好友的 uid。
+  uint64 uid = 1;
+  // 备注名，为空时清除备注。
+  string remark = 2;
+}
+
+// UpdateFriendRemarkResponse 返回备注更新结果。
+message UpdateFriendRemarkResponse {
+  // 是否更新成功。
+  bool success = 1;
+}
+
 service FriendService {
   // 获取好友列表。
   rpc ListFriends(ListFriendsRequest) returns (ListFriendsResponse);
@@ -264,4 +280,6 @@ service FriendService {
   rpc GetMyFriendProfile(GetMyFriendProfileRequest) returns (GetMyFriendProfileResponse);
   // 修改当前用户自己的朋友资料。
   rpc UpdateMyFriendProfile(UpdateMyFriendProfileRequest) returns (UpdateMyFriendProfileResponse);
+  // 修改好友备注名。
+  rpc UpdateFriendRemark(UpdateFriendRemarkRequest) returns (UpdateFriendRemarkResponse);
 }

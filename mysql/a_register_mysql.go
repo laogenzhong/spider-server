@@ -19,6 +19,7 @@ func Init() {
 		&mysqlmodel2.FriendProfileRecord{},
 		&mysqlmodel2.FriendRequestRecord{},
 		&mysqlmodel2.FriendRelationRecord{},
+		&mysqlmodel2.FriendRemarkRecord{},
 	}
 
 	for _, model := range models {
