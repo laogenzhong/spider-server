@@ -127,7 +127,7 @@ func MetadataLogInterceptor(
 
 	if uid > 0 && nonce != "" {
 		key := fmt.Sprintf("%d:%s", uid, nonce)
-		expireAt := time.Now().Add(30 * time.Second).Unix()
+		expireAt := time.Now().Add(60 * time.Second).Unix()
 		if _, loaded := replayNonceCache.LoadOrStore(key, expireAt); loaded {
 			return nil, fmt.Errorf("replay attack detected")
 		}
