@@ -1,0 +1,640 @@
+{
+  "success": true,
+  "meta": {
+    "total": 323,
+    "hasNextPage": true,
+    "hasPreviousPage": false,
+    "nextCursor": "4dUn2iv"
+  },
+  "data": [
+    {
+      "exerciseId": "05Cf2v8",
+      "name": "impossible dips",
+      "gifUrl": "https://static.exercisedb.dev/media/05Cf2v8.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "chest",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Position yourself between two parallel bars with your arms fully extended and your body suspended in the air.",
+        "Step:2 Bend your knees and cross your ankles.",
+        "Step:3 Lower your body by bending your elbows until your upper arms are parallel to the ground.",
+        "Step:4 Pause for a moment, then push yourself back up to the starting position by straightening your arms.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "0IgNjSM",
+      "name": "dumbbell standing reverse curl",
+      "gifUrl": "https://static.exercisedb.dev/media/0IgNjSM.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand up straight with your feet shoulder-width apart and hold a dumbbell in each hand, palms facing your body.",
+        "Step:2 Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps. Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.",
+        "Step:3 Hold the contracted position for a brief pause as you squeeze your biceps.",
+        "Step:4 Inhale and slowly begin to lower the dumbbells back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1cTf2Ux",
+      "name": "ez bar standing french press",
+      "gifUrl": "https://static.exercisedb.dev/media/1cTf2Ux.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "ez barbell"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold the ez barbell with an overhand grip.",
+        "Step:2 Raise the barbell above your head, fully extending your arms.",
+        "Step:3 Keeping your upper arms close to your head, slowly lower the barbell behind your head by bending your elbows.",
+        "Step:4 Pause for a moment, then extend your arms back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1IFV9h3",
+      "name": "push-up on lower arms - resistance variation",
+      "gifUrl": "https://static.exercisedb.dev/media/1IFV9h3.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "chest",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Start in a plank position with your forearms on the ground and elbows directly below your shoulders.",
+        "Step:2 Engage your core and keep your body in a straight line from head to toe.",
+        "Step:3 Lower your chest towards the ground by bending your elbows, keeping them close to your body. Emphasize resistance control.",
+        "Step:4 Pause for a moment at the bottom, then push yourself back up to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1TVoin7",
+      "name": "barbell lying triceps extension double",
+      "gifUrl": "https://static.exercisedb.dev/media/1TVoin7.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Lie flat on a bench with your feet flat on the ground and your head at the end of the bench.",
+        "Step:2 Hold the barbell with an overhand grip, hands shoulder-width apart, and extend your arms straight up over your chest.",
+        "Step:3 Keeping your upper arms stationary, slowly lower the barbell towards your forehead by bending your elbows. Focus on double movement.",
+        "Step:4 Pause for a moment at the bottom, then extend your arms back up to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1V1gj1u",
+      "name": "barbell seated close-grip concentration curl",
+      "gifUrl": "https://static.exercisedb.dev/media/1V1gj1u.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Sit on a bench with your feet flat on the floor and hold a barbell with an underhand grip, hands shoulder-width apart.",
+        "Step:2 Rest your upper arms against your inner thighs, just above your knees, and let the barbell hang down in front of you.",
+        "Step:3 Keeping your upper arms stationary, exhale and curl the barbell up towards your shoulders, contracting your biceps.",
+        "Step:4 Hold the contracted position for a brief pause, then inhale and slowly lower the barbell back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1VpF8db",
+      "name": "dumbbell bicep curl lunge with bowling motion",
+      "gifUrl": "https://static.exercisedb.dev/media/1VpF8db.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in each hand with your palms facing forward.",
+        "Step:2 Take a step forward with your right foot, bending your right knee and lowering your body into a lunge position.",
+        "Step:3 As you lunge forward, curl the dumbbells up towards your shoulders, keeping your elbows close to your body.",
+        "Step:4 At the bottom of the lunge, rotate your torso to the right, as if you were bowling a ball.",
+        "Step:5 Reverse the motion, stepping back with your right foot and returning to the starting position while lowering the dumbbells back down.",
+        "Step:6 Repeat the lunge and curl motion, this time rotating your torso to the left.",
+        "Step:7 Continue alternating sides for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1xHyxys",
+      "name": "cable high pulley overhead tricep extension",
+      "gifUrl": "https://static.exercisedb.dev/media/1xHyxys.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "cable"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Attach a rope to a high pulley and stand facing away from the machine.",
+        "Step:2 Grasp the rope with both hands and extend your arms overhead.",
+        "Step:3 Keep your elbows close to your head and your upper arms stationary.",
+        "Step:4 Slowly lower the rope behind your head by bending your elbows.",
+        "Step:5 Pause for a moment, then extend your arms back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1YB40kg",
+      "name": "incline close-grip push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/1YB40kg.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "chest",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Place your hands on an elevated surface, such as a bench or step, slightly wider than shoulder-width apart.",
+        "Step:2 Extend your legs behind you, resting on the balls of your feet, with your body forming a straight line from head to heels.",
+        "Step:3 Lower your chest towards the elevated surface by bending your elbows, keeping them close to your sides.",
+        "Step:4 Pause for a moment at the bottom, then push yourself back up to the starting position by straightening your arms.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "25GPyDY",
+      "name": "barbell curl",
+      "gifUrl": "https://static.exercisedb.dev/media/25GPyDY.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand up straight with your feet shoulder-width apart and hold a barbell with an underhand grip, palms facing forward.",
+        "Step:2 Keep your elbows close to your torso and exhale as you curl the weights while contracting your biceps.",
+        "Step:3 Continue to raise the bar until your biceps are fully contracted and the bar is at shoulder level.",
+        "Step:4 Hold the contracted position for a brief pause as you squeeze your biceps.",
+        "Step:5 Inhale as you slowly begin to lower the bar back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "2IxROQ1",
+      "name": "cable overhead triceps extension (rope attachment)",
+      "gifUrl": "https://static.exercisedb.dev/media/2IxROQ1.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "cable"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Attach a rope to a cable machine at a high position.",
+        "Step:2 Stand facing away from the machine with your feet shoulder-width apart.",
+        "Step:3 Grasp the rope with both hands, palms facing each other, and bring your hands above your head.",
+        "Step:4 Keep your upper arms close to your head and your elbows pointing forward.",
+        "Step:5 Slowly lower the rope behind your head by bending your elbows.",
+        "Step:6 Pause for a moment, then extend your arms back up to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "2JCuFTU",
+      "name": "dumbbell kneeling bicep curl exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/2JCuFTU.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Kneel on the floor with an exercise ball in front of you.",
+        "Step:2 Place your elbows on top of the exercise ball, holding a dumbbell in each hand with your palms facing up.",
+        "Step:3 Keeping your upper arms stationary, exhale and curl the dumbbells while contracting your biceps.",
+        "Step:4 Continue to raise the dumbbells until your biceps are fully contracted and the dumbbells are at shoulder level.",
+        "Step:5 Hold the contracted position for a brief pause as you squeeze your biceps.",
+        "Step:6 Inhale and slowly begin to lower the dumbbells back to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "2kattbR",
+      "name": "ez barbell spider curl",
+      "gifUrl": "https://static.exercisedb.dev/media/2kattbR.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "ez barbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold the ez barbell with an underhand grip, palms facing up.",
+        "Step:2 Rest your upper arms on a preacher bench or stability ball, allowing your elbows to hang down.",
+        "Step:3 Keeping your upper arms stationary, exhale and curl the barbell up towards your shoulders.",
+        "Step:4 Pause for a moment at the top, squeezing your biceps.",
+        "Step:5 Inhale and slowly lower the barbell back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "2NImIAG",
+      "name": "dumbbell bicep curl on exercise ball with leg raised",
+      "gifUrl": "https://static.exercisedb.dev/media/2NImIAG.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with your feet flat on the ground and your back straight.",
+        "Step:2 Hold a dumbbell in each hand with your palms facing forward and your arms fully extended.",
+        "Step:3 Slowly curl the dumbbells towards your shoulders, keeping your elbows close to your sides.",
+        "Step:4 Pause for a moment at the top of the movement, then slowly lower the dumbbells back to the starting position.",
+        "Step:5 While performing the bicep curl, raise one leg off the ground and hold it in the air for the duration of the exercise.",
+        "Step:6 Repeat for the desired number of repetitions, then switch legs and repeat."
+      ]
+    },
+    {
+      "exerciseId": "2NpxjC1",
+      "name": "dumbbell hammer curl v. 2",
+      "gifUrl": "https://static.exercisedb.dev/media/2NpxjC1.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand up straight with a dumbbell in each hand, palms facing your torso.",
+        "Step:2 Keep your elbows close to your torso and rotate the palms of your hands until they are facing forward.",
+        "Step:3 This will be your starting position.",
+        "Step:4 Now, keeping the upper arms stationary, exhale and curl the weights while contracting your biceps.",
+        "Step:5 Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.",
+        "Step:6 Hold the contracted position for a brief pause as you squeeze your biceps.",
+        "Step:7 Then, inhale and slowly begin to lower the dumbbells back to the starting position.",
+        "Step:8 Repeat for the recommended amount of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "2sQGZ5b",
+      "name": "dumbbell one arm standing hammer curl",
+      "gifUrl": "https://static.exercisedb.dev/media/2sQGZ5b.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand up straight with a dumbbell in each hand, palms facing your torso.",
+        "Step:2 Keep your elbows close to your torso and your upper arms stationary.",
+        "Step:3 Exhale and curl the weights while contracting your biceps.",
+        "Step:4 Continue to raise the weights until your biceps are fully contracted and the dumbbells are at shoulder level.",
+        "Step:5 Hold the contracted position for a brief pause as you squeeze your biceps.",
+        "Step:6 Inhale and slowly begin to lower the dumbbells back to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "3omWx6P",
+      "name": "band alternating biceps curl",
+      "gifUrl": "https://static.exercisedb.dev/media/3omWx6P.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "band"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold the band with an underhand grip, palms facing up.",
+        "Step:2 Keep your elbows close to your sides and slowly curl one arm up towards your shoulder, squeezing your biceps at the top.",
+        "Step:3 Lower the arm back down to the starting position and repeat with the other arm.",
+        "Step:4 Continue alternating arms for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "3s4NnTh",
+      "name": "dumbbell standing biceps curl",
+      "gifUrl": "https://static.exercisedb.dev/media/3s4NnTh.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand up straight with a dumbbell in each hand, palms facing forward and arms fully extended.",
+        "Step:2 Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.",
+        "Step:3 Continue to raise the dumbbells until your biceps are fully contracted and the dumbbells are at shoulder level.",
+        "Step:4 Hold the contracted position for a brief pause as you squeeze your biceps.",
+        "Step:5 Inhale and slowly begin to lower the dumbbells back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "3T12T87",
+      "name": "dumbbell standing bent over two arm triceps extension",
+      "gifUrl": "https://static.exercisedb.dev/media/3T12T87.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "back"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a dumbbell in each hand.",
+        "Step:2 Bend forward at the waist, keeping your back straight and your knees slightly bent.",
+        "Step:3 Extend your arms straight back, keeping your elbows close to your body.",
+        "Step:4 Slowly lower the dumbbells back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "3XFdb1Z",
+      "name": "cable squatting curl",
+      "gifUrl": "https://static.exercisedb.dev/media/3XFdb1Z.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "cable"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Attach a cable handle to the lowest setting on a cable machine.",
+        "Step:2 Stand facing the machine with your feet shoulder-width apart.",
+        "Step:3 Hold the cable handle with an underhand grip, palms facing up, and arms fully extended.",
+        "Step:4 Lower your body into a squat position, keeping your back straight and knees behind your toes.",
+        "Step:5 As you squat down, curl the cable handle towards your shoulders, keeping your elbows close to your sides.",
+        "Step:6 Pause for a moment at the top of the curl, squeezing your biceps.",
+        "Step:7 Slowly lower the cable handle back to the starting position, fully extending your arms.",
+        "Step:8 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "3ZflifB",
+      "name": "cable pushdown",
+      "gifUrl": "https://static.exercisedb.dev/media/3ZflifB.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "cable"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Attach a straight bar to a high pulley cable machine.",
+        "Step:2 Stand facing the machine with your feet shoulder-width apart and a slight bend in your knees.",
+        "Step:3 Grasp the bar with an overhand grip, hands shoulder-width apart.",
+        "Step:4 Keep your elbows close to your sides and your upper arms stationary.",
+        "Step:5 Exhale and push the bar down until your elbows are fully extended.",
+        "Step:6 Pause for a moment, then inhale and slowly return the bar to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "4CBIBOM",
+      "name": "barbell seated close grip behind neck triceps extension",
+      "gifUrl": "https://static.exercisedb.dev/media/4CBIBOM.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Sit on a bench with your back straight and feet flat on the ground.",
+        "Step:2 Hold the barbell with a close grip behind your neck, palms facing forward.",
+        "Step:3 Keep your elbows close to your head and slowly lower the barbell towards the back of your head.",
+        "Step:4 Pause for a moment, then extend your arms back up to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "4cWjYEN",
+      "name": "narrow push-up on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/4cWjYEN.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "stability ball"
+      ],
+      "targetMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "chest",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Place the stability ball on the ground and position yourself in a push-up position with your hands on the ball, slightly narrower than shoulder-width apart.",
+        "Step:2 Engage your core and keep your body in a straight line from head to toe.",
+        "Step:3 Lower your chest towards the ball by bending your elbows, keeping them close to your body.",
+        "Step:4 Pause for a moment at the bottom, then push yourself back up to the starting position by straightening your arms.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "4dF3maG",
+      "name": "dumbbell one arm hammer preacher curl",
+      "gifUrl": "https://static.exercisedb.dev/media/4dF3maG.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Sit on a preacher bench with a dumbbell in one hand and your upper arm resting on the pad.",
+        "Step:2 Hold the dumbbell with a neutral grip (palms facing your body).",
+        "Step:3 Keeping your upper arm stationary, exhale and curl the dumbbell up towards your shoulder.",
+        "Step:4 Pause for a moment at the top, squeezing your biceps.",
+        "Step:5 Inhale and slowly lower the dumbbell back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions, then switch arms."
+      ]
+    },
+    {
+      "exerciseId": "4dUn2iv",
+      "name": "barbell standing close grip curl",
+      "gifUrl": "https://static.exercisedb.dev/media/4dUn2iv.gif",
+      "bodyParts": [
+        "upper arms"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand up straight with your feet shoulder-width apart and hold a barbell with an underhand grip, hands close together.",
+        "Step:2 Keep your elbows close to your torso and your upper arms stationary throughout the movement.",
+        "Step:3 Exhale as you curl the weights while contracting your biceps. Continue to raise the bar until your biceps are fully contracted and the bar is at shoulder level.",
+        "Step:4 Hold the contracted position for a brief pause as you squeeze your biceps.",
+        "Step:5 Inhale as you slowly begin to bring the barbell back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    }
+  ]
+}

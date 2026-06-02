@@ -1,0 +1,633 @@
+{
+  "success": true,
+  "meta": {
+    "total": 156,
+    "hasNextPage": true,
+    "hasPreviousPage": false,
+    "nextCursor": "AQ0mC4Y"
+  },
+  "data": [
+    {
+      "exerciseId": "0dCyly0",
+      "name": "barbell seated bradford rocky press",
+      "gifUrl": "https://static.exercisedb.dev/media/0dCyly0.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "upper back"
+      ],
+      "instructions": [
+        "Step:1 Sit on a bench with your back straight and feet flat on the ground.",
+        "Step:2 Hold the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Step:3 Lift the barbell to shoulder height, keeping your elbows slightly bent and pointing forward.",
+        "Step:4 Press the barbell overhead, fully extending your arms.",
+        "Step:5 Lower the barbell back to shoulder height and repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1DN3iz4",
+      "name": "smith upright row",
+      "gifUrl": "https://static.exercisedb.dev/media/1DN3iz4.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "smith machine"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "biceps"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, facing the smith machine.",
+        "Step:2 Grasp the barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Step:3 Keep your back straight and your core engaged.",
+        "Step:4 Pull the barbell up towards your chin, leading with your elbows.",
+        "Step:5 Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1oE78pm",
+      "name": "core barbell upright row v. 2",
+      "gifUrl": "https://static.exercisedb.dev/media/1oE78pm.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "biceps"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Step:2 Let the barbell hang in front of your thighs, arms fully extended. Perform with core intensity.",
+        "Step:3 Keeping your back straight, exhale and lift the barbell straight up towards your chin, leading with your elbows.",
+        "Step:4 Pause for a moment at the top, then inhale and slowly lower the barbell back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1RIkUHT",
+      "name": "dumbbell iron cross - improved variation",
+      "gifUrl": "https://static.exercisedb.dev/media/1RIkUHT.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "chest"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in each hand at your sides.",
+        "Step:2 Raise your arms out to the sides until they are parallel to the ground, forming a T shape with your body. Perform with improved intensity.",
+        "Step:3 Pause for a moment, then slowly lower your arms back down to the starting position.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1TkiAFK",
+      "name": "dumbbell one arm shoulder press v. 2",
+      "gifUrl": "https://static.exercisedb.dev/media/1TkiAFK.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "upper back"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a dumbbell in one hand at shoulder level, palm facing forward.",
+        "Step:2 Engage your core and press the dumbbell straight up overhead, fully extending your arm.",
+        "Step:3 Pause for a moment at the top, then slowly lower the dumbbell back to shoulder level.",
+        "Step:4 Repeat for the desired number of repetitions, then switch to the other arm."
+      ]
+    },
+    {
+      "exerciseId": "2KGnL6M",
+      "name": "lever one arm shoulder press",
+      "gifUrl": "https://static.exercisedb.dev/media/2KGnL6M.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "leverage machine"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "upper back"
+      ],
+      "instructions": [
+        "Step:1 Adjust the seat height and position yourself on the machine with your back against the pad.",
+        "Step:2 Grasp the lever handle with one hand and position your elbow at a 90-degree angle.",
+        "Step:3 Press the lever upward until your arm is fully extended overhead.",
+        "Step:4 Pause for a moment at the top, then slowly lower the lever back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions, then switch to the other arm."
+      ]
+    },
+    {
+      "exerciseId": "3d7wHyd",
+      "name": "dumbbell bench seated press",
+      "gifUrl": "https://static.exercisedb.dev/media/3d7wHyd.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "chest"
+      ],
+      "instructions": [
+        "Step:1 Sit on a bench with a dumbbell in each hand, resting on your thighs.",
+        "Step:2 Lean back and position the dumbbells to the sides of your chest, palms facing forward.",
+        "Step:3 Press the dumbbells upward until your arms are fully extended.",
+        "Step:4 Pause for a moment at the top, then slowly lower the dumbbells back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "3eGE2JC",
+      "name": "dumbbell front raise",
+      "gifUrl": "https://static.exercisedb.dev/media/3eGE2JC.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "trapezius"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in each hand with your palms facing your thighs.",
+        "Step:2 Keeping your arms straight, exhale and lift the dumbbells in front of you until they are at shoulder level.",
+        "Step:3 Pause for a moment at the top, then inhale and slowly lower the dumbbells back down to the starting position.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "4Leypho",
+      "name": "barbell skier",
+      "gifUrl": "https://static.exercisedb.dev/media/4Leypho.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a barbell in front of your thighs with an overhand grip.",
+        "Step:2 Bend your knees slightly and hinge forward at the hips, keeping your back straight and chest up.",
+        "Step:3 Simultaneously lift the barbell up towards your shoulders while jumping slightly off the ground.",
+        "Step:4 As you reach the top of the movement, quickly reverse the motion and lower the barbell back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "53Ttlck",
+      "name": "dumbbell lying rear lateral raise",
+      "gifUrl": "https://static.exercisedb.dev/media/53Ttlck.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "rhomboids"
+      ],
+      "instructions": [
+        "Step:1 Lie face down on a flat bench with a dumbbell in each hand, palms facing each other.",
+        "Step:2 Extend your arms straight down towards the floor, keeping a slight bend in your elbows.",
+        "Step:3 Engaging your shoulder muscles, lift your arms out to the sides until they are parallel to the floor.",
+        "Step:4 Pause for a moment at the top, then slowly lower your arms back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "5KLbZWx",
+      "name": "kettlebell alternating press",
+      "gifUrl": "https://static.exercisedb.dev/media/5KLbZWx.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "kettlebell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a kettlebell in each hand at shoulder height.",
+        "Step:2 Press one kettlebell overhead, fully extending your arm.",
+        "Step:3 Lower the kettlebell back to shoulder height.",
+        "Step:4 Repeat with the other arm.",
+        "Step:5 Continue alternating arms for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "5vfAI0I",
+      "name": "dumbbell scott press",
+      "gifUrl": "https://static.exercisedb.dev/media/5vfAI0I.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "chest"
+      ],
+      "instructions": [
+        "Step:1 Sit on a bench with a dumbbell in each hand, palms facing forward.",
+        "Step:2 Raise the dumbbells to shoulder height, with your elbows bent and palms facing forward.",
+        "Step:3 Press the dumbbells upward until your arms are fully extended.",
+        "Step:4 Pause for a moment at the top, then slowly lower the dumbbells back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "67n3r98",
+      "name": "lever shoulder press",
+      "gifUrl": "https://static.exercisedb.dev/media/67n3r98.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "leverage machine"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "chest"
+      ],
+      "instructions": [
+        "Step:1 Adjust the seat height and position yourself on the machine with your back against the backrest.",
+        "Step:2 Grasp the handles with an overhand grip and position your hands at shoulder level.",
+        "Step:3 Push the handles upward until your arms are fully extended, but do not lock your elbows.",
+        "Step:4 Pause for a moment at the top, then slowly lower the handles back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "6cKQC5E",
+      "name": "dumbbell one arm upright row",
+      "gifUrl": "https://static.exercisedb.dev/media/6cKQC5E.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "biceps"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in one hand with an overhand grip.",
+        "Step:2 Let the dumbbell hang at arm's length in front of your thighs, with your palm facing your body.",
+        "Step:3 Keeping your back straight and your core engaged, exhale and lift the dumbbell straight up towards your chin, leading with your elbow.",
+        "Step:4 Pause for a moment at the top, then inhale and slowly lower the dumbbell back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions, then switch to the other arm."
+      ]
+    },
+    {
+      "exerciseId": "7Ba7bQ2",
+      "name": "kettlebell two arm clean",
+      "gifUrl": "https://static.exercisedb.dev/media/7Ba7bQ2.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "kettlebell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "forearms"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a kettlebell in front of your thighs with both hands, palms facing towards you.",
+        "Step:2 Bend your knees slightly and hinge at the hips, lowering the kettlebell towards the ground.",
+        "Step:3 Explosively extend your hips and knees, using the momentum to pull the kettlebell up towards your shoulders.",
+        "Step:4 As the kettlebell reaches shoulder height, rotate your wrists and catch the kettlebell in the rack position, with your elbows tucked in and the kettlebell resting on the back of your forearm.",
+        "Step:5 Lower the kettlebell back down to the starting position and repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "7uFJuXp",
+      "name": "weighted kneeling step with swing",
+      "gifUrl": "https://static.exercisedb.dev/media/7uFJuXp.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "weighted"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Start in a kneeling position with your knees hip-width apart and your back straight.",
+        "Step:2 Hold a weight in each hand, with your arms extended straight down in front of you.",
+        "Step:3 Engage your core and swing the weights up and overhead, keeping your arms straight.",
+        "Step:4 Lower the weights back down to the starting position and repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "83HoW9X",
+      "name": "barbell upright row v. 2",
+      "gifUrl": "https://static.exercisedb.dev/media/83HoW9X.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "biceps"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Step:2 Let the barbell hang in front of your thighs, arms fully extended.",
+        "Step:3 Keeping your back straight, exhale and lift the barbell straight up towards your chin, leading with your elbows.",
+        "Step:4 Pause for a moment at the top, then inhale and slowly lower the barbell back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "84RyJf8",
+      "name": "dumbbell one arm shoulder press",
+      "gifUrl": "https://static.exercisedb.dev/media/84RyJf8.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "upper back"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a dumbbell in one hand at shoulder level, palm facing forward.",
+        "Step:2 Press the dumbbell upward until your arm is fully extended overhead.",
+        "Step:3 Pause for a moment at the top, then slowly lower the dumbbell back to the starting position.",
+        "Step:4 Repeat for the desired number of repetitions, then switch to the other arm."
+      ]
+    },
+    {
+      "exerciseId": "89HVjEp",
+      "name": "kettlebell seated press with high",
+      "gifUrl": "https://static.exercisedb.dev/media/89HVjEp.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "kettlebell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Sit on a bench with your back straight and feet flat on the ground.",
+        "Step:2 Hold a kettlebell in each hand at shoulder height, palms facing forward.",
+        "Step:3 Press the kettlebells overhead, fully extending your arms. Focus on high movement.",
+        "Step:4 Lower the kettlebells back to shoulder height.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "8DiFDVA",
+      "name": "dumbbell rear fly",
+      "gifUrl": "https://static.exercisedb.dev/media/8DiFDVA.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "rhomboids"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a dumbbell in each hand.",
+        "Step:2 Bend your knees slightly and hinge forward at the hips, keeping your back straight.",
+        "Step:3 Extend your arms straight down towards the ground, palms facing each other.",
+        "Step:4 Keeping a slight bend in your elbows, lift your arms out to the sides and squeeze your shoulder blades together.",
+        "Step:5 Pause for a moment at the top, then slowly lower your arms back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "903mzG8",
+      "name": "smith shoulder press",
+      "gifUrl": "https://static.exercisedb.dev/media/903mzG8.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "smith machine"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "upper back"
+      ],
+      "instructions": [
+        "Step:1 Adjust the seat height and position yourself on the smith machine with your feet shoulder-width apart.",
+        "Step:2 Grasp the bar with an overhand grip, slightly wider than shoulder-width apart.",
+        "Step:3 Lift the bar off the rack and position it at shoulder level, with your elbows bent and palms facing forward.",
+        "Step:4 Press the bar upward until your arms are fully extended overhead.",
+        "Step:5 Pause for a moment at the top, then slowly lower the bar back down to shoulder level.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "A6wtbuL",
+      "name": "dumbbell standing overhead press",
+      "gifUrl": "https://static.exercisedb.dev/media/A6wtbuL.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "upper back"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in each hand at shoulder level with your palms facing forward.",
+        "Step:2 Press the dumbbells upward until your arms are fully extended overhead.",
+        "Step:3 Pause for a moment at the top, then slowly lower the dumbbells back down to shoulder level.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "aHDy5O5",
+      "name": "band y-raise",
+      "gifUrl": "https://static.exercisedb.dev/media/aHDy5O5.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "band"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "rhomboids"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold the band in front of your thighs with your palms facing inwards.",
+        "Step:2 Keep your arms straight and lift them up and out to the sides, forming a 'Y' shape with your body.",
+        "Step:3 Squeeze your shoulder blades together at the top of the movement.",
+        "Step:4 Slowly lower your arms back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "ainizkb",
+      "name": "dumbbell upright row",
+      "gifUrl": "https://static.exercisedb.dev/media/ainizkb.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "biceps"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in each hand with an overhand grip.",
+        "Step:2 Let the dumbbells hang in front of your thighs, with your arms fully extended.",
+        "Step:3 Keeping your back straight and your core engaged, exhale and lift the dumbbells straight up towards your chin, leading with your elbows.",
+        "Step:4 Pause for a moment at the top, then inhale and slowly lower the dumbbells back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "AQ0mC4Y",
+      "name": "dumbbell full can lateral raise",
+      "gifUrl": "https://static.exercisedb.dev/media/AQ0mC4Y.gif",
+      "bodyParts": [
+        "shoulders"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "delts"
+      ],
+      "secondaryMuscles": [
+        "traps",
+        "rotator cuff"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in each hand with your palms facing your body.",
+        "Step:2 Keep your back straight and engage your core.",
+        "Step:3 Raise your arms out to the sides, keeping a slight bend in your elbows, until they are parallel to the ground.",
+        "Step:4 Pause for a moment at the top, then slowly lower your arms back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,642 @@
+{
+  "success": true,
+  "meta": {
+    "total": 63,
+    "hasNextPage": true,
+    "hasPreviousPage": false,
+    "nextCursor": "fKZgDEO"
+  },
+  "data": [
+    {
+      "exerciseId": "0jp9Rlz",
+      "name": "one leg floor calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/0jp9Rlz.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles",
+        "feet"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet hip-width apart and place your hands on a wall or sturdy object for balance.",
+        "Step:2 Lift one foot off the ground and balance on the other foot.",
+        "Step:3 Slowly raise your heel off the ground, lifting your body up onto the ball of your foot.",
+        "Step:4 Pause for a moment at the top, then slowly lower your heel back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions, then switch legs and repeat."
+      ]
+    },
+    {
+      "exerciseId": "0S75mYG",
+      "name": "smith seated one leg calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/0S75mYG.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "smith machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "instructions": [
+        "Step:1 Sit on the machine with your back against the pad and your feet on the footrest.",
+        "Step:2 Place one leg on the footrest and keep the other leg off the footrest.",
+        "Step:3 Using your calf muscles, raise your heel as high as possible.",
+        "Step:4 Pause for a moment at the top, then slowly lower your heel back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions, then switch legs and repeat."
+      ]
+    },
+    {
+      "exerciseId": "17bqEXD",
+      "name": "seated calf stretch (male)",
+      "gifUrl": "https://static.exercisedb.dev/media/17bqEXD.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "instructions": [
+        "Step:1 Sit on the edge of a chair or bench with your feet flat on the ground.",
+        "Step:2 Extend one leg straight out in front of you, keeping your heel on the ground.",
+        "Step:3 Lean forward slightly, feeling a stretch in your calf muscle.",
+        "Step:4 Hold the stretch for 20-30 seconds.",
+        "Step:5 Switch legs and repeat the stretch."
+      ]
+    },
+    {
+      "exerciseId": "1kB3Wmk",
+      "name": "dumbbell single leg calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/1kB3Wmk.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles"
+      ],
+      "instructions": [
+        "Step:1 Stand on the edge of a step or platform with your heels hanging off and your toes on the step.",
+        "Step:2 Hold a dumbbell in one hand and place your other hand on a wall or railing for support.",
+        "Step:3 Raise your heel as high as possible, lifting your body up onto your toes.",
+        "Step:4 Pause for a moment at the top, then slowly lower your heel back down below the step.",
+        "Step:5 Repeat for the desired number of repetitions, then switch to the other leg."
+      ]
+    },
+    {
+      "exerciseId": "1LVFcEn",
+      "name": "calf stretch with rope",
+      "gifUrl": "https://static.exercisedb.dev/media/1LVFcEn.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "rope"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "instructions": [
+        "Step:1 Stand facing a wall or sturdy object with your feet hip-width apart.",
+        "Step:2 Hold the ends of the rope in each hand and place the middle of the rope around the ball of your right foot.",
+        "Step:3 Step back with your left foot, keeping your heel on the ground and your leg straight.",
+        "Step:4 Lean forward, keeping your back straight, and gently pull on the rope to stretch your calf.",
+        "Step:5 Hold the stretch for 20-30 seconds, then release.",
+        "Step:6 Repeat on the other leg."
+      ]
+    },
+    {
+      "exerciseId": "2IHEa2T",
+      "name": "barbell floor calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/2IHEa2T.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "instructions": [
+        "Step:1 Place a barbell on the floor in front of you.",
+        "Step:2 Stand with the balls of your feet on the edge of the barbell, with your heels hanging off.",
+        "Step:3 Hold onto a stable object for balance if needed.",
+        "Step:4 Raise your heels as high as possible, using your calves to lift your body.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "2ORFMoR",
+      "name": "hack calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/2ORFMoR.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "sled machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Adjust the sled machine to a comfortable weight.",
+        "Step:2 Stand on the sled machine with your toes on the platform and your heels hanging off.",
+        "Step:3 Hold onto the handles for stability.",
+        "Step:4 Raise your heels as high as possible by pushing through the balls of your feet.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "6HiHHe0",
+      "name": "barbell standing rocking leg calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/6HiHHe0.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and hold a barbell across your upper back.",
+        "Step:2 Raise your heels off the ground as high as possible, balancing on the balls of your feet.",
+        "Step:3 Slowly lower your heels back down to the starting position.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "6HmFgmx",
+      "name": "standing calf raise (on a staircase)",
+      "gifUrl": "https://static.exercisedb.dev/media/6HmFgmx.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles",
+        "feet"
+      ],
+      "instructions": [
+        "Step:1 Stand on the edge of a step or a sturdy platform with your heels hanging off and your toes on the step.",
+        "Step:2 Hold onto a railing or wall for balance if needed.",
+        "Step:3 Slowly raise your heels as high as possible, lifting your body weight onto the balls of your feet.",
+        "Step:4 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "6MaEjVA",
+      "name": "smith standing leg calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/6MaEjVA.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "smith machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Adjust the smith machine bar to a height that allows you to stand with your feet flat on the ground and your shoulders under the bar.",
+        "Step:2 Position yourself under the bar with your feet shoulder-width apart and your toes pointing forward.",
+        "Step:3 Place your hands on the bar for stability.",
+        "Step:4 Engage your calves and slowly raise your heels off the ground, lifting your body up onto your toes.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "7B4F5nZ",
+      "name": "lever calf press",
+      "gifUrl": "https://static.exercisedb.dev/media/7B4F5nZ.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "leverage machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "instructions": [
+        "Step:1 Adjust the seat of the leverage machine so that your shoulders are aligned with the lever pad.",
+        "Step:2 Place your toes on the lever pad, with your heels hanging off the edge.",
+        "Step:3 Grasp the handles or side supports for stability.",
+        "Step:4 Push the lever pad down by extending your ankles, contracting your calf muscles.",
+        "Step:5 Pause for a moment at the bottom of the movement.",
+        "Step:6 Slowly return to the starting position by allowing your heels to rise back up.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "8ozhUIZ",
+      "name": "barbell standing calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/8ozhUIZ.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "barbell"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and place a barbell across your upper back.",
+        "Step:2 Raise your heels off the ground as high as possible, using only your toes.",
+        "Step:3 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "9GXrTE6",
+      "name": "smith one leg floor calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/9GXrTE6.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "smith machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Position yourself on the floor under the smith machine bar, facing away from the machine.",
+        "Step:2 Place the balls of your feet on a raised surface, such as a weight plate or block.",
+        "Step:3 Position the smith machine bar across your lower legs, just above your ankles.",
+        "Step:4 Hold onto the bar with your hands for stability.",
+        "Step:5 Raise your heels off the ground by extending your ankles, lifting your body up.",
+        "Step:6 Pause at the top of the movement, then slowly lower your heels back down to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "9JprnPh",
+      "name": "band single leg calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/9JprnPh.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "band"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles",
+        "feet"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet hip-width apart and place the band around the ball of your left foot.",
+        "Step:2 Hold onto a stable object for balance if needed.",
+        "Step:3 Slowly raise your left heel off the ground, lifting your body weight onto the ball of your foot.",
+        "Step:4 Pause for a moment at the top, then slowly lower your left heel back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions, then switch to the right leg."
+      ]
+    },
+    {
+      "exerciseId": "A2upspL",
+      "name": "one leg donkey calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/A2upspL.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, toes pointing forward.",
+        "Step:2 Place your hands on a stable surface for support, such as a wall or a bar.",
+        "Step:3 Lift one leg off the ground, keeping your knee slightly bent.",
+        "Step:4 Raise your heel as high as possible, using your calf muscles.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heel back down.",
+        "Step:6 Repeat for the desired number of repetitions, then switch legs."
+      ]
+    },
+    {
+      "exerciseId": "AxFoqAD",
+      "name": "hack one leg calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/AxFoqAD.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "sled machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Adjust the sled machine to an appropriate weight.",
+        "Step:2 Stand on the sled machine with one foot, keeping the other foot off the ground.",
+        "Step:3 Hold onto the handles for stability.",
+        "Step:4 Raise your heel as high as possible, lifting your body up on the ball of your foot.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heel back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions.",
+        "Step:7 Switch legs and repeat the exercise."
+      ]
+    },
+    {
+      "exerciseId": "bJYHBIN",
+      "name": "bodyweight standing calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/bJYHBIN.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles",
+        "feet"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, toes pointing forward.",
+        "Step:2 Place your hands on a wall or stable surface for balance.",
+        "Step:3 Slowly raise your heels off the ground, lifting your body weight onto the balls of your feet.",
+        "Step:4 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "bOOdeyc",
+      "name": "lever seated calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/bOOdeyc.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "leverage machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "soleus",
+        "ankle stabilizers"
+      ],
+      "instructions": [
+        "Step:1 Adjust the seat height so that your knees are slightly bent and your feet are flat on the footplate.",
+        "Step:2 Place your toes on the footplate with your heels hanging off the edge.",
+        "Step:3 Grasp the handles or the sides of the seat for stability.",
+        "Step:4 Push through the balls of your feet to raise your heels as high as possible.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "C9LuR4A",
+      "name": "lever donkey calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/C9LuR4A.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "leverage machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Adjust the leverage machine to the appropriate height for your body.",
+        "Step:2 Position yourself facing the machine, with your toes on the foot platform and your heels hanging off the edge.",
+        "Step:3 Place your hands on the handles or the support bars for stability.",
+        "Step:4 Engage your calves and lift your heels as high as possible, using the balls of your feet.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "DEEqoI2",
+      "name": "posterior tibialis stretch",
+      "gifUrl": "https://static.exercisedb.dev/media/DEEqoI2.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "rope"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "instructions": [
+        "Step:1 Sit on the ground with your legs extended in front of you.",
+        "Step:2 Loop the rope around the ball of your foot and hold the ends of the rope with your hands.",
+        "Step:3 Gently pull the rope towards you, flexing your foot and stretching your calf muscles.",
+        "Step:4 Hold the stretch for 20-30 seconds.",
+        "Step:5 Release the tension on the rope and relax your foot.",
+        "Step:6 Repeat the stretch on the other leg."
+      ]
+    },
+    {
+      "exerciseId": "DICPHtq",
+      "name": "targeted style single leg calf raise (on a dumbbell)",
+      "gifUrl": "https://static.exercisedb.dev/media/DICPHtq.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles",
+        "feet"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet hip-width apart and hold a dumbbell in one hand.",
+        "Step:2 Lift one foot off the ground and balance on the other foot.",
+        "Step:3 Slowly raise your heel as high as possible, using your calf muscles. Emphasize targeted control.",
+        "Step:4 Pause for a moment at the top, then slowly lower your heel back down.",
+        "Step:5 Repeat for the desired number of repetitions, then switch to the other leg."
+      ]
+    },
+    {
+      "exerciseId": "dPmaUaU",
+      "name": "dumbbell standing calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/dPmaUaU.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart, holding a dumbbell in each hand.",
+        "Step:2 Raise your heels off the ground as high as possible, using your calves.",
+        "Step:3 Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "Dx2RIva",
+      "name": "triple style sled one leg calf press on leg press",
+      "gifUrl": "https://static.exercisedb.dev/media/Dx2RIva.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "sled machine"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": [
+        "Step:1 Adjust the seat of the leg press machine so that your knees are slightly bent when your feet are on the sled.",
+        "Step:2 Sit on the machine with your back against the backrest and your feet on the sled, shoulder-width apart.",
+        "Step:3 Place your toes and the balls of your feet on the sled, keeping your heels off.",
+        "Step:4 Push the sled forward by extending your ankles, keeping your knees slightly bent.",
+        "Step:5 Pause for a moment at the top, then slowly lower the sled back down by flexing your ankles.",
+        "Step:6 Repeat for the desired number of repetitions. Perform with triple intensity."
+      ]
+    },
+    {
+      "exerciseId": "fgc9Xdl",
+      "name": "cable standing one leg calf raise",
+      "gifUrl": "https://static.exercisedb.dev/media/fgc9Xdl.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "cable"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles",
+        "feet"
+      ],
+      "instructions": [
+        "Step:1 Stand facing a cable machine with your feet shoulder-width apart.",
+        "Step:2 Hold onto the cable machine for support.",
+        "Step:3 Lift one leg off the ground and balance on the other leg.",
+        "Step:4 Slowly raise your heel off the ground, lifting your body up onto your toes.",
+        "Step:5 Pause for a moment at the top, then slowly lower your heel back down to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions, then switch legs."
+      ]
+    },
+    {
+      "exerciseId": "fKZgDEO",
+      "name": "single leg calf raise (on a dumbbell)",
+      "gifUrl": "https://static.exercisedb.dev/media/fKZgDEO.gif",
+      "bodyParts": [
+        "lower legs"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "ankles",
+        "feet"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet hip-width apart and hold a dumbbell in one hand.",
+        "Step:2 Lift one foot off the ground and balance on the other foot.",
+        "Step:3 Slowly raise your heel as high as possible, using your calf muscles.",
+        "Step:4 Pause for a moment at the top, then slowly lower your heel back down.",
+        "Step:5 Repeat for the desired number of repetitions, then switch to the other leg."
+      ]
+    }
+  ]
+}

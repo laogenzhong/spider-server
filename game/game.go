@@ -25,7 +25,10 @@ func NewGRPCServer(addr string, registers ...GRPCServiceRegister) *GRPCServer {
 	return &GRPCServer{
 		addr: addr,
 		server: grpc.NewServer(
-			grpc.UnaryInterceptor(authUnaryInterceptor),
+			grpc.ChainUnaryInterceptor(
+				authUnaryInterceptor,
+				MetadataLogInterceptor,
+			),
 		),
 		registers: registers,
 	}
