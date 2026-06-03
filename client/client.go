@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"sort"
+	appconfig "spider-server/common/config"
 	"spider-server/gen/spider/api"
 	"strconv"
 	"strings"
@@ -41,16 +42,29 @@ type GatewayClient struct {
 }
 
 func NewGatewayClient(baseURL string) *GatewayClient {
+	return NewGatewayClientWithTimeout(baseURL, 10*time.Second)
+}
+
+func NewGatewayClientWithTimeout(baseURL string, timeout time.Duration) *GatewayClient {
+	if timeout <= 0 {
+		timeout = 10 * time.Second
+	}
 	return &GatewayClient{
 		baseURL: strings.TrimRight(baseURL, "/"),
 		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: timeout,
 		},
 	}
 }
 
 func NewGatewayClientWithSigner(baseURL string, signFunc RequestSignFunction) *GatewayClient {
 	client := NewGatewayClient(baseURL)
+	client.signFunc = signFunc
+	return client
+}
+
+func NewGatewayClientWithSignerAndTimeout(baseURL string, timeout time.Duration, signFunc RequestSignFunction) *GatewayClient {
+	client := NewGatewayClientWithTimeout(baseURL, timeout)
 	client.signFunc = signFunc
 	return client
 }
@@ -248,10 +262,15 @@ func parseHTTPHeaderBinary(rawHeaders []byte) http.Header {
 }
 
 func exampleCallGateway() {
-	gatewayClient := NewGatewayClientWithSigner("http://192.168.3.49:19080", func(data []byte) (string, error) {
+	cfg, err := appconfig.LoadDefault()
+	if err != nil {
+		log.Printf("load config failed: %v", err)
+		return
+	}
+
+	gatewayClient := NewGatewayClientWithSignerAndTimeout(cfg.Client.GatewayBaseURL, cfg.Client.TimeoutDuration(), func(data []byte) (string, error) {
 		// 当前示例使用 sha256(canonicalSignContent)。
-		salt := "你的salt"
-		signData := append([]byte(salt), data...)
+		signData := append([]byte(cfg.Client.SignSalt), data...)
 
 		return sha256Hex(signData), nil
 	})

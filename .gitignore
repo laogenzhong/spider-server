@@ -4,6 +4,7 @@
 
 /vendor/
 *.log
+config.local.yaml
 /bin/
 /gen/node_modules/
 downloads/

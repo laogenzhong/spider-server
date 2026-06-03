@@ -4,6 +4,7 @@ import (
 	"context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	appconfig "spider-server/common/config"
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	"strings"
@@ -21,8 +22,20 @@ import (
 // 1. 默认所有接口都需要拦截校验。
 // 2. 只有命中这里配置的前缀才会跳过拦截。
 // 3. 例如配置 "/api.uc."，那么所有 /api.uc.* 服务都不会拦截。
-var publicGRPCMethodPrefixes = []string{
-	"/uc.",
+var publicGRPCMethodPrefixes = append([]string(nil), appconfig.Default().Auth.PublicGRPCMethodPrefixes...)
+
+func ConfigureAuth(prefixes []string) {
+	cleaned := make([]string, 0, len(prefixes))
+	for _, prefix := range prefixes {
+		prefix = strings.TrimSpace(prefix)
+		if prefix != "" {
+			cleaned = append(cleaned, prefix)
+		}
+	}
+	if len(cleaned) == 0 {
+		cleaned = append([]string(nil), appconfig.Default().Auth.PublicGRPCMethodPrefixes...)
+	}
+	publicGRPCMethodPrefixes = cleaned
 }
 
 // shouldSkipAuthInterceptor 判断当前 gRPC 方法是否跳过登录拦截。

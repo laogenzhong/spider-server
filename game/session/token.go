@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	appconfig "spider-server/common/config"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,7 +32,18 @@ var (
 	ErrAttachNotFound   = errors.New("attach not found")
 )
 
-var SignSessionManager = NewSessionManager("spider-sign-session-secret", nil)
+var SignSessionManager = NewSessionManager(appconfig.Default().Session.SignSecret, nil)
+
+func ConfigureSignSessionManager(secret string, defaultTTL time.Duration) {
+	secret = strings.TrimSpace(secret)
+	if secret == "" {
+		secret = appconfig.Default().Session.SignSecret
+	}
+
+	manager := NewSessionManager(secret, nil)
+	manager.SetDefaultTTL(defaultTTL)
+	SignSessionManager = manager
+}
 
 // TokenPayload 是写入 token 内部的基础信息。
 // UID 表示用户 ID，ScopeID 表示作用域 ID，Salt 用于和服务端保存的 _salt 做二次校验，ExpiresAt 表示过期时间，IssuedAt 表示签发时间。

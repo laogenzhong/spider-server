@@ -24,9 +24,11 @@ func GetLoggerEntry() *log.Entry {
 }
 
 type Config struct {
-	Level  string
-	Path   string
-	Rotate string
+	Level        string
+	Path         string
+	Rotate       string
+	MaxAge       time.Duration
+	RotationTime time.Duration
 }
 
 var closer = func() error {
@@ -34,8 +36,31 @@ var closer = func() error {
 }
 
 func init() {
-	fmt.Println("init log 。。。。")
-	logCfg := Config{Level: "info", Path: "stdout"}
+	Configure(Config{Level: "info", Path: "stdout", Rotate: "%Y%m%d%H", MaxAge: 24 * time.Hour, RotationTime: time.Hour})
+}
+
+func Configure(logCfg Config) {
+	_ = closer()
+	closer = func() error {
+		return nil
+	}
+
+	if logCfg.Level == "" {
+		logCfg.Level = "info"
+	}
+	if logCfg.Path == "" {
+		logCfg.Path = "stdout"
+	}
+	if logCfg.Rotate == "" {
+		logCfg.Rotate = "%Y%m%d%H"
+	}
+	if logCfg.MaxAge <= 0 {
+		logCfg.MaxAge = 24 * time.Hour
+	}
+	if logCfg.RotationTime <= 0 {
+		logCfg.RotationTime = time.Hour
+	}
+
 	newLogger := log.New()
 	// 如果是终端输出，使用带颜色的文本格式；否则用JSON格式
 	if logCfg.Path == "" || logCfg.Path == "stdout" || logCfg.Path == "stderr" {
@@ -89,8 +114,8 @@ func init() {
 		logs, err := rotatelogs.New(
 			logCfg.Path+"."+logCfg.Rotate,
 			rotatelogs.WithLinkName(logCfg.Path),
-			rotatelogs.WithMaxAge(24*time.Hour),
-			rotatelogs.WithRotationTime(time.Hour),
+			rotatelogs.WithMaxAge(logCfg.MaxAge),
+			rotatelogs.WithRotationTime(logCfg.RotationTime),
 		)
 		if err != nil {
 			panic(fmt.Sprintf("rotate log init error: %v", err))

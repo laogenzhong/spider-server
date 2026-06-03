@@ -1,0 +1,47 @@
+server:
+  gateway_addr: ":19080"
+  grpc_addr: ":18000"
+  grpc_target: "localhost:18000"
+  endpoint_host: "127.0.0.1"
+  read_header_timeout: "5s"
+
+mysql:
+  user: "root"
+  password: "root"
+  host: "localhost"
+  port: 3306
+  database: "spider"
+  charset: "utf8mb4"
+  parse_time: true
+  loc: "Local"
+  max_open_conns: 50
+  max_idle_conns: 10
+  conn_max_lifetime: "1h"
+  conn_max_idle_time: "10m"
+  log_level: "warn"
+
+session:
+  sign_secret: "spider-sign-session-secret"
+  default_ttl: "8760h"
+
+auth:
+  public_grpc_method_prefixes:
+    - "/uc."
+
+sign:
+  enabled: true
+  replay_nonce_ttl: "60s"
+  replay_nonce_cleanup: "5s"
+  log_metadata_prefix_only: true
+
+logger:
+  level: "info"
+  path: "stdout"
+  rotate: "%Y%m%d%H"
+  max_age: "24h"
+  rotation_time: "1h"
+
+client:
+  gateway_base_url: "http://127.0.0.1:19080"
+  timeout: "10s"
+  sign_salt: ""

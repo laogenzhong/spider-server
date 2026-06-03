@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"log"
 	"sort"
+	appconfig "spider-server/common/config"
 	"spider-server/game/session"
 	"strings"
 	"sync"
@@ -17,6 +18,12 @@ import (
 )
 
 var replayNonceCache sync.Map
+var replayNonceCleanerMu sync.Mutex
+var replayNonceCleanerStop chan struct{}
+var signVerificationEnabled = appconfig.Default().Sign.Enabled
+var replayNonceTTL = appconfig.Default().Sign.ReplayNonceTTLDuration()
+var replayNonceCleanupInterval = appconfig.Default().Sign.ReplayNonceCleanupDuration()
+var logMetadataPrefixOnly = appconfig.Default().Sign.LogMetadataPrefixOnly
 
 func sha256Hex(data []byte) string {
 	sum := sha256.Sum256(data)
@@ -57,11 +64,44 @@ func buildServerSignContent(method string, md metadata.MD, bodyBytes []byte) []b
 }
 
 func init() {
+	startReplayNonceCleaner(replayNonceCleanupInterval)
+}
+
+func ConfigureSign(enabled bool, nonceTTL time.Duration, cleanupInterval time.Duration, metadataPrefixOnly bool) {
+	signVerificationEnabled = enabled
+	logMetadataPrefixOnly = metadataPrefixOnly
+	if nonceTTL > 0 {
+		replayNonceTTL = nonceTTL
+	}
+	if cleanupInterval > 0 {
+		replayNonceCleanupInterval = cleanupInterval
+		startReplayNonceCleaner(cleanupInterval)
+	}
+}
+
+func startReplayNonceCleaner(interval time.Duration) {
+	if interval <= 0 {
+		interval = appconfig.Default().Sign.ReplayNonceCleanupDuration()
+	}
+
+	replayNonceCleanerMu.Lock()
+	if replayNonceCleanerStop != nil {
+		close(replayNonceCleanerStop)
+	}
+	stop := make(chan struct{})
+	replayNonceCleanerStop = stop
+	replayNonceCleanerMu.Unlock()
+
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
-		for range ticker.C {
+		for {
+			select {
+			case <-ticker.C:
+			case <-stop:
+				return
+			}
 			now := time.Now().Unix()
 			replayNonceCache.Range(func(key, value any) bool {
 				expireAt, ok := value.(int64)
@@ -84,7 +124,7 @@ func MetadataLogInterceptor(
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		xxMeta := make(map[string][]string)
 		for k, v := range md {
-			if strings.HasPrefix(k, "xx-") {
+			if !logMetadataPrefixOnly || strings.HasPrefix(k, "xx-") {
 				xxMeta[k] = v
 			}
 		}
@@ -92,7 +132,7 @@ func MetadataLogInterceptor(
 		log.Printf("grpc method=%s metadata=%v", info.FullMethod, xxMeta)
 	}
 
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
+	if md, ok := metadata.FromIncomingContext(ctx); ok && signVerificationEnabled {
 		signs := md.Get("xx-sign")
 		if len(signs) == 0 {
 			return nil, fmt.Errorf("missing xx-sign")
@@ -116,7 +156,10 @@ func MetadataLogInterceptor(
 		}
 	}
 
-	uid := session.GetUser(ctx).UID()
+	var uid uint64
+	if user := session.GetUser(ctx); user != nil {
+		uid = user.UIDOrDefault()
+	}
 
 	nonce := ""
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
@@ -127,7 +170,7 @@ func MetadataLogInterceptor(
 
 	if uid > 0 && nonce != "" {
 		key := fmt.Sprintf("%d:%s", uid, nonce)
-		expireAt := time.Now().Add(60 * time.Second).Unix()
+		expireAt := time.Now().Add(replayNonceTTL).Unix()
 		if _, loaded := replayNonceCache.LoadOrStore(key, expireAt); loaded {
 			return nil, fmt.Errorf("replay attack detected")
 		}
