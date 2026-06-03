@@ -1,0 +1,656 @@
+{
+  "success": true,
+  "meta": {
+    "total": 50,
+    "hasNextPage": true,
+    "hasPreviousPage": false,
+    "nextCursor": "o5Jsk92"
+  },
+  "data": [
+    {
+      "exerciseId": "1PLE8e9",
+      "name": "dumbbell incline twisted flyes",
+      "gifUrl": "https://static.exercisedb.dev/media/1PLE8e9.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Set an incline bench to a 45-degree angle and sit on it with a dumbbell in each hand, palms facing each other.",
+        "Step:2 Lie back on the bench and press the dumbbells up to the starting position, directly above your chest, with your arms extended.",
+        "Step:3 Lower the dumbbells out to the sides in a wide arc until you feel a stretch in your chest.",
+        "Step:4 As you lower the dumbbells, rotate your wrists so that your palms face forward at the bottom of the movement.",
+        "Step:5 Reverse the motion and bring the dumbbells back up to the starting position, squeezing your chest muscles together at the top.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "1qrWgZ2",
+      "name": "dumbbell decline hammer press",
+      "gifUrl": "https://static.exercisedb.dev/media/1qrWgZ2.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Lie on a decline bench with your feet secured and your head lower than your hips.",
+        "Step:2 Hold a dumbbell in each hand with your palms facing each other and your arms extended above your chest.",
+        "Step:3 Lower the dumbbells to the sides of your chest, keeping your elbows slightly bent.",
+        "Step:4 Press the dumbbells back up to the starting position, fully extending your arms.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "6e2DcYX",
+      "name": "dumbbell incline shoulder raise",
+      "gifUrl": "https://static.exercisedb.dev/media/6e2DcYX.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "serratus anterior"
+      ],
+      "secondaryMuscles": [
+        "deltoids",
+        "trapezius"
+      ],
+      "instructions": [
+        "Step:1 Set an incline bench to a 45-degree angle and sit on it with a dumbbell in each hand, palms facing down.",
+        "Step:2 Rest the dumbbells on your thighs and lean back onto the bench.",
+        "Step:3 Use your thighs to help raise the dumbbells to shoulder height, then rotate your wrists so that your palms are facing forward.",
+        "Step:4 Exhale and slowly raise the dumbbells above your head, keeping a slight bend in your elbows.",
+        "Step:5 Pause for a moment at the top, then inhale and slowly lower the dumbbells back to shoulder height.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "7gdLIXa",
+      "name": "dumbbell lying hammer press",
+      "gifUrl": "https://static.exercisedb.dev/media/7gdLIXa.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Lie flat on a bench with a dumbbell in each hand, palms facing each other and arms extended straight up.",
+        "Step:2 Lower the dumbbells to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Step:3 Press the dumbbells back up to the starting position, fully extending your arms.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "9XjtHvS",
+      "name": "dumbbell pullover",
+      "gifUrl": "https://static.exercisedb.dev/media/9XjtHvS.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "latissimus dorsi",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Lie flat on a bench with your head at one end and your feet on the floor.",
+        "Step:2 Hold a dumbbell with both hands and extend your arms straight above your chest.",
+        "Step:3 Keeping a slight bend in your elbows, slowly lower the dumbbell behind your head until you feel a stretch in your chest and shoulders.",
+        "Step:4 Pause for a moment, then raise the dumbbell back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "Am02iPd",
+      "name": "dumbbell one arm fly on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/Am02iPd.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with a dumbbell in one hand and your feet flat on the ground.",
+        "Step:2 Walk your feet forward and roll your body down until your upper back is resting on the exercise ball.",
+        "Step:3 Extend your arm with the dumbbell straight up above your chest, palm facing inwards.",
+        "Step:4 Slowly lower the dumbbell out to the side, keeping a slight bend in your elbow.",
+        "Step:5 Pause for a moment, then squeeze your chest muscles to bring the dumbbell back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions, then switch arms."
+      ]
+    },
+    {
+      "exerciseId": "B3Rxp6L",
+      "name": "dumbbell incline breeding",
+      "gifUrl": "https://static.exercisedb.dev/media/B3Rxp6L.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Set up an incline bench at a 45-degree angle.",
+        "Step:2 Sit on the bench with your back against the pad and feet flat on the ground.",
+        "Step:3 Hold a dumbbell in each hand with an overhand grip, palms facing forward.",
+        "Step:4 Start with your arms fully extended, perpendicular to the ground.",
+        "Step:5 Lower the dumbbells slowly to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Step:6 Pause for a moment at the bottom, then push the dumbbells back up to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "bfiHMpI",
+      "name": "dumbbell incline press on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/bfiHMpI.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with a dumbbell in each hand, palms facing forward.",
+        "Step:2 Slowly walk your feet forward, rolling your body down the ball until your head, neck, and upper back are supported on the ball.",
+        "Step:3 Hold the dumbbells at shoulder level, elbows bent and pointing out to the sides.",
+        "Step:4 Press the dumbbells upward, extending your arms fully.",
+        "Step:5 Pause for a moment at the top, then slowly lower the dumbbells back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "Bg5JKSH",
+      "name": "dumbbell incline one arm press on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/Bg5JKSH.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with a dumbbell in one hand, feet flat on the ground.",
+        "Step:2 Slowly walk your feet forward, rolling the ball until your head, neck, and upper back are supported on the ball.",
+        "Step:3 Hold the dumbbell at shoulder height with your palm facing forward.",
+        "Step:4 Press the dumbbell upward until your arm is fully extended.",
+        "Step:5 Pause for a moment at the top, then slowly lower the dumbbell back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions, then switch to the other arm."
+      ]
+    },
+    {
+      "exerciseId": "Bpkf41o",
+      "name": "dumbbell one arm chest fly on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/Bpkf41o.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with a dumbbell in one hand and your feet flat on the ground.",
+        "Step:2 Walk your feet forward, rolling the ball until your upper back is supported on the ball and your head, neck, and shoulders are off the ball.",
+        "Step:3 Extend your arm with the dumbbell straight up above your chest, palm facing inward.",
+        "Step:4 Slowly lower the dumbbell out to the side, keeping a slight bend in your elbow.",
+        "Step:5 Pause for a moment when your arm is parallel to the ground.",
+        "Step:6 Engage your chest muscles to bring the dumbbell back up to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions, then switch arms."
+      ]
+    },
+    {
+      "exerciseId": "bQHPBU3",
+      "name": "dumbbell one arm pullover on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/bQHPBU3.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "latissimus dorsi",
+        "rhomboids"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with your feet flat on the ground and your knees bent at a 90-degree angle.",
+        "Step:2 Hold a dumbbell with one hand and extend your arm straight up above your chest.",
+        "Step:3 Slowly lower the dumbbell behind your head while keeping your arm straight.",
+        "Step:4 Pause for a moment, then raise the dumbbell back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions, then switch arms."
+      ]
+    },
+    {
+      "exerciseId": "DwhEmmE",
+      "name": "dumbbell decline bench press",
+      "gifUrl": "https://static.exercisedb.dev/media/DwhEmmE.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Lie down on a decline bench with your feet secured and your head lower than your hips.",
+        "Step:2 Hold a dumbbell in each hand and extend your arms straight up above your chest, palms facing forward.",
+        "Step:3 Lower the dumbbells slowly to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Step:4 Push the dumbbells back up to the starting position, fully extending your arms.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "ESOd5Pl",
+      "name": "dumbbell incline fly",
+      "gifUrl": "https://static.exercisedb.dev/media/ESOd5Pl.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Set an incline bench to a 45-degree angle.",
+        "Step:2 Sit on the bench with a dumbbell in each hand, palms facing each other.",
+        "Step:3 Lie back on the bench and press the dumbbells up to the starting position, directly above your chest.",
+        "Step:4 Lower the dumbbells out to the sides in a wide arc until you feel a stretch in your chest.",
+        "Step:5 Pause for a moment, then squeeze your chest muscles to bring the dumbbells back up to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "FSD6PGL",
+      "name": "dumbbell pullover on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/FSD6PGL.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "latissimus dorsi"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball and hold a dumbbell with both hands above your chest, arms extended.",
+        "Step:2 Slowly lower the dumbbell behind your head while keeping your arms straight.",
+        "Step:3 Pause for a moment, then raise the dumbbell back to the starting position.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "Gw2HFvW",
+      "name": "dumbbell incline one arm fly",
+      "gifUrl": "https://static.exercisedb.dev/media/Gw2HFvW.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "deltoids",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Adjust the incline bench to a 30-45 degree angle.",
+        "Step:2 Sit on the bench with a dumbbell in one hand, resting it on your thigh.",
+        "Step:3 Lie back on the bench, keeping your feet flat on the ground.",
+        "Step:4 Hold the dumbbell with your arm extended straight up over your chest.",
+        "Step:5 Lower the dumbbell out to the side in a wide arc, keeping a slight bend in your elbow.",
+        "Step:6 Pause when your arm is parallel to the ground, then reverse the motion to bring the dumbbell back to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions, then switch arms."
+      ]
+    },
+    {
+      "exerciseId": "HYe1ZqR",
+      "name": "dumbbell incline fly on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/HYe1ZqR.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Set up an incline bench at a 45-degree angle.",
+        "Step:2 Sit on an exercise ball and roll forward until your upper back is resting on the incline bench.",
+        "Step:3 Hold a dumbbell in each hand with your palms facing each other and your arms extended above your chest.",
+        "Step:4 Lower the dumbbells out to the sides in a wide arc until you feel a stretch in your chest.",
+        "Step:5 Pause for a moment, then squeeze your chest muscles to bring the dumbbells back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "i8BdLTK",
+      "name": "dumbbell straight arm pullover",
+      "gifUrl": "https://static.exercisedb.dev/media/i8BdLTK.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "latissimus dorsi",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Lie flat on a bench with your head at one end and your feet planted firmly on the ground.",
+        "Step:2 Hold a dumbbell with both hands and extend your arms straight above your chest.",
+        "Step:3 Keeping your arms straight, slowly lower the dumbbell behind your head in an arc-like motion.",
+        "Step:4 Pause for a moment, then raise the dumbbell back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "iK59oEA",
+      "name": "dumbbell lying pullover on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/iK59oEA.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders",
+        "back"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball and roll forward until your upper back is resting on the ball.",
+        "Step:2 Hold a dumbbell with both hands and extend your arms straight up over your chest.",
+        "Step:3 Slowly lower the dumbbell behind your head while keeping your arms straight.",
+        "Step:4 Pause for a moment, then raise the dumbbell back to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "K3dIO25",
+      "name": "dumbbell lying one arm press v. 2",
+      "gifUrl": "https://static.exercisedb.dev/media/K3dIO25.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Lie flat on a bench with your back supported and feet flat on the ground.",
+        "Step:2 Hold a dumbbell in one hand with your palm facing towards your feet.",
+        "Step:3 Extend your arm straight up towards the ceiling, keeping your elbow slightly bent.",
+        "Step:4 Slowly lower the dumbbell down towards your chest, keeping your elbow close to your body.",
+        "Step:5 Pause for a moment at the bottom, then push the dumbbell back up to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions, then switch to the other arm."
+      ]
+    },
+    {
+      "exerciseId": "lI7easp",
+      "name": "dumbbell pullover hip extension on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/lI7easp.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with your feet flat on the ground and the dumbbell resting on your thighs.",
+        "Step:2 Slowly walk your feet forward, rolling the exercise ball down your back until your head, neck, and upper back are supported on the ball.",
+        "Step:3 Hold the dumbbell with both hands and extend your arms straight up over your chest, keeping a slight bend in your elbows.",
+        "Step:4 Lower the dumbbell behind your head, keeping your arms straight and maintaining control.",
+        "Step:5 Pause for a moment, then raise the dumbbell back to the starting position.",
+        "Step:6 While keeping your arms extended, lift your hips off the ground, squeezing your glutes and engaging your core.",
+        "Step:7 Lower your hips back down to the starting position.",
+        "Step:8 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "LLNh6q5",
+      "name": "dumbbell incline one arm fly on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/LLNh6q5.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball with a dumbbell in one hand.",
+        "Step:2 Walk your feet forward and roll your body down until your head, neck, and upper back are supported on the ball.",
+        "Step:3 Hold the dumbbell with your arm extended straight up over your chest, palm facing inwards.",
+        "Step:4 Slowly lower the dumbbell out to the side, keeping a slight bend in your elbow.",
+        "Step:5 Pause for a moment when your arm is parallel to the ground.",
+        "Step:6 Engage your chest muscles to bring the dumbbell back up to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions, then switch arms."
+      ]
+    },
+    {
+      "exerciseId": "Lt3iWnf",
+      "name": "dumbbell fly on exercise ball",
+      "gifUrl": "https://static.exercisedb.dev/media/Lt3iWnf.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Sit on an exercise ball and hold a dumbbell in each hand.",
+        "Step:2 Walk your feet forward and roll your body down until your head, neck, and upper back are supported by the ball.",
+        "Step:3 Extend your arms straight up above your chest, palms facing each other.",
+        "Step:4 Bend your elbows slightly and lower your arms out to the sides in a wide arc until you feel a stretch in your chest.",
+        "Step:5 Pause for a moment, then reverse the movement and squeeze your chest muscles as you bring the dumbbells back to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "NL6YBwN",
+      "name": "dumbbell decline one arm fly",
+      "gifUrl": "https://static.exercisedb.dev/media/NL6YBwN.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Lie down on a decline bench with a dumbbell in one hand, resting it on your thigh.",
+        "Step:2 Using your thigh to help raise the dumbbell, lift it up to shoulder width with your palm facing your torso.",
+        "Step:3 Rotate your wrist so that the palm of your hand is facing forward.",
+        "Step:4 As you breathe in, lower the dumbbell slowly to the side until you feel a stretch in your chest.",
+        "Step:5 Exhale and use your chest muscles to bring the dumbbell back up to the starting position.",
+        "Step:6 Repeat for the desired number of repetitions, then switch arms."
+      ]
+    },
+    {
+      "exerciseId": "ns0SIbU",
+      "name": "dumbbell incline bench press",
+      "gifUrl": "https://static.exercisedb.dev/media/ns0SIbU.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Set up an incline bench at a 45-degree angle.",
+        "Step:2 Sit on the bench with your feet flat on the ground and your back pressed firmly against the bench.",
+        "Step:3 Hold a dumbbell in each hand, palms facing forward, and lift them to shoulder height.",
+        "Step:4 Slowly lower the dumbbells to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Step:5 Push the dumbbells back up to the starting position, fully extending your arms.",
+        "Step:6 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "o5Jsk92",
+      "name": "dumbbell one arm bench fly",
+      "gifUrl": "https://static.exercisedb.dev/media/o5Jsk92.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "dumbbell"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Sit on a flat bench with a dumbbell in one hand, resting it on top of your thigh.",
+        "Step:2 Lie back on the bench, keeping the dumbbell pressed against your thigh.",
+        "Step:3 Using your free hand, help lift the dumbbell up to the starting position.",
+        "Step:4 Hold the dumbbell directly above your shoulder with your arm extended and palm facing inward.",
+        "Step:5 Lower the dumbbell out to the side in a wide arc, keeping a slight bend in your elbow.",
+        "Step:6 Pause when your arm is parallel to the ground, then reverse the movement and bring the dumbbell back to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions, then switch arms and repeat."
+      ]
+    }
+  ]
+}

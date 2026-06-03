@@ -32,9 +32,11 @@ const upperlegs = "/Users/huitailang/workdir/spider-server/download/upperlegs.js
 const waist = "/Users/huitailang/workdir/spider-server/download/waist.json"
 const barbell = "/Users/huitailang/workdir/spider-server/download/barbell.json"
 
+const temp = "/Users/huitailang/workdir/spider-server/download/chest_barbell.json"
+
 func main() {
 	// 读取 JSON 文件
-	file, err := os.Open(barbell)
+	file, err := os.Open(temp)
 	if err != nil {
 		panic(err)
 	}
