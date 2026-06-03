@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spider Router Error Codes"
+  short_description: "Keep spider-server router errors consistent"
+  default_prompt: "Use $spider-router-error-codes when adding or changing spider-server router logic."
