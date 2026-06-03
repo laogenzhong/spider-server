@@ -5,4 +5,5 @@
 /vendor/
 *.log
 /bin/
-/gen/
+/gen/node_modules/
+downloads/

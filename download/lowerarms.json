@@ -1,236 +1,659 @@
 {
   "success": true,
   "meta": {
-    "total": 9,
-    "hasNextPage": false,
-    "hasPreviousPage": false
+    "total": 44,
+    "hasNextPage": true,
+    "hasPreviousPage": false,
+    "nextCursor": "LEH9jxP"
   },
   "data": [
     {
-      "exerciseId": "2qTvJAZ",
-      "name": "barbell standing back wrist curl",
-      "gifUrl": "https://static.exercisedb.dev/media/2qTvJAZ.gif",
+      "exerciseId": "11wrviz",
+      "name": "isometric wipers",
+      "gifUrl": "https://static.exercisedb.dev/media/11wrviz.gif",
       "bodyParts": [
-        "lower arms"
+        "chest"
       ],
       "equipments": [
-        "barbell"
+        "body weight"
       ],
       "targetMuscles": [
-        "forearms"
+        "pectorals"
       ],
       "secondaryMuscles": [
-        "biceps",
+        "shoulders",
+        "triceps",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Start by lying flat on your back on a mat or bench.",
+        "Step:2 Extend your arms straight out to the sides, perpendicular to your body.",
+        "Step:3 Engage your core and lift both legs off the ground, keeping them together and straight.",
+        "Step:4 Slowly lower your legs to one side, aiming to touch the ground with your feet while maintaining control.",
+        "Step:5 Pause for a moment, then use your core to lift your legs back to the starting position.",
+        "Step:6 Repeat the movement, this time lowering your legs to the opposite side.",
+        "Step:7 Continue alternating sides for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "13TpY4H",
+      "name": "raise single arm push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/13TpY4H.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Start in a push-up position with your hands slightly wider than shoulder-width apart and your feet together.",
+        "Step:2 Extend one arm straight out to the side, parallel to the ground.",
+        "Step:3 Lower your body towards the ground by bending your elbows, keeping your back straight and core engaged.",
+        "Step:4 Push back up to the starting position, using your chest muscles to lift your body.",
+        "Step:5 Repeat with the other arm extended."
+      ]
+    },
+    {
+      "exerciseId": "3uj0Ozg",
+      "name": "dynamic chest stretch (male)",
+      "gifUrl": "https://static.exercisedb.dev/media/3uj0Ozg.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": [
+        "Step:1 Stand tall with your feet shoulder-width apart.",
+        "Step:2 Extend your arms straight out to the sides, parallel to the ground.",
+        "Step:3 Slowly bring your arms forward, crossing them in front of your body.",
+        "Step:4 Feel the stretch in your chest muscles.",
+        "Step:5 Hold the stretch for 10-30 seconds.",
+        "Step:6 Return to the starting position and repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "4GqRrAk",
+      "name": "superman push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/4GqRrAk.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "core",
         "shoulders"
       ],
       "instructions": [
-        "Step:1 Stand up straight with your feet shoulder-width apart and hold a barbell with an overhand grip.",
-        "Step:2 Rest the barbell on the back of your hands with your palms facing down and your fingers pointing towards your body.",
-        "Step:3 Keeping your upper arms stationary, exhale and curl your wrists upwards as far as possible.",
-        "Step:4 Hold the contracted position for a brief pause, then inhale and slowly lower the barbell back to the starting position.",
+        "Step:1 Start in a high plank position with your hands slightly wider than shoulder-width apart and your feet together.",
+        "Step:2 Engage your core and lower your body towards the ground, keeping your elbows close to your sides.",
+        "Step:3 As you lower your body, simultaneously lift your right arm and left leg off the ground, extending them straight out.",
+        "Step:4 Pause for a moment at the top, then lower your arm and leg back down while pushing yourself back up to the starting position.",
+        "Step:5 Repeat the movement, this time lifting your left arm and right leg.",
+        "Step:6 Continue alternating sides for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "7E06s6d",
+      "name": "chest tap push-up (male)",
+      "gifUrl": "https://static.exercisedb.dev/media/7E06s6d.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Start in a high plank position with your hands slightly wider than shoulder-width apart and your body in a straight line.",
+        "Step:2 Lower your body towards the ground by bending your elbows, keeping them close to your sides.",
+        "Step:3 As you lower yourself, tap your chest with your right hand.",
+        "Step:4 Push yourself back up to the starting position.",
+        "Step:5 Repeat the movement, this time tapping your chest with your left hand.",
+        "Step:6 Continue alternating sides for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "9WTm7dq",
+      "name": "chest dip",
+      "gifUrl": "https://static.exercisedb.dev/media/9WTm7dq.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Position yourself on parallel bars with your arms fully extended and your body straight.",
+        "Step:2 Lower your body by bending your elbows until your shoulders are below your elbows.",
+        "Step:3 Push yourself back up to the starting position by straightening your arms.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "A9qxk2F",
+      "name": "archer push up",
+      "gifUrl": "https://static.exercisedb.dev/media/A9qxk2F.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Start in a push-up position with your hands slightly wider than shoulder-width apart.",
+        "Step:2 Extend one arm straight out to the side, parallel to the ground.",
+        "Step:3 Lower your body by bending your elbows, keeping your back straight and core engaged.",
+        "Step:4 Push back up to the starting position.",
+        "Step:5 Repeat on the other side, extending the opposite arm out to the side.",
+        "Step:6 Continue alternating sides for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "B1EVP9F",
+      "name": "incline push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/B1EVP9F.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Place your hands on an elevated surface, such as a bench or step, slightly wider than shoulder-width apart.",
+        "Step:2 Extend your legs behind you, resting on the balls of your feet, creating a straight line from your head to your heels.",
+        "Step:3 Lower your chest towards the elevated surface by bending your elbows, keeping your body in a straight line.",
+        "Step:4 Pause for a moment at the bottom, then push yourself back up to the starting position by straightening your arms.",
         "Step:5 Repeat for the desired number of repetitions."
       ]
     },
     {
-      "exerciseId": "6kSxYnw",
-      "name": "barbell wrist curl v. 2",
-      "gifUrl": "https://static.exercisedb.dev/media/6kSxYnw.gif",
+      "exerciseId": "CB8WET1",
+      "name": "incline push up depth jump",
+      "gifUrl": "https://static.exercisedb.dev/media/CB8WET1.gif",
       "bodyParts": [
-        "lower arms"
+        "chest"
       ],
       "equipments": [
-        "barbell"
+        "body weight"
       ],
       "targetMuscles": [
-        "forearms"
+        "pectorals"
       ],
       "secondaryMuscles": [
-        "biceps",
-        "brachialis"
+        "triceps",
+        "shoulders",
+        "core"
       ],
       "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and your knees bent.",
-        "Step:2 Hold a barbell with an underhand grip, palms facing up, and your hands shoulder-width apart.",
-        "Step:3 Rest your forearms on your thighs, allowing your wrists to hang off the edge.",
-        "Step:4 Slowly curl your wrists upward, bringing the barbell towards your forearms.",
-        "Step:5 Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
+        "Step:1 Find an elevated surface, such as a bench or step, and place your hands shoulder-width apart on the edge.",
+        "Step:2 Step your feet back, keeping your body in a straight line from head to heels.",
+        "Step:3 Lower your chest towards the edge of the surface, bending your elbows and keeping your body aligned.",
+        "Step:4 Push through your palms to extend your arms and return to the starting position.",
+        "Step:5 Jump off the edge of the surface, landing softly with your knees slightly bent.",
+        "Step:6 Repeat the push-up and depth jump for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "CMAxnsG",
+      "name": "clock push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/CMAxnsG.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Start in a high plank position with your hands directly under your shoulders and your body in a straight line.",
+        "Step:2 Lower your body towards the ground by bending your elbows, keeping them close to your sides.",
+        "Step:3 As you lower, rotate your body to the left, extending your left arm straight out to the side.",
+        "Step:4 Push back up to the starting position, while rotating your body to the center.",
+        "Step:5 Repeat the push-up, this time rotating your body to the right and extending your right arm out to the side.",
+        "Step:6 Continue alternating sides with each repetition."
+      ]
+    },
+    {
+      "exerciseId": "EpKrFiv",
+      "name": "incline push up depth jump with complex",
+      "gifUrl": "https://static.exercisedb.dev/media/EpKrFiv.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Find an elevated surface, such as a bench or step, and place your hands shoulder-width apart on the edge.",
+        "Step:2 Step your feet back, keeping your body in a straight line from head to heels.",
+        "Step:3 Lower your chest towards the edge of the surface, bending your elbows and keeping your body aligned. Maintain complex form throughout.",
+        "Step:4 Push through your palms to extend your arms and return to the starting position.",
+        "Step:5 Jump off the edge of the surface, landing softly with your knees slightly bent.",
+        "Step:6 Repeat the push-up and depth jump for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "epOSYUZ",
+      "name": "modified hindu push-up (male)",
+      "gifUrl": "https://static.exercisedb.dev/media/epOSYUZ.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Start in a push-up position with your hands slightly wider than shoulder-width apart and your feet hip-width apart.",
+        "Step:2 Lower your body towards the ground, bending your elbows and keeping your core engaged.",
+        "Step:3 As you lower your body, shift your weight back and lift your hips up towards the ceiling, creating an inverted V shape with your body.",
+        "Step:4 Continue to lower your body until your chest is just above the ground, then reverse the movement, pushing your hips back down and extending your arms to return to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "F7vjXqT",
+      "name": "incline push-up (on box)",
+      "gifUrl": "https://static.exercisedb.dev/media/F7vjXqT.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Place your hands on the edge of a box or elevated surface, slightly wider than shoulder-width apart.",
+        "Step:2 Extend your legs behind you, resting on the balls of your feet, creating a straight line from your head to your heels.",
+        "Step:3 Lower your chest towards the box by bending your elbows, keeping your body in a straight line.",
+        "Step:4 Pause for a moment at the bottom, then push yourself back up to the starting position by straightening your arms.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "FSF9WOs",
+      "name": "wide-grip chest dip on high parallel bars - low variation",
+      "gifUrl": "https://static.exercisedb.dev/media/FSF9WOs.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Position yourself on the parallel bars with your arms fully extended and your body suspended in the air.",
+        "Step:2 Lean forward slightly and lower your body by bending your elbows until your chest is just above the bars.",
+        "Step:3 (low variation) Pause for a moment, then push yourself back up to the starting position by straightening your arms.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "GdMa1ET",
+      "name": "incline scapula push up",
+      "gifUrl": "https://static.exercisedb.dev/media/GdMa1ET.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "serratus anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Set up an incline bench at a 45-degree angle.",
+        "Step:2 Place your hands on the bench slightly wider than shoulder-width apart.",
+        "Step:3 Position your feet on the ground, hip-width apart.",
+        "Step:4 Lower your chest towards the bench, keeping your elbows tucked in.",
+        "Step:5 As you lower, retract your shoulder blades, squeezing your scapulae together.",
+        "Step:6 Push through your palms to extend your arms and return to the starting position.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "gMyx3Qn",
+      "name": "high style scapula push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/gMyx3Qn.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "serratus anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Start in a high plank position with your hands directly under your shoulders and your body in a straight line.",
+        "Step:2 Lower your chest towards the ground, keeping your elbows close to your body.",
+        "Step:3 As you lower, squeeze your shoulder blades together and push your chest forward. Focus on high movement.",
+        "Step:4 Pause for a moment at the bottom, then push back up to the starting position.",
+        "Step:5 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "gw9PqGk",
+      "name": "full planche push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/gw9PqGk.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps",
+        "core"
+      ],
+      "instructions": [
+        "Step:1 Start in a push-up position with your hands placed slightly wider than shoulder-width apart.",
+        "Step:2 Engage your core and lower your body down towards the ground, keeping your elbows close to your sides.",
+        "Step:3 As you lower yourself, lean your body forward and lift your feet off the ground, balancing on your hands.",
+        "Step:4 Continue to lower your body until your chest is just above the ground.",
+        "Step:5 Push through your hands and extend your arms to lift your body back up to the starting position.",
+        "Step:6 Maintain a straight line from your head to your heels throughout the movement.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "HbSG1Pw",
+      "name": "isometric chest squeeze",
+      "gifUrl": "https://static.exercisedb.dev/media/HbSG1Pw.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Stand with your feet shoulder-width apart and your knees slightly bent.",
+        "Step:2 Extend your arms straight out in front of you, parallel to the ground, with your palms facing each other.",
+        "Step:3 Squeeze your chest muscles together as hard as you can, while keeping your arms straight.",
+        "Step:4 Hold this position for a few seconds, focusing on contracting your chest muscles.",
+        "Step:5 Release the squeeze and relax your chest muscles.",
         "Step:6 Repeat for the desired number of repetitions."
       ]
     },
     {
-      "exerciseId": "82LxxkW",
-      "name": "barbell wrist curl",
-      "gifUrl": "https://static.exercisedb.dev/media/82LxxkW.gif",
+      "exerciseId": "I4hDWkc",
+      "name": "push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/I4hDWkc.gif",
       "bodyParts": [
-        "lower arms"
+        "chest"
       ],
       "equipments": [
-        "barbell"
+        "body weight"
       ],
       "targetMuscles": [
-        "forearms"
+        "pectorals"
       ],
       "secondaryMuscles": [
-        "biceps",
-        "brachialis"
+        "triceps",
+        "deltoids",
+        "core"
       ],
       "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and your forearms resting on your thighs, holding a barbell with an underhand grip.",
-        "Step:2 Allow the barbell to roll down to your fingertips, keeping your wrists straight.",
-        "Step:3 Slowly curl the barbell up towards your forearms by flexing your wrists.",
-        "Step:4 Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
+        "Step:1 Start in a high plank position with your hands slightly wider than shoulder-width apart and your feet together.",
+        "Step:2 Engage your core and lower your body towards the ground by bending your elbows, keeping your body in a straight line.",
+        "Step:3 Pause for a moment when your chest is just above the ground, then push yourself back up to the starting position by straightening your arms.",
+        "Step:4 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "i5cEhka",
+      "name": "decline push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/i5cEhka.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": [
+        "Step:1 Place your hands on the ground slightly wider than shoulder-width apart, with your feet elevated on a stable surface.",
+        "Step:2 Keep your body in a straight line from head to toe, engaging your core muscles.",
+        "Step:3 Lower your chest towards the ground by bending your elbows, keeping them close to your body.",
+        "Step:4 Push through your palms to extend your arms and return to the starting position.",
         "Step:5 Repeat for the desired number of repetitions."
       ]
     },
     {
-      "exerciseId": "awG04cF",
-      "name": "finger curls",
-      "gifUrl": "https://static.exercisedb.dev/media/awG04cF.gif",
+      "exerciseId": "IaGQCrC",
+      "name": "suspended push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/IaGQCrC.gif",
       "bodyParts": [
-        "lower arms"
+        "chest"
       ],
       "equipments": [
-        "barbell"
+        "body weight"
       ],
       "targetMuscles": [
-        "forearms"
+        "pectorals"
       ],
       "secondaryMuscles": [
-        "wrist flexors",
-        "grip muscles"
+        "triceps",
+        "shoulders",
+        "core"
       ],
       "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and hold a barbell with an underhand grip, palms facing up.",
-        "Step:2 Rest your forearms on your thighs, allowing your wrists to hang off the edge.",
-        "Step:3 Slowly curl your fingers towards your palms, squeezing the barbell tightly.",
-        "Step:4 Hold the contraction for a moment, then slowly release your fingers back to the starting position.",
-        "Step:5 Repeat for the desired number of repetitions."
-      ]
-    },
-    {
-      "exerciseId": "LsZkfU6",
-      "name": "barbell reverse wrist curl",
-      "gifUrl": "https://static.exercisedb.dev/media/LsZkfU6.gif",
-      "bodyParts": [
-        "lower arms"
-      ],
-      "equipments": [
-        "barbell"
-      ],
-      "targetMuscles": [
-        "forearms"
-      ],
-      "secondaryMuscles": [
-        "biceps",
-        "brachialis"
-      ],
-      "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and hold a barbell with an overhand grip, palms facing down.",
-        "Step:2 Rest your forearms on your thighs, allowing your wrists to hang off the edge.",
-        "Step:3 Slowly curl your wrists upward, bringing the barbell towards your body.",
-        "Step:4 Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
-        "Step:5 Repeat for the desired number of repetitions."
-      ]
-    },
-    {
-      "exerciseId": "qDnGfDb",
-      "name": "barbell revers wrist curl v. 2",
-      "gifUrl": "https://static.exercisedb.dev/media/qDnGfDb.gif",
-      "bodyParts": [
-        "lower arms"
-      ],
-      "equipments": [
-        "barbell"
-      ],
-      "targetMuscles": [
-        "forearms"
-      ],
-      "secondaryMuscles": [
-        "biceps",
-        "brachialis"
-      ],
-      "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and your knees bent.",
-        "Step:2 Hold a barbell with an overhand grip, palms facing down, and your hands shoulder-width apart.",
-        "Step:3 Rest your forearms on your thighs, allowing your wrists to hang off the edge.",
-        "Step:4 Keeping your forearms stationary, exhale and curl your wrists upward as far as possible.",
-        "Step:5 Hold the contracted position for a brief pause, then inhale and slowly lower the barbell back to the starting position.",
+        "Step:1 Find a suspension trainer and adjust it to an appropriate height.",
+        "Step:2 Stand facing away from the anchor point and hold the handles with an overhand grip.",
+        "Step:3 Walk your feet forward, leaning your body forward until your weight is supported by the suspension trainer.",
+        "Step:4 Keep your body straight from head to heels, engage your core, and lower your chest towards the handles.",
+        "Step:5 Push through your chest and arms to return to the starting position.",
         "Step:6 Repeat for the desired number of repetitions."
       ]
     },
     {
-      "exerciseId": "SJAA2IQ",
-      "name": "barbell palms up wrist curl over a bench",
-      "gifUrl": "https://static.exercisedb.dev/media/SJAA2IQ.gif",
+      "exerciseId": "iDGtjyi",
+      "name": "chest and front of shoulder stretch micro",
+      "gifUrl": "https://static.exercisedb.dev/media/iDGtjyi.gif",
       "bodyParts": [
-        "lower arms"
+        "chest"
       ],
       "equipments": [
-        "barbell"
+        "body weight"
       ],
       "targetMuscles": [
-        "forearms"
+        "pectorals"
       ],
       "secondaryMuscles": [
-        "biceps",
+        "deltoids"
+      ],
+      "instructions": [
+        "Step:1 Stand tall with your feet shoulder-width apart.",
+        "Step:2 Extend your arms straight out in front of you at shoulder height.",
+        "Step:3 Cross your arms in front of your body, with your right arm on top of your left arm.",
+        "Step:4 Interlace your fingers and press your palms together.",
+        "Step:5 Gently squeeze your shoulder blades together and push your hands forward, feeling a stretch in your chest and front of your shoulders.",
+        "Step:6 (micro variation) Hold the stretch for 20-30 seconds, then release.",
+        "Step:7 Repeat for the desired number of repetitions."
+      ]
+    },
+    {
+      "exerciseId": "JmMVpR3",
+      "name": "wide hand push up",
+      "gifUrl": "https://static.exercisedb.dev/media/JmMVpR3.gif",
+      "bodyParts": [
+        "chest"
+      ],
+      "equipments": [
+        "body weight"
+      ],
+      "targetMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
         "shoulders"
       ],
       "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and hold a barbell with an underhand grip, palms facing up.",
-        "Step:2 Rest your forearms on the bench, allowing your wrists to hang off the edge.",
-        "Step:3 Keeping your forearms stationary, exhale and curl your wrists upwards as far as possible.",
-        "Step:4 Hold the contracted position for a brief pause, then inhale and slowly lower the barbell back to the starting position.",
+        "Step:1 Start in a high plank position with your hands wider than shoulder-width apart.",
+        "Step:2 Keep your body in a straight line from head to toe.",
+        "Step:3 Lower your chest towards the ground by bending your elbows, keeping them close to your sides.",
+        "Step:4 Push through your palms to extend your arms and return to the starting position.",
         "Step:5 Repeat for the desired number of repetitions."
       ]
     },
     {
-      "exerciseId": "YA2HKGz",
-      "name": "barbell reverse wrist curl - prone variation",
-      "gifUrl": "https://static.exercisedb.dev/media/YA2HKGz.gif",
+      "exerciseId": "jV65tKx",
+      "name": "scapula push-up",
+      "gifUrl": "https://static.exercisedb.dev/media/jV65tKx.gif",
       "bodyParts": [
-        "lower arms"
+        "chest"
       ],
       "equipments": [
-        "barbell"
+        "body weight"
       ],
       "targetMuscles": [
-        "forearms"
+        "serratus anterior"
       ],
       "secondaryMuscles": [
-        "biceps",
-        "brachialis"
+        "triceps",
+        "shoulders"
       ],
       "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and hold a barbell with an overhand grip, palms facing down.",
-        "Step:2 Rest your forearms on your thighs, allowing your wrists to hang off the edge.",
-        "Step:3 Slowly curl your wrists upward, bringing the barbell towards your body. Emphasize prone control.",
-        "Step:4 Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
+        "Step:1 Start in a high plank position with your hands directly under your shoulders and your body in a straight line.",
+        "Step:2 Lower your chest towards the ground, keeping your elbows close to your body.",
+        "Step:3 As you lower, squeeze your shoulder blades together and push your chest forward.",
+        "Step:4 Pause for a moment at the bottom, then push back up to the starting position.",
         "Step:5 Repeat for the desired number of repetitions."
       ]
     },
     {
-      "exerciseId": "yzYH9pI",
-      "name": "barbell palms down wrist curl over a bench",
-      "gifUrl": "https://static.exercisedb.dev/media/yzYH9pI.gif",
+      "exerciseId": "LEH9jxP",
+      "name": "push-up (wall)",
+      "gifUrl": "https://static.exercisedb.dev/media/LEH9jxP.gif",
       "bodyParts": [
-        "lower arms"
+        "chest"
       ],
       "equipments": [
-        "barbell"
+        "body weight"
       ],
       "targetMuscles": [
-        "forearms"
+        "pectorals"
       ],
       "secondaryMuscles": [
-        "biceps",
-        "brachialis"
+        "triceps",
+        "deltoids"
       ],
       "instructions": [
-        "Step:1 Sit on a bench with your feet flat on the ground and your forearms resting on your thighs, palms facing down.",
-        "Step:2 Hold a barbell with an overhand grip, hands shoulder-width apart.",
-        "Step:3 Lower the barbell towards the ground by flexing your wrists, keeping your forearms stationary.",
-        "Step:4 Pause for a moment at the bottom, then slowly raise the barbell back up by extending your wrists.",
-        "Step:5 Repeat for the desired number of repetitions."
+        "Step:1 Stand facing a wall, about arm's length away.",
+        "Step:2 Place your hands on the wall at shoulder height, slightly wider than shoulder-width apart.",
+        "Step:3 Step back a few feet, keeping your body straight and your feet hip-width apart.",
+        "Step:4 Bend your elbows and lower your chest towards the wall, keeping your body in a straight line.",
+        "Step:5 Push back up to the starting position, straightening your arms.",
+        "Step:6 Repeat for the desired number of repetitions."
       ]
     }
   ]
