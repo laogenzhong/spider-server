@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 
+	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
@@ -23,19 +22,19 @@ func (a *BodyPhotoApi) SaveBodyPhoto(ctx context.Context, req *pb.SaveBodyPhotoR
 	uid := session.GetUser(ctx).UID()
 	record := req.GetRecord()
 	if record == nil {
-		return nil, status.Error(codes.InvalidArgument, "record 不能为空")
+		return session.Error(ctx, gamecode.BodyPhotoRecordEmpty, &pb.SaveBodyPhotoResponse{})
 	}
 	if record.GetClientRecordId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "client_record_id 不能为空")
+		return session.Error(ctx, gamecode.BodyPhotoClientRecordIDEmpty, &pb.SaveBodyPhotoResponse{})
 	}
 	if record.GetPhotoLibraryAssetId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "photo_library_asset_id 不能为空")
+		return session.Error(ctx, gamecode.BodyPhotoAssetIDEmpty, &pb.SaveBodyPhotoResponse{})
 	}
 	if record.GetKind() == pb.BodyPhotoKind_BODY_PHOTO_KIND_UNKNOWN {
-		return nil, status.Error(codes.InvalidArgument, "kind 不能为空")
+		return session.Error(ctx, gamecode.BodyPhotoKindEmpty, &pb.SaveBodyPhotoResponse{})
 	}
 	if record.GetRecordAt() == 0 {
-		return nil, status.Error(codes.InvalidArgument, "record_at 不能为空")
+		return session.Error(ctx, gamecode.BodyPhotoRecordAtEmpty, &pb.SaveBodyPhotoResponse{})
 	}
 
 	saved, err := mysqlmodel.SaveBodyPhotoRecord(&mysqlmodel.BodyPhotoRecord{
@@ -49,7 +48,7 @@ func (a *BodyPhotoApi) SaveBodyPhoto(ctx context.Context, req *pb.SaveBodyPhotoR
 		FileName:            record.GetFileName(),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "保存照片索引失败：%v", err)
+		return session.Error(ctx, gamecode.BodyPhotoSaveFailed, &pb.SaveBodyPhotoResponse{})
 	}
 
 	return &pb.SaveBodyPhotoResponse{
@@ -61,15 +60,15 @@ func (a *BodyPhotoApi) SaveBodyPhoto(ctx context.Context, req *pb.SaveBodyPhotoR
 func (a *BodyPhotoApi) DeleteBodyPhoto(ctx context.Context, req *pb.DeleteBodyPhotoRequest) (*pb.DeleteBodyPhotoResponse, error) {
 	uid := session.GetUser(ctx).UID()
 	if req.GetId() == 0 && req.GetClientRecordId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "id 和 client_record_id 不能同时为空")
+		return session.Error(ctx, gamecode.BodyPhotoDeleteKeyEmpty, &pb.DeleteBodyPhotoResponse{})
 	}
 
 	err := mysqlmodel.DeleteBodyPhotoRecord(uid, req.GetId(), req.GetClientRecordId())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "照片索引不存在")
+		return session.Error(ctx, gamecode.BodyPhotoNotFound, &pb.DeleteBodyPhotoResponse{})
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "删除照片索引失败：%v", err)
+		return session.Error(ctx, gamecode.BodyPhotoDeleteFailed, &pb.DeleteBodyPhotoResponse{})
 	}
 
 	return &pb.DeleteBodyPhotoResponse{Success: true}, nil

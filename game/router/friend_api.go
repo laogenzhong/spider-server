@@ -5,12 +5,11 @@ import (
 	"errors"
 	"strconv"
 
+	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
@@ -25,17 +24,17 @@ func (a *FriendApi) ListFriends(ctx context.Context, req *pb.ListFriendsRequest)
 
 	myProfile, err := mysqlmodel.EnsureFriendProfile(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取当前用户朋友资料失败：%v", err)
+		return session.Error(ctx, gamecode.FriendProfileQueryFailed, &pb.ListFriendsResponse{})
 	}
 
 	profiles, _, err := mysqlmodel.ListFriendProfiles(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取好友列表失败：%v", err)
+		return session.Error(ctx, gamecode.FriendListQueryFailed, &pb.ListFriendsResponse{})
 	}
 
 	remarks, err := mysqlmodel.GetFriendRemarks(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取好友备注失败：%v", err)
+		return session.Error(ctx, gamecode.FriendRemarkQueryFailed, &pb.ListFriendsResponse{})
 	}
 
 	friends := make([]*pb.FriendListItem, 0, len(profiles))
@@ -57,15 +56,15 @@ func (a *FriendApi) ListFriends(ctx context.Context, req *pb.ListFriendsRequest)
 func (a *FriendApi) AddFriend(ctx context.Context, req *pb.AddFriendRequest) (*pb.AddFriendResponse, error) {
 	uid := session.GetUser(ctx).UID()
 	if req.GetFriendUserId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "friend_user_id 不能为空")
+		return session.Error(ctx, gamecode.FriendUserIDEmpty, &pb.AddFriendResponse{})
 	}
 
 	message, err := mysqlmodel.AddFriendRequest(uid, req.GetFriendUserId())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "用户不存在")
+		return session.Error(ctx, gamecode.FriendUserNotFound, &pb.AddFriendResponse{})
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "发送好友申请失败：%v", err)
+		return session.Error(ctx, gamecode.FriendRequestSendFailed, &pb.AddFriendResponse{})
 	}
 
 	return &pb.AddFriendResponse{
@@ -80,14 +79,14 @@ func (a *FriendApi) ListFriendRequests(ctx context.Context, req *pb.ListFriendRe
 
 	requests, err := mysqlmodel.ListReceivedFriendRequests(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取好友申请失败：%v", err)
+		return session.Error(ctx, gamecode.FriendRequestListFailed, &pb.ListFriendRequestsResponse{})
 	}
 
 	respRequests := make([]*pb.FriendRequest, 0, len(requests))
 	for _, request := range requests {
 		fromProfile, err := mysqlmodel.EnsureFriendProfile(request.FromUID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "获取申请人资料失败：%v", err)
+			return session.Error(ctx, gamecode.FriendRequestApplicantQueryFailed, &pb.ListFriendRequestsResponse{})
 		}
 		respRequests = append(respRequests, convertFriendRequest(request, fromProfile))
 	}
@@ -99,15 +98,15 @@ func (a *FriendApi) ListFriendRequests(ctx context.Context, req *pb.ListFriendRe
 func (a *FriendApi) HandleFriendRequest(ctx context.Context, req *pb.HandleFriendRequestRequest) (*pb.HandleFriendRequestResponse, error) {
 	uid := session.GetUser(ctx).UID()
 	if req.GetRequestId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "request_id 不能为空")
+		return session.Error(ctx, gamecode.FriendRequestIDEmpty, &pb.HandleFriendRequestResponse{})
 	}
 
 	err := mysqlmodel.HandleFriendRequest(uid, req.GetRequestId(), req.GetAccept())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "好友申请不存在")
+		return session.Error(ctx, gamecode.FriendRequestNotFound, &pb.HandleFriendRequestResponse{})
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "处理好友申请失败：%v", err)
+		return session.Error(ctx, gamecode.FriendRequestHandleFailed, &pb.HandleFriendRequestResponse{})
 	}
 
 	return &pb.HandleFriendRequestResponse{Success: true}, nil
@@ -129,7 +128,7 @@ func (a *FriendApi) UpdateTrainingDataVisibility(ctx context.Context, req *pb.Up
 
 	_, err := mysqlmodel.UpdateTrainingDataVisibility(uid, req.GetVisible(), sparkDays, days, updatedAt)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "更新训练公开状态失败：%v", err)
+		return session.Error(ctx, gamecode.FriendTrainingVisibilityUpdateFailed, &pb.UpdateTrainingDataVisibilityResponse{})
 	}
 
 	return &pb.UpdateTrainingDataVisibilityResponse{Visible: req.GetVisible()}, nil
@@ -140,7 +139,7 @@ func (a *FriendApi) UploadMyTrainingPublicSnapshot(ctx context.Context, req *pb.
 	uid := session.GetUser(ctx).UID()
 	snapshot := req.GetSnapshot()
 	if snapshot == nil {
-		return nil, status.Error(codes.InvalidArgument, "snapshot 不能为空")
+		return session.Error(ctx, gamecode.FriendTrainingSnapshotEmpty, &pb.UploadMyTrainingPublicSnapshotResponse{})
 	}
 
 	err := mysqlmodel.UploadTrainingPublicSnapshot(
@@ -150,7 +149,7 @@ func (a *FriendApi) UploadMyTrainingPublicSnapshot(ctx context.Context, req *pb.
 		snapshot.GetUpdatedAt(),
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "上传训练公开快照失败：%v", err)
+		return session.Error(ctx, gamecode.FriendTrainingSnapshotUploadFailed, &pb.UploadMyTrainingPublicSnapshotResponse{})
 	}
 
 	return &pb.UploadMyTrainingPublicSnapshotResponse{Success: true}, nil
@@ -162,11 +161,11 @@ func (a *FriendApi) GetFriendEntryStatus(ctx context.Context, req *pb.GetFriendE
 
 	profile, err := mysqlmodel.EnsureFriendProfile(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取当前用户朋友资料失败：%v", err)
+		return session.Error(ctx, gamecode.FriendProfileQueryFailed, &pb.GetFriendEntryStatusResponse{})
 	}
 	pendingCount, err := mysqlmodel.CountPendingFriendRequests(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取好友入口状态失败：%v", err)
+		return session.Error(ctx, gamecode.FriendEntryStatusQueryFailed, &pb.GetFriendEntryStatusResponse{})
 	}
 
 	return &pb.GetFriendEntryStatusResponse{
@@ -182,12 +181,12 @@ func (a *FriendApi) GetFriendProfile(ctx context.Context, req *pb.GetFriendProfi
 	friendUID := req.GetUid()
 
 	if friendUID == 0 {
-		return nil, status.Error(codes.InvalidArgument, "uid 不能为空")
+		return session.Error(ctx, gamecode.FriendUIDEmpty, &pb.GetFriendProfileResponse{})
 	}
 
 	profiles, relationCreatedAt, err := mysqlmodel.ListFriendProfiles(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取好友列表失败：%v", err)
+		return session.Error(ctx, gamecode.FriendListQueryFailed, &pb.GetFriendProfileResponse{})
 	}
 
 	var target *mysqlmodel.FriendProfileRecord
@@ -202,7 +201,7 @@ func (a *FriendApi) GetFriendProfile(ctx context.Context, req *pb.GetFriendProfi
 	}
 
 	if target == nil {
-		return nil, status.Error(codes.NotFound, "好友不存在")
+		return session.Error(ctx, gamecode.FriendNotFound, &pb.GetFriendProfileResponse{})
 	}
 
 	return &pb.GetFriendProfileResponse{
@@ -216,7 +215,7 @@ func (a *FriendApi) GetMyFriendProfile(ctx context.Context, req *pb.GetMyFriendP
 
 	profile, err := mysqlmodel.EnsureFriendProfile(uid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "获取朋友资料失败：%v", err)
+		return session.Error(ctx, gamecode.FriendProfileQueryFailed, &pb.GetMyFriendProfileResponse{})
 	}
 
 	return &pb.GetMyFriendProfileResponse{
@@ -230,15 +229,15 @@ func (a *FriendApi) UpdateFriendRemark(ctx context.Context, req *pb.UpdateFriend
 	friendUID := req.GetUid()
 
 	if friendUID == 0 {
-		return nil, status.Error(codes.InvalidArgument, "uid 不能为空")
+		return session.Error(ctx, gamecode.FriendUIDEmpty, &pb.UpdateFriendRemarkResponse{})
 	}
 
 	err := mysqlmodel.UpdateFriendRemark(uid, friendUID, req.GetRemark())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "好友不存在")
+		return session.Error(ctx, gamecode.FriendNotFound, &pb.UpdateFriendRemarkResponse{})
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "更新好友备注失败：%v", err)
+		return session.Error(ctx, gamecode.FriendRemarkUpdateFailed, &pb.UpdateFriendRemarkResponse{})
 	}
 
 	return &pb.UpdateFriendRemarkResponse{Success: true}, nil
@@ -257,7 +256,7 @@ func (a *FriendApi) UpdateMyFriendProfile(ctx context.Context, req *pb.UpdateMyF
 		req.GetPlanDescription(),
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "更新朋友资料失败：%v", err)
+		return session.Error(ctx, gamecode.FriendProfileUpdateFailed, &pb.UpdateMyFriendProfileResponse{})
 	}
 
 	return &pb.UpdateMyFriendProfileResponse{

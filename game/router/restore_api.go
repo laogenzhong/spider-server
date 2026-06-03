@@ -4,12 +4,10 @@ import (
 	"context"
 	"time"
 
+	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -32,12 +30,12 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 	uid := session.GetUser(ctx).UID()
 	startSnapshotID := req.GetStartSnapshotId()
 	if startSnapshotID < 0 {
-		return nil, status.Error(codes.InvalidArgument, "start_snapshot_id 不能小于 0")
+		return session.Error(ctx, gamecode.RestoreStartSnapshotInvalid, &pb.RestorePlanResponse{})
 	}
 
 	endSnapshotID := time.Now().UnixMilli()
 	if startSnapshotID > endSnapshotID {
-		return nil, status.Error(codes.InvalidArgument, "start_snapshot_id 不能大于当前服务端快照")
+		return session.Error(ctx, gamecode.RestoreStartAfterCurrent, &pb.RestorePlanResponse{})
 	}
 
 	batchSize := normalizeRestoreBatchSize(req.GetPreferredBatchSize())
@@ -46,7 +44,7 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 
 	weightCount, weightStartDate, weightEndDate, err := mysqlmodel.CountWeightRecordChanges(uid, startSnapshotID, endSnapshotID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "统计体重同步数据失败：%v", err)
+		return session.Error(ctx, gamecode.RestoreCountWeightFailed, &pb.RestorePlanResponse{})
 	}
 	if weightCount > 0 {
 		tasks = append(tasks, buildRestoreTask(
@@ -62,7 +60,7 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 
 	tagCount, err := mysqlmodel.CountTrainingTagChanges(uid, startSnapshotID, endSnapshotID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "统计训练标签同步数据失败：%v", err)
+		return session.Error(ctx, gamecode.RestoreCountTrainingTagsFailed, &pb.RestorePlanResponse{})
 	}
 	if tagCount > 0 {
 		tasks = append(tasks, buildRestoreTask(
@@ -78,7 +76,7 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 
 	bindingCount, bindingStartDate, bindingEndDate, err := mysqlmodel.CountWorkoutTagBindingChanges(uid, startSnapshotID, endSnapshotID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "统计训练标签绑定同步数据失败：%v", err)
+		return session.Error(ctx, gamecode.RestoreCountWorkoutTagBindingsFailed, &pb.RestorePlanResponse{})
 	}
 	if bindingCount > 0 {
 		tasks = append(tasks, buildRestoreTask(
@@ -94,7 +92,7 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 
 	photoCount, photoStartDate, photoEndDate, err := mysqlmodel.CountBodyPhotoRecordChanges(uid, startSnapshotID, endSnapshotID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "统计照片索引同步数据失败：%v", err)
+		return session.Error(ctx, gamecode.RestoreCountBodyPhotosFailed, &pb.RestorePlanResponse{})
 	}
 	if photoCount > 0 {
 		tasks = append(tasks, buildRestoreTask(
@@ -123,16 +121,16 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 	startSnapshotID := req.GetStartSnapshotId()
 	endSnapshotID := req.GetEndSnapshotId()
 	if startSnapshotID < 0 {
-		return nil, status.Error(codes.InvalidArgument, "start_snapshot_id 不能小于 0")
+		return session.Error(ctx, gamecode.RestoreStartSnapshotInvalid, &pb.RestoreBatchResponse{})
 	}
 	if endSnapshotID <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "end_snapshot_id 不能为空")
+		return session.Error(ctx, gamecode.RestoreEndSnapshotEmpty, &pb.RestoreBatchResponse{})
 	}
 	if startSnapshotID > endSnapshotID {
-		return nil, status.Error(codes.InvalidArgument, "start_snapshot_id 不能大于 end_snapshot_id")
+		return session.Error(ctx, gamecode.RestoreStartAfterEnd, &pb.RestoreBatchResponse{})
 	}
 	if req.GetTaskId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "task_id 不能为空")
+		return session.Error(ctx, gamecode.RestoreTaskIDEmpty, &pb.RestoreBatchResponse{})
 	}
 
 	batchSize := normalizeRestoreBatchSize(req.GetBatchSize())
@@ -143,11 +141,11 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 	case restoreTaskWeightRecords:
 		count, _, _, err := mysqlmodel.CountWeightRecordChanges(uid, startSnapshotID, endSnapshotID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "统计体重同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreCountWeightFailed, &pb.RestoreBatchResponse{})
 		}
 		records, err := mysqlmodel.ListWeightRecordChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "拉取体重同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreFetchWeightFailed, &pb.RestoreBatchResponse{})
 		}
 		items := make([]*pb.WeightRecordSyncItem, 0, len(records))
 		for _, record := range records {
@@ -176,11 +174,11 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 	case restoreTaskTrainingTags:
 		count, err := mysqlmodel.CountTrainingTagChanges(uid, startSnapshotID, endSnapshotID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "统计训练标签同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreCountTrainingTagsFailed, &pb.RestoreBatchResponse{})
 		}
 		tags, err := mysqlmodel.ListTrainingTagChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "拉取训练标签同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreFetchTrainingTagsFailed, &pb.RestoreBatchResponse{})
 		}
 		items := make([]*pb.TrainingTagSyncItem, 0, len(tags))
 		for _, tag := range tags {
@@ -209,11 +207,11 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 	case restoreTaskWorkoutTagBindings:
 		count, _, _, err := mysqlmodel.CountWorkoutTagBindingChanges(uid, startSnapshotID, endSnapshotID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "统计训练标签绑定同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreCountWorkoutTagBindingsFailed, &pb.RestoreBatchResponse{})
 		}
 		bindings, err := mysqlmodel.ListWorkoutTagBindingChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "拉取训练标签绑定同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreFetchWorkoutTagBindingsFailed, &pb.RestoreBatchResponse{})
 		}
 		items := make([]*pb.WorkoutTagBindingSyncItem, 0, len(bindings))
 		for _, binding := range bindings {
@@ -242,11 +240,11 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 	case restoreTaskBodyPhotos:
 		count, _, _, err := mysqlmodel.CountBodyPhotoRecordChanges(uid, startSnapshotID, endSnapshotID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "统计照片索引同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreCountBodyPhotosFailed, &pb.RestoreBatchResponse{})
 		}
 		records, err := mysqlmodel.ListBodyPhotoRecordChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "拉取照片索引同步数据失败：%v", err)
+			return session.Error(ctx, gamecode.RestoreFetchBodyPhotosFailed, &pb.RestoreBatchResponse{})
 		}
 		items := make([]*pb.BodyPhotoSyncItem, 0, len(records))
 		for _, record := range records {
@@ -273,7 +271,7 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		return resp, nil
 	}
 
-	return nil, status.Errorf(codes.InvalidArgument, "未知同步任务：%s", req.GetTaskId())
+	return session.Error(ctx, gamecode.RestoreTaskUnknown, &pb.RestoreBatchResponse{})
 }
 
 func buildRestoreTask(taskID string, dataType pb.RestoreDataType, startDate string, endDate string, totalCount uint64, batchSize uint32) *pb.RestoreTask {

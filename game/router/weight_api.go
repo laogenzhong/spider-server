@@ -2,13 +2,11 @@ package router
 
 import (
 	"context"
+	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
 	"time"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // WeightApi 实现体重记录相关 gRPC 接口。
@@ -35,18 +33,18 @@ func (a *WeightApi) SaveWeightRecord(ctx context.Context, req *pb.SaveWeightReco
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetRecordDate() == "" {
-		return nil, status.Error(codes.InvalidArgument, "record_date 不能为空")
+		return session.Error(ctx, gamecode.WeightRecordDateEmpty, &pb.SaveWeightRecordResponse{})
 	}
 	if req.GetWeight() <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "weight 必须大于 0")
+		return session.Error(ctx, gamecode.WeightValueInvalid, &pb.SaveWeightRecordResponse{})
 	}
 	if req.GetSatiety() < 0 || req.GetSatiety() > 10 {
-		return nil, status.Error(codes.InvalidArgument, "satiety 必须在 0-10 之间")
+		return session.Error(ctx, gamecode.WeightSatietyInvalid, &pb.SaveWeightRecordResponse{})
 	}
 
 	record, err := mysqlmodel.CreateWeightRecord(uid, req.GetRecordDate(), req.GetWeight(), req.GetSatiety())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "保存体重记录失败：%v", err)
+		return session.Error(ctx, gamecode.WeightSaveFailed, &pb.SaveWeightRecordResponse{})
 	}
 
 	return &pb.SaveWeightRecordResponse{
@@ -61,11 +59,11 @@ func (a *WeightApi) DeleteWeightRecord(ctx context.Context, req *pb.DeleteWeight
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetId() == 0 && req.GetRecordDate() == "" {
-		return nil, status.Error(codes.InvalidArgument, "id 和 record_date 不能同时为空")
+		return session.Error(ctx, gamecode.WeightDeleteKeyEmpty, &pb.DeleteWeightRecordResponse{})
 	}
 
 	if err := mysqlmodel.DeleteWeightRecord(uid, req.GetId(), req.GetRecordDate()); err != nil {
-		return nil, status.Errorf(codes.Internal, "删除体重记录失败：%v", err)
+		return session.Error(ctx, gamecode.WeightDeleteFailed, &pb.DeleteWeightRecordResponse{})
 	}
 
 	return &pb.DeleteWeightRecordResponse{Success: true}, nil
@@ -76,7 +74,7 @@ func (a *WeightApi) GetWeightRecord(ctx context.Context, req *pb.GetWeightRecord
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetRecordDate() == "" {
-		return nil, status.Error(codes.InvalidArgument, "record_date 不能为空")
+		return session.Error(ctx, gamecode.WeightRecordDateEmpty, &pb.GetWeightRecordResponse{})
 	}
 
 	record, err := mysqlmodel.GetWeightRecordByDate(uid, req.GetRecordDate())
@@ -84,7 +82,7 @@ func (a *WeightApi) GetWeightRecord(ctx context.Context, req *pb.GetWeightRecord
 		if err.Error() == "record not found" {
 			return &pb.GetWeightRecordResponse{Exists: false}, nil
 		}
-		return nil, status.Errorf(codes.Internal, "查询体重记录失败：%v", err)
+		return session.Error(ctx, gamecode.WeightQueryFailed, &pb.GetWeightRecordResponse{})
 	}
 
 	return &pb.GetWeightRecordResponse{
@@ -98,12 +96,12 @@ func (a *WeightApi) ListWeightRecords(ctx context.Context, req *pb.ListWeightRec
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetStartDate() == "" || req.GetEndDate() == "" {
-		return nil, status.Error(codes.InvalidArgument, "start_date 和 end_date 不能为空")
+		return session.Error(ctx, gamecode.WeightDateRangeEmpty, &pb.ListWeightRecordsResponse{})
 	}
 
 	records, err := mysqlmodel.ListWeightRecords(uid, req.GetStartDate(), req.GetEndDate())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "查询体重记录列表失败：%v", err)
+		return session.Error(ctx, gamecode.WeightListFailed, &pb.ListWeightRecordsResponse{})
 	}
 
 	respRecords := make([]*pb.WeightRecord, 0, len(records))
@@ -123,7 +121,7 @@ func (a *WeightApi) GetLatestWeightRecord(ctx context.Context, req *pb.GetLatest
 		if err.Error() == "record not found" {
 			return &pb.GetLatestWeightRecordResponse{Exists: false}, nil
 		}
-		return nil, status.Errorf(codes.Internal, "查询最近体重记录失败：%v", err)
+		return session.Error(ctx, gamecode.WeightLatestQueryFailed, &pb.GetLatestWeightRecordResponse{})
 	}
 
 	return &pb.GetLatestWeightRecordResponse{

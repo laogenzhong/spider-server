@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 
+	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
@@ -34,12 +33,12 @@ func (a *TrainingTagApi) CreateTrainingTag(ctx context.Context, req *pb.CreateTr
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetName() == "" {
-		return nil, status.Error(codes.InvalidArgument, "标签名称不能为空")
+		return session.Error(ctx, gamecode.TrainingTagNameEmpty, &pb.CreateTrainingTagResponse{})
 	}
 
 	tag, err := mysqlmodel.CreateTrainingTag(uid, req.GetName(), req.GetSortOrder())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "创建训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.TrainingTagCreateFailed, &pb.CreateTrainingTagResponse{})
 	}
 
 	return &pb.CreateTrainingTagResponse{
@@ -52,10 +51,10 @@ func (a *TrainingTagApi) UpdateTrainingTag(ctx context.Context, req *pb.UpdateTr
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetId() == 0 {
-		return nil, status.Error(codes.InvalidArgument, "标签 id 不能为空")
+		return session.Error(ctx, gamecode.TrainingTagIDEmpty, &pb.UpdateTrainingTagResponse{})
 	}
 	if req.GetName() == "" {
-		return nil, status.Error(codes.InvalidArgument, "标签名称不能为空")
+		return session.Error(ctx, gamecode.TrainingTagNameEmpty, &pb.UpdateTrainingTagResponse{})
 	}
 
 	tag, err := mysqlmodel.UpdateTrainingTag(
@@ -66,10 +65,10 @@ func (a *TrainingTagApi) UpdateTrainingTag(ctx context.Context, req *pb.UpdateTr
 		req.GetEnabled(),
 	)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "训练标签不存在")
+		return session.Error(ctx, gamecode.TrainingTagNotFound, &pb.UpdateTrainingTagResponse{})
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "修改训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.TrainingTagUpdateFailed, &pb.UpdateTrainingTagResponse{})
 	}
 
 	return &pb.UpdateTrainingTagResponse{
@@ -82,11 +81,11 @@ func (a *TrainingTagApi) DeleteTrainingTag(ctx context.Context, req *pb.DeleteTr
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetId() == 0 {
-		return nil, status.Error(codes.InvalidArgument, "标签 id 不能为空")
+		return session.Error(ctx, gamecode.TrainingTagIDEmpty, &pb.DeleteTrainingTagResponse{})
 	}
 
 	if err := mysqlmodel.DeleteTrainingTag(uid, req.GetId()); err != nil {
-		return nil, status.Errorf(codes.Internal, "删除训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.TrainingTagDeleteFailed, &pb.DeleteTrainingTagResponse{})
 	}
 
 	return &pb.DeleteTrainingTagResponse{Success: true}, nil
@@ -98,7 +97,7 @@ func (a *TrainingTagApi) ListTrainingTags(ctx context.Context, req *pb.ListTrain
 
 	tags, err := mysqlmodel.ListTrainingTags(uid, req.GetOnlyEnabled())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "查询训练标签列表失败：%v", err)
+		return session.Error(ctx, gamecode.TrainingTagListFailed, &pb.ListTrainingTagsResponse{})
 	}
 
 	respTags := make([]*pb.TrainingTag, 0, len(tags))
@@ -129,7 +128,7 @@ func (a *TrainingTagApi) ReorderTrainingTags(ctx context.Context, req *pb.Reorde
 
 	tags, err := mysqlmodel.ReorderTrainingTags(uid, items)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "调整训练标签排序失败：%v", err)
+		return session.Error(ctx, gamecode.TrainingTagReorderFailed, &pb.ReorderTrainingTagsResponse{})
 	}
 
 	respTags := make([]*pb.TrainingTag, 0, len(tags))
@@ -152,7 +151,7 @@ func (a *TrainingTagApi) SaveWorkoutTags(ctx context.Context, req *pb.SaveWorkou
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetWorkoutUuid() == "" && (req.GetWorkoutStartAt() == 0 || req.GetWorkoutEndAt() == 0) {
-		return nil, status.Error(codes.InvalidArgument, "workout_uuid 和训练时间不能同时为空")
+		return session.Error(ctx, gamecode.WorkoutTagsTargetEmpty, &pb.SaveWorkoutTagsResponse{})
 	}
 
 	bindings, err := mysqlmodel.SaveWorkoutTags(
@@ -164,7 +163,7 @@ func (a *TrainingTagApi) SaveWorkoutTags(ctx context.Context, req *pb.SaveWorkou
 		req.GetTagIds(),
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "保存训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.WorkoutTagsSaveFailed, &pb.SaveWorkoutTagsResponse{})
 	}
 
 	respBindings := make([]*pb.WorkoutTagBinding, 0, len(bindings))
@@ -182,7 +181,7 @@ func (a *TrainingTagApi) GetWorkoutTags(ctx context.Context, req *pb.GetWorkoutT
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetWorkoutUuid() == "" && (req.GetWorkoutStartAt() == 0 || req.GetWorkoutEndAt() == 0) {
-		return nil, status.Error(codes.InvalidArgument, "workout_uuid 和训练时间不能同时为空")
+		return session.Error(ctx, gamecode.WorkoutTagsTargetEmpty, &pb.GetWorkoutTagsResponse{})
 	}
 
 	bindings, err := mysqlmodel.GetWorkoutTags(
@@ -192,7 +191,7 @@ func (a *TrainingTagApi) GetWorkoutTags(ctx context.Context, req *pb.GetWorkoutT
 		req.GetWorkoutEndAt(),
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "查询训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.WorkoutTagsQueryFailed, &pb.GetWorkoutTagsResponse{})
 	}
 
 	respBindings := make([]*pb.WorkoutTagBinding, 0, len(bindings))
@@ -210,7 +209,7 @@ func (a *TrainingTagApi) DeleteWorkoutTags(ctx context.Context, req *pb.DeleteWo
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetWorkoutUuid() == "" && (req.GetWorkoutStartAt() == 0 || req.GetWorkoutEndAt() == 0) {
-		return nil, status.Error(codes.InvalidArgument, "workout_uuid 和训练时间不能同时为空")
+		return session.Error(ctx, gamecode.WorkoutTagsTargetEmpty, &pb.DeleteWorkoutTagsResponse{})
 	}
 
 	if err := mysqlmodel.DeleteWorkoutTags(
@@ -219,7 +218,7 @@ func (a *TrainingTagApi) DeleteWorkoutTags(ctx context.Context, req *pb.DeleteWo
 		req.GetWorkoutStartAt(),
 		req.GetWorkoutEndAt(),
 	); err != nil {
-		return nil, status.Errorf(codes.Internal, "删除训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.WorkoutTagsDeleteFailed, &pb.DeleteWorkoutTagsResponse{})
 	}
 
 	return &pb.DeleteWorkoutTagsResponse{Success: true}, nil
@@ -230,12 +229,12 @@ func (a *TrainingTagApi) ListDailyWorkoutTags(ctx context.Context, req *pb.ListD
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetRecordDate() == "" {
-		return nil, status.Error(codes.InvalidArgument, "record_date 不能为空")
+		return session.Error(ctx, gamecode.WorkoutTagsRecordDateEmpty, &pb.ListDailyWorkoutTagsResponse{})
 	}
 
 	workouts, err := mysqlmodel.ListDailyWorkoutTags(uid, req.GetRecordDate())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "查询当天训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.WorkoutTagsDailyQueryFailed, &pb.ListDailyWorkoutTagsResponse{})
 	}
 
 	respWorkouts := make([]*pb.DailyWorkoutTags, 0, len(workouts))
@@ -253,12 +252,12 @@ func (a *TrainingTagApi) ListRangeWorkoutTags(ctx context.Context, req *pb.ListR
 	uid := session.GetUser(ctx).UID()
 
 	if req.GetStartDate() == "" || req.GetEndDate() == "" {
-		return nil, status.Error(codes.InvalidArgument, "start_date 和 end_date 不能为空")
+		return session.Error(ctx, gamecode.WorkoutTagsDateRangeEmpty, &pb.ListRangeWorkoutTagsResponse{})
 	}
 
 	days, err := mysqlmodel.ListRangeWorkoutTags(uid, req.GetStartDate(), req.GetEndDate())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "查询范围训练标签失败：%v", err)
+		return session.Error(ctx, gamecode.WorkoutTagsRangeQueryFailed, &pb.ListRangeWorkoutTagsResponse{})
 	}
 
 	respDays := make([]*pb.DailyTrainingTagSummary, 0, len(days))
