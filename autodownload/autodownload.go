@@ -8,27 +8,16 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 )
 
 const (
-	baseURL     = "https://oss.exercisedb.dev/api/v1/exercises"
-	downloadDir = "autodownloads"
-	limit       = 50
+	baseURL         = "https://oss.exercisedb.dev/api/v1/exercises"
+	pageLimit       = 25
+	outputDir       = "exercise_body_part_json"
+	requestInterval = 2 * time.Second
 )
-
-type Exercise struct {
-	Name       string   `json:"name"`
-	GifURL     string   `json:"gifUrl"`
-	BodyParts  []string `json:"bodyParts"`
-	Equipments []string `json:"equipments"`
-}
-
-type ExerciseData struct {
-	Data []Exercise `json:"data"`
-}
 
 var bodyParts = []string{
 	"neck",
@@ -43,194 +32,210 @@ var bodyParts = []string{
 	"waist",
 }
 
-var equipments = []string{
-	"stepmill machine",
-	"elliptical machine",
-	"trap bar",
-	"tire",
-	"stationary bike",
-	"wheel roller",
-	"smith machine",
-	"hammer",
-	"skierg machine",
-	"roller",
-	"resistance band",
-	"bosu ball",
-	"weighted",
-	"olympic barbell",
-	"kettlebell",
-	"upper body ergometer",
-	"sled machine",
-	"ez barbell",
-	"dumbbell",
-	"rope",
-	"barbell",
-	"band",
-	"stability ball",
-	"medicine ball",
-	"assisted",
-	"leverage machine",
-	"cable",
-	"body weight",
+type ExerciseResponse struct {
+	Success bool             `json:"success"`
+	Meta    ExercisePageMeta `json:"meta"`
+	Data    []Exercise       `json:"data"`
 }
 
-var httpClient = &http.Client{
-	Timeout: 30 * time.Second,
+type ExercisePageMeta struct {
+	Total           int  `json:"total"`
+	HasNextPage     bool `json:"hasNextPage"`
+	HasPreviousPage bool `json:"hasPreviousPage"`
+}
+
+type Exercise struct {
+	ExerciseID       string   `json:"exerciseId"`
+	Name             string   `json:"name"`
+	GifURL           string   `json:"gifUrl"`
+	BodyParts        []string `json:"bodyParts"`
+	Equipments       []string `json:"equipments"`
+	TargetMuscles    []string `json:"targetMuscles"`
+	SecondaryMuscles []string `json:"secondaryMuscles"`
+	Instructions     []string `json:"instructions"`
+}
+
+type BodyPartExerciseFile struct {
+	BodyPart string     `json:"bodyPart"`
+	Total    int        `json:"total"`
+	Data     []Exercise `json:"data"`
 }
 
 func main() {
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		fmt.Printf("创建输出目录失败: %v\n", err)
+		return
+	}
+
 	for _, bodyPart := range bodyParts {
-		for _, equipment := range equipments {
-			exercises, err := fetchExercises(bodyPart, equipment)
-			if err != nil {
-				fmt.Printf("请求失败: bodyPart=%s equipment=%s err=%v\n", bodyPart, equipment, err)
-				continue
-			}
+		fmt.Printf("开始下载部位: %s\n", bodyPart)
 
-			if len(exercises) == 0 {
-				fmt.Printf("无数据: bodyPart=%s equipment=%s\n", bodyPart, equipment)
-				continue
-			}
-
-			fmt.Printf("开始下载: bodyPart=%s equipment=%s count=%d\n", bodyPart, equipment, len(exercises))
-
-			for _, ex := range exercises {
-				if ex.Name == "" || ex.GifURL == "" {
-					continue
-				}
-
-				if err := downloadExerciseGif(bodyPart, equipment, ex); err != nil {
-					fmt.Printf("下载失败: bodyPart=%s equipment=%s name=%s url=%s err=%v\n", bodyPart, equipment, ex.Name, ex.GifURL, err)
-					continue
-				}
-			}
+		exercises, err := fetchAllExercisesByBodyPart(client, bodyPart)
+		if err != nil {
+			fmt.Printf("下载失败 bodyPart=%s err=%v\n", bodyPart, err)
+			continue
 		}
+
+		if err := saveBodyPartExercises(bodyPart, exercises); err != nil {
+			fmt.Printf("保存失败 bodyPart=%s err=%v\n", bodyPart, err)
+			continue
+		}
+
+		fmt.Printf("下载完成部位: %s, count=%d\n", bodyPart, len(exercises))
+
+		// 每个部位的首个请求之间也间隔 2 秒。
+		time.Sleep(requestInterval)
 	}
 }
 
-func fetchExercises(bodyPart string, equipment string) ([]Exercise, error) {
-	reqURL, err := buildExercisesURL(bodyPart, equipment)
+func fetchAllExercisesByBodyPart(client *http.Client, bodyPart string) ([]Exercise, error) {
+	var allExercises []Exercise
+	var after string
+
+	for {
+		resp, err := fetchExercisePage(client, bodyPart, after)
+		if err != nil {
+			return nil, err
+		}
+
+		allExercises = append(allExercises, resp.Data...)
+
+		if !resp.Meta.HasNextPage {
+			break
+		}
+
+		if len(resp.Data) == 0 {
+			return nil, fmt.Errorf("hasNextPage=true 但当前页 data 为空，无法获取 after")
+		}
+
+		after = resp.Data[len(resp.Data)-1].ExerciseID
+		if after == "" {
+			return nil, fmt.Errorf("当前页最后一条 exerciseId 为空，无法继续分页")
+		}
+
+		// 防止请求过快触发 429，每次分页请求之间间隔 2 秒。
+		time.Sleep(requestInterval)
+	}
+
+	return allExercises, nil
+}
+
+func fetchExercisePage(client *http.Client, bodyPart string, after string) (*ExerciseResponse, error) {
+	reqURL, err := buildExerciseURL(bodyPart, after)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := httpClient.Get(reqURL)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code: %d", resp.StatusCode)
+	if after == "" {
+		fmt.Printf("请求 bodyPart=%s page=first url=%s\n", bodyPart, reqURL)
+	} else {
+		fmt.Printf("请求 bodyPart=%s after=%s url=%s\n", bodyPart, after, reqURL)
 	}
 
-	var data ExerciseData
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
+	var lastErr error
+	for attempt := 1; attempt <= 3; attempt++ {
+		req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("User-Agent", "spider-server-exercise-downloader/1.0")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			time.Sleep(time.Duration(attempt) * time.Second)
+			continue
+		}
+
+		body, readErr := io.ReadAll(resp.Body)
+		closeErr := resp.Body.Close()
+		if readErr != nil {
+			return nil, readErr
+		}
+		if closeErr != nil {
+			return nil, closeErr
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			lastErr = fmt.Errorf("请求过快，接口返回 429: %s", string(body))
+			time.Sleep(time.Duration(attempt*2) * time.Second)
+			continue
+		}
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return nil, fmt.Errorf("接口返回异常 status=%d body=%s", resp.StatusCode, string(body))
+		}
+
+		var result ExerciseResponse
+		if err := json.Unmarshal(body, &result); err != nil {
+			return nil, fmt.Errorf("解析 JSON 失败: %w, body=%s", err, string(body))
+		}
+
+		if !result.Success {
+			return nil, fmt.Errorf("接口 success=false, body=%s", string(body))
+		}
+
+		fmt.Printf(
+			"响应 bodyPart=%s after=%s status=%d current=%d total=%d hasNextPage=%v\n",
+			bodyPart,
+			after,
+			resp.StatusCode,
+			len(result.Data),
+			result.Meta.Total,
+			result.Meta.HasNextPage,
+		)
+
+		return &result, nil
 	}
 
-	return data.Data, nil
+	return nil, fmt.Errorf("请求失败，已重试 3 次: %w", lastErr)
 }
 
-func buildExercisesURL(bodyPart string, equipment string) (string, error) {
-	u, err := url.Parse(baseURL)
+func buildExerciseURL(bodyPart string, after string) (string, error) {
+	parsedURL, err := url.Parse(baseURL)
 	if err != nil {
 		return "", err
 	}
 
-	query := u.Query()
+	query := parsedURL.Query()
 	query.Set("bodyParts", bodyPart)
-	query.Set("equipments", equipment)
-	query.Set("limit", fmt.Sprintf("%d", limit))
-	u.RawQuery = query.Encode()
+	query.Set("limit", fmt.Sprintf("%d", pageLimit))
+	if after != "" {
+		query.Set("after", after)
+	}
+	parsedURL.RawQuery = query.Encode()
 
-	return u.String(), nil
+	return parsedURL.String(), nil
 }
 
-func downloadExerciseGif(bodyPart string, equipment string, ex Exercise) error {
-	folderPath := filepath.Join(downloadDir, sanitizePathName(bodyPart), sanitizePathName(equipment))
-	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
-		return err
+func saveBodyPartExercises(bodyPart string, exercises []Exercise) error {
+	fileData := BodyPartExerciseFile{
+		BodyPart: bodyPart,
+		Total:    len(exercises),
+		Data:     exercises,
 	}
 
-	fileName := sanitizePathName(ex.Name) + ".gif"
-	filePath := filepath.Join(folderPath, fileName)
-
-	if fileExists(filePath) {
-		fmt.Printf("已存在，跳过: %s\n", filePath)
-		return nil
-	}
-
-	return downloadFileWithRetry(ex.GifURL, filePath, 3)
-}
-
-func downloadFileWithRetry(fileURL string, filePath string, retryTimes int) error {
-	var lastErr error
-
-	for i := 1; i <= retryTimes; i++ {
-		if err := downloadFile(fileURL, filePath); err != nil {
-			lastErr = err
-			fmt.Printf("第 %d 次下载失败: %s err=%v\n", i, fileURL, err)
-			time.Sleep(time.Duration(i) * time.Second)
-			continue
-		}
-
-		fmt.Printf("已下载: %s\n", filePath)
-		return nil
-	}
-
-	return lastErr
-}
-
-func downloadFile(fileURL string, filePath string) error {
-	resp, err := httpClient.Get(fileURL)
+	body, err := json.MarshalIndent(fileData, "", "  ")
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("status code: %d", resp.StatusCode)
-	}
+	fileName := safeFileName(bodyPart) + ".json"
+	filePath := filepath.Join(outputDir, fileName)
 
-	outFile, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, resp.Body)
-	if err != nil {
-		_ = os.Remove(filePath)
-		return err
-	}
-
-	return nil
+	return os.WriteFile(filePath, body, 0644)
 }
 
-func fileExists(filePath string) bool {
-	info, err := os.Stat(filePath)
-	return err == nil && !info.IsDir()
-}
-
-func sanitizePathName(name string) string {
+func safeFileName(name string) string {
 	name = strings.TrimSpace(name)
-	name = strings.ReplaceAll(name, "/", "-")
-	name = strings.ReplaceAll(name, "\\", "-")
-	name = strings.ReplaceAll(name, ":", "-")
-	name = strings.ReplaceAll(name, "*", "-")
-	name = strings.ReplaceAll(name, "?", "-")
-	name = strings.ReplaceAll(name, "\"", "-")
-	name = strings.ReplaceAll(name, "<", "-")
-	name = strings.ReplaceAll(name, ">", "-")
-	name = strings.ReplaceAll(name, "|", "-")
-
-	spaceRegexp := regexp.MustCompile(`\s+`)
-	name = spaceRegexp.ReplaceAllString(name, " ")
-
-	if name == "" {
-		return "unknown"
-	}
-
+	name = strings.ToLower(name)
+	name = strings.ReplaceAll(name, " ", "_")
+	name = strings.ReplaceAll(name, "/", "_")
+	name = strings.ReplaceAll(name, "\\", "_")
 	return name
 }
