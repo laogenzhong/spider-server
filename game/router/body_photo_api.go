@@ -47,6 +47,12 @@ func (a *BodyPhotoApi) SaveBodyPhoto(ctx context.Context, req *pb.SaveBodyPhotoR
 		Note:                record.GetNote(),
 		FileName:            record.GetFileName(),
 	})
+	if errors.Is(err, mysqlmodel.ErrBodyPhotoDailyLimitExceeded) {
+		return session.Error(ctx, gamecode.BodyPhotoDailyLimitExceeded, &pb.SaveBodyPhotoResponse{})
+	}
+	if errors.Is(err, mysqlmodel.ErrBodyPhotoDailyCreateLimitExceeded) {
+		return session.Error(ctx, gamecode.BodyPhotoDailyCreateLimitExceeded, &pb.SaveBodyPhotoResponse{})
+	}
 	if err != nil {
 		return session.Error(ctx, gamecode.BodyPhotoSaveFailed, &pb.SaveBodyPhotoResponse{})
 	}

@@ -1,6 +1,7 @@
 package mysqlmodel
 
 import (
+	"errors"
 	"fmt"
 	"spider-server/mysql/config"
 	"time"
@@ -27,6 +28,10 @@ type WeightRecord struct {
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
 
+const MaxWeightRecordCreatesPerDay = 100
+
+var ErrWeightRecordDailyCreateLimitExceeded = errors.New("weight record daily create limit exceeded")
+
 // CreateWeightRecord 创建或覆盖某一天的体重记录。
 //
 // 如果同一个 uid + record_date 已经存在，则更新 weight 和 satiety。
@@ -50,17 +55,43 @@ func CreateWeightRecord(uid uint64, recordDate string, weight int32, satiety int
 		return nil, err
 	}
 
-	err = db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{
-			{Name: "uid"},
-			{Name: "record_date"},
-		},
-		DoUpdates: clause.AssignmentColumns([]string{
-			"weight",
-			"satiety",
-			"updated_at",
-		}),
-	}).Create(record).Error
+	err = db.Transaction(func(tx *gorm.DB) error {
+		existing := &WeightRecord{}
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Unscoped().
+			Where("uid = ? AND record_date = ?", uid, recordDate).
+			First(existing).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			startAt, endAt := dayBoundsTime(time.Now())
+			var dailyRecords []*WeightRecord
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+				Unscoped().
+				Where("uid = ? AND created_at >= ? AND created_at < ?", uid, startAt, endAt).
+				Find(&dailyRecords).Error; err != nil {
+				return err
+			}
+			if len(dailyRecords) >= MaxWeightRecordCreatesPerDay {
+				return ErrWeightRecordDailyCreateLimitExceeded
+			}
+		}
+
+		return tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "uid"},
+				{Name: "record_date"},
+			},
+			DoUpdates: clause.Assignments(map[string]any{
+				"weight":     record.Weight,
+				"satiety":    record.Satiety,
+				"deleted_at": nil,
+				"updated_at": time.Now(),
+			}),
+		}).Create(record).Error
+	})
 	if err != nil {
 		return nil, err
 	}

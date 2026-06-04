@@ -1,6 +1,7 @@
 package mysqlmodel
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -79,6 +80,14 @@ type DailyTrainingTagSummary struct {
 const (
 	TrainingTagTypeSystem int32 = 1
 	TrainingTagTypeCustom int32 = 2
+
+	MaxTrainingTagsPerUser      = 100
+	MaxTrainingTagCreatesPerDay = 500
+)
+
+var (
+	ErrTrainingTagLimitExceeded      = errors.New("training tag limit exceeded")
+	ErrTrainingTagDailyLimitExceeded = errors.New("training tag daily limit exceeded")
 )
 
 // CreateTrainingTag 创建用户自定义训练标签。
@@ -102,11 +111,61 @@ func CreateTrainingTag(uid uint64, name string, sortOrder int32) (*TrainingTag, 
 	if err != nil {
 		return nil, err
 	}
-	if err := db.Create(tag).Error; err != nil {
+
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		var activeTags []*TrainingTag
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("uid = ?", uid).
+			Find(&activeTags).Error; err != nil {
+			return err
+		}
+		if len(activeTags) >= MaxTrainingTagsPerUser {
+			return ErrTrainingTagLimitExceeded
+		}
+
+		startAt, endAt := dayBoundsTime(time.Now())
+		var dailyTags []*TrainingTag
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Unscoped().
+			Where("uid = ? AND created_at >= ? AND created_at < ?", uid, startAt, endAt).
+			Find(&dailyTags).Error; err != nil {
+			return err
+		}
+		if len(dailyTags) >= MaxTrainingTagCreatesPerDay {
+			return ErrTrainingTagDailyLimitExceeded
+		}
+
+		return tx.Create(tag).Error
+	}); err != nil {
 		return nil, err
 	}
 
 	return tag, nil
+}
+
+// CountUserTrainingTags 统计当前 uid 未软删除的训练标签数量。
+func CountUserTrainingTags(uid uint64) (uint64, error) {
+	if uid == 0 {
+		return 0, fmt.Errorf("uid is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return 0, err
+	}
+
+	var count int64
+	if err := db.Model(&TrainingTag{}).
+		Where("uid = ?", uid).
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return uint64(count), nil
+}
+
+func dayBoundsTime(t time.Time) (time.Time, time.Time) {
+	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	return start, start.AddDate(0, 0, 1)
 }
 
 // UpdateTrainingTag 修改用户自定义训练标签。

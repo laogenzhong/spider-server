@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
@@ -43,6 +44,9 @@ func (a *WeightApi) SaveWeightRecord(ctx context.Context, req *pb.SaveWeightReco
 	}
 
 	record, err := mysqlmodel.CreateWeightRecord(uid, req.GetRecordDate(), req.GetWeight(), req.GetSatiety())
+	if errors.Is(err, mysqlmodel.ErrWeightRecordDailyCreateLimitExceeded) {
+		return session.Error(ctx, gamecode.WeightDailyCreateLimitExceeded, &pb.SaveWeightRecordResponse{})
+	}
 	if err != nil {
 		return session.Error(ctx, gamecode.WeightSaveFailed, &pb.SaveWeightRecordResponse{})
 	}

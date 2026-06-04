@@ -37,6 +37,12 @@ func (a *TrainingTagApi) CreateTrainingTag(ctx context.Context, req *pb.CreateTr
 	}
 
 	tag, err := mysqlmodel.CreateTrainingTag(uid, req.GetName(), req.GetSortOrder())
+	if errors.Is(err, mysqlmodel.ErrTrainingTagLimitExceeded) {
+		return session.Error(ctx, gamecode.TrainingTagLimitExceeded, &pb.CreateTrainingTagResponse{})
+	}
+	if errors.Is(err, mysqlmodel.ErrTrainingTagDailyLimitExceeded) {
+		return session.Error(ctx, gamecode.TrainingTagDailyLimitExceeded, &pb.CreateTrainingTagResponse{})
+	}
 	if err != nil {
 		return session.Error(ctx, gamecode.TrainingTagCreateFailed, &pb.CreateTrainingTagResponse{})
 	}

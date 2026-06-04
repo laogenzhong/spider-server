@@ -70,6 +70,27 @@ func UpdateUserPasswordByID(id uint, password string) error {
 	return db.Model(&User{}).Where("id = ?", id).Update("password", password).Error
 }
 
+func MarkUserAccountDeletedByID(id uint) error {
+	if id == 0 {
+		return fmt.Errorf("id is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return err
+	}
+
+	result := db.Model(&User{}).Where("id = ?", id).Update("account", "del")
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
+}
+
 func DeleteUserByID(id uint) error {
 	if id == 0 {
 		return fmt.Errorf("id is empty")

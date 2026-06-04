@@ -1,6 +1,7 @@
 package mysqlmodel
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,6 +32,14 @@ type BodyPhotoRecord struct {
 const (
 	BodyPhotoKindBody int32 = 1
 	BodyPhotoKindDiet int32 = 2
+
+	MaxBodyPhotosPerDay       = 100
+	MaxBodyPhotoCreatesPerDay = 500
+)
+
+var (
+	ErrBodyPhotoDailyLimitExceeded       = errors.New("body photo daily limit exceeded")
+	ErrBodyPhotoDailyCreateLimitExceeded = errors.New("body photo daily create limit exceeded")
 )
 
 // SaveBodyPhotoRecord 创建或更新照片索引记录。
@@ -59,27 +68,93 @@ func SaveBodyPhotoRecord(record *BodyPhotoRecord) (*BodyPhotoRecord, error) {
 		return nil, err
 	}
 
-	err = db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{
-			{Name: "uid"},
-			{Name: "client_record_id"},
-		},
-		DoUpdates: clause.Assignments(map[string]any{
-			"photo_library_asset_id": record.PhotoLibraryAssetID,
-			"kind":                   record.Kind,
-			"record_at":              record.RecordAt,
-			"weight":                 record.Weight,
-			"note":                   record.Note,
-			"file_name":              record.FileName,
-			"deleted_at":             nil,
-			"updated_at":             time.Now(),
-		}),
-	}).Create(record).Error
+	err = db.Transaction(func(tx *gorm.DB) error {
+		existing := &BodyPhotoRecord{}
+		existingID := uint64(0)
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Unscoped().
+			Where("uid = ? AND client_record_id = ?", record.UID, record.ClientRecordID).
+			First(existing).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if err == nil {
+			existingID = existing.ID
+		}
+
+		if existingID == 0 {
+			totalCount, err := countBodyPhotoRecordsOnDayUnscoped(tx, record.UID, record.RecordAt)
+			if err != nil {
+				return err
+			}
+			if totalCount >= MaxBodyPhotoCreatesPerDay {
+				return ErrBodyPhotoDailyCreateLimitExceeded
+			}
+		}
+
+		count, err := countBodyPhotoRecordsOnDay(tx, record.UID, record.RecordAt, existingID)
+		if err != nil {
+			return err
+		}
+		if count >= MaxBodyPhotosPerDay {
+			return ErrBodyPhotoDailyLimitExceeded
+		}
+
+		return tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "uid"},
+				{Name: "client_record_id"},
+			},
+			DoUpdates: clause.Assignments(map[string]any{
+				"photo_library_asset_id": record.PhotoLibraryAssetID,
+				"kind":                   record.Kind,
+				"record_at":              record.RecordAt,
+				"weight":                 record.Weight,
+				"note":                   record.Note,
+				"file_name":              record.FileName,
+				"deleted_at":             nil,
+				"updated_at":             time.Now(),
+			}),
+		}).Create(record).Error
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return GetBodyPhotoRecordByClientID(record.UID, record.ClientRecordID)
+}
+
+func countBodyPhotoRecordsOnDay(tx *gorm.DB, uid uint64, recordAt int64, excludeID uint64) (int, error) {
+	startAt, endAt := dayBoundsMillis(recordAt)
+	query := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("uid = ? AND record_at >= ? AND record_at < ?", uid, startAt, endAt)
+	if excludeID > 0 {
+		query = query.Where("id <> ?", excludeID)
+	}
+
+	var records []*BodyPhotoRecord
+	if err := query.Find(&records).Error; err != nil {
+		return 0, err
+	}
+	return len(records), nil
+}
+
+func countBodyPhotoRecordsOnDayUnscoped(tx *gorm.DB, uid uint64, recordAt int64) (int, error) {
+	startAt, endAt := dayBoundsMillis(recordAt)
+	var records []*BodyPhotoRecord
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Unscoped().
+		Where("uid = ? AND record_at >= ? AND record_at < ?", uid, startAt, endAt).
+		Find(&records).Error; err != nil {
+		return 0, err
+	}
+	return len(records), nil
+}
+
+func dayBoundsMillis(millis int64) (int64, int64) {
+	t := time.UnixMilli(millis)
+	start := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	return start.UnixMilli(), start.AddDate(0, 0, 1).UnixMilli()
 }
 
 // GetBodyPhotoRecordByClientID 根据客户端记录 ID 查询照片索引。

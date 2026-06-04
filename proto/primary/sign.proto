@@ -25,6 +25,8 @@ service SignApi {
   rpc token(TokenRequest) returns (SignInResponse);
   // 退出登录
   rpc signOut(google.protobuf.Empty) returns (google.protobuf.Empty);
+  // 删除账号
+  rpc deleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
 }
 
 message SignInRequest {
@@ -34,6 +36,26 @@ message SignInRequest {
 }
 
 message TokenRequest {}
+
+message DeleteAccountRequest {
+  // 用户在客户端输入的确认词，例如 DELETE 或 删除账号。
+  string confirm_text = 1;
+  // 是否已确认删除后数据可能无法恢复。
+  bool acknowledge_data_loss = 2;
+  // 使用 Sign in with Apple 的账号是否同步处理 Apple 登录授权/令牌。
+  bool revoke_apple_sign_in = 3;
+  // 可选删除原因。
+  string reason = 4;
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
+  string message = 2;
+  // 是否进入延迟删除队列。
+  bool deletion_scheduled = 3;
+  // 预计完成时间戳，秒级 Unix time。0 表示无预计时间。
+  int64 expected_complete_at = 4;
+}
 
 message SignUpMixedResponse {
   uint32 code = 1;

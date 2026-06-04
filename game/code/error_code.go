@@ -47,6 +47,9 @@ const (
 	// SignLogoutFailed 退出登录失败。
 	SignLogoutFailed int = 10012
 
+	// SignDeleteAccountFailed 删除账号失败。
+	SignDeleteAccountFailed int = 10013
+
 	// WeightRecordDateEmpty 体重记录日期为空。
 	WeightRecordDateEmpty int = 20001
 
@@ -76,6 +79,9 @@ const (
 
 	// WeightLatestQueryFailed 查询最近体重记录失败。
 	WeightLatestQueryFailed int = 20010
+
+	// WeightDailyCreateLimitExceeded 当天体重记录新增数量超过上限。
+	WeightDailyCreateLimitExceeded int = 20011
 
 	// TrainingTagNameEmpty 训练标签名称为空。
 	TrainingTagNameEmpty int = 30001
@@ -124,6 +130,12 @@ const (
 
 	// WorkoutTagsRangeQueryFailed 查询范围训练标签失败。
 	WorkoutTagsRangeQueryFailed int = 30016
+
+	// TrainingTagLimitExceeded 训练标签数量超过上限。
+	TrainingTagLimitExceeded int = 30017
+
+	// TrainingTagDailyLimitExceeded 当天训练标签新增数量超过上限。
+	TrainingTagDailyLimitExceeded int = 30018
 
 	// RestoreStartSnapshotInvalid 起始快照无效。
 	RestoreStartSnapshotInvalid int = 40001
@@ -250,4 +262,10 @@ const (
 
 	// BodyPhotoDeleteFailed 删除照片索引失败。
 	BodyPhotoDeleteFailed int = 60009
+
+	// BodyPhotoDailyLimitExceeded 当天照片数量超过上限。
+	BodyPhotoDailyLimitExceeded int = 60010
+
+	// BodyPhotoDailyCreateLimitExceeded 当天照片新增数量超过上限。
+	BodyPhotoDailyCreateLimitExceeded int = 60011
 )

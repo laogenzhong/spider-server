@@ -137,3 +137,33 @@ func (s *SignApi) SignOut(ctx context.Context, req *emptypb.Empty) (*emptypb.Emp
 
 	return &emptypb.Empty{}, nil
 }
+
+func (s *SignApi) DeleteAccount(ctx context.Context, _ *api.DeleteAccountRequest) (*api.DeleteAccountResponse, error) {
+	oldToken := session.GetTokenFromContext(ctx)
+	if oldToken == "" {
+		return session.Error(ctx, gamecode.SignTokenEmpty, &api.DeleteAccountResponse{})
+	}
+
+	user, err := session.SignSessionManager.FromToken(ctx, oldToken, sessionAttachAccountKey)
+	if err != nil {
+		return session.Error(ctx, gamecode.SignTokenInvalid, &api.DeleteAccountResponse{})
+	}
+
+	uid := user.UIDOrDefault()
+	if uid == 0 {
+		return session.Error(ctx, gamecode.SignTokenInvalid, &api.DeleteAccountResponse{})
+	}
+
+	if err := mysqlmodel.MarkUserAccountDeletedByID(uint(uid)); err != nil {
+		return session.Error(ctx, gamecode.SignDeleteAccountFailed, &api.DeleteAccountResponse{})
+	}
+
+	if err := user.Logout(ctx); err != nil {
+		return session.Error(ctx, gamecode.SignLogoutFailed, &api.DeleteAccountResponse{})
+	}
+
+	return &api.DeleteAccountResponse{
+		Success: true,
+		Message: "ok",
+	}, nil
+}
