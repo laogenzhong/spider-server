@@ -50,6 +50,27 @@ const (
 	// SignDeleteAccountFailed 删除账号失败。
 	SignDeleteAccountFailed int = 10013
 
+	// SignAppleIdentityTokenEmpty Apple 登录 identityToken 为空。
+	SignAppleIdentityTokenEmpty int = 10014
+
+	// SignAppleIdentityTokenInvalid Apple 登录 identityToken 无效。
+	SignAppleIdentityTokenInvalid int = 10015
+
+	// SignAppleNonceInvalid Apple 登录 nonce 校验失败。
+	SignAppleNonceInvalid int = 10016
+
+	// SignAppleConfigInvalid Apple 登录服务端配置无效。
+	SignAppleConfigInvalid int = 10017
+
+	// SignAppleTokenExchangeFailed Apple 登录授权码换取 token 失败。
+	SignAppleTokenExchangeFailed int = 10018
+
+	// SignAppleAccountBindFailed Apple 登录账号绑定失败。
+	SignAppleAccountBindFailed int = 10019
+
+	// SignAppleTokenRevokeFailed Apple 登录授权撤销失败。
+	SignAppleTokenRevokeFailed int = 10020
+
 	// WeightRecordDateEmpty 体重记录日期为空。
 	WeightRecordDateEmpty int = 20001
 

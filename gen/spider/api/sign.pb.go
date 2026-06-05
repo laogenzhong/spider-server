@@ -348,6 +348,87 @@ func (x *SignInParams) GetUuid() string {
 	return ""
 }
 
+type AppleSignInRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Apple 返回的 identityToken/JWT。
+	IdentityToken string `protobuf:"bytes,1,opt,name=identity_token,json=identityToken,proto3" json:"identity_token,omitempty"`
+	// Apple 返回的一次性授权码，用于服务器换 refresh_token。
+	AuthorizationCode string `protobuf:"bytes,2,opt,name=authorization_code,json=authorizationCode,proto3" json:"authorization_code,omitempty"`
+	// 客户端发起 Apple 登录时使用的 nonce 原文。
+	Nonce string `protobuf:"bytes,3,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	// 首次授权时客户端可透传的 email，服务器会优先使用 token 内 email。
+	Email string `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	// 首次授权时客户端可透传的用户名称。
+	FullName      string `protobuf:"bytes,5,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AppleSignInRequest) Reset() {
+	*x = AppleSignInRequest{}
+	mi := &file_primary_sign_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppleSignInRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppleSignInRequest) ProtoMessage() {}
+
+func (x *AppleSignInRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_sign_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppleSignInRequest.ProtoReflect.Descriptor instead.
+func (*AppleSignInRequest) Descriptor() ([]byte, []int) {
+	return file_primary_sign_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AppleSignInRequest) GetIdentityToken() string {
+	if x != nil {
+		return x.IdentityToken
+	}
+	return ""
+}
+
+func (x *AppleSignInRequest) GetAuthorizationCode() string {
+	if x != nil {
+		return x.AuthorizationCode
+	}
+	return ""
+}
+
+func (x *AppleSignInRequest) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
+func (x *AppleSignInRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *AppleSignInRequest) GetFullName() string {
+	if x != nil {
+		return x.FullName
+	}
+	return ""
+}
+
 type SignInResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Uid   uint64                 `protobuf:"varint,1,opt,name=uid,proto3" json:"uid,omitempty"`
@@ -365,7 +446,7 @@ type SignInResponse struct {
 
 func (x *SignInResponse) Reset() {
 	*x = SignInResponse{}
-	mi := &file_primary_sign_proto_msgTypes[6]
+	mi := &file_primary_sign_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +458,7 @@ func (x *SignInResponse) String() string {
 func (*SignInResponse) ProtoMessage() {}
 
 func (x *SignInResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_sign_proto_msgTypes[6]
+	mi := &file_primary_sign_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +471,7 @@ func (x *SignInResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignInResponse.ProtoReflect.Descriptor instead.
 func (*SignInResponse) Descriptor() ([]byte, []int) {
-	return file_primary_sign_proto_rawDescGZIP(), []int{6}
+	return file_primary_sign_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SignInResponse) GetUid() uint64 {
@@ -451,16 +532,23 @@ const file_primary_sign_proto_rawDesc = "" +
 	"\x13SignUpMixedResponse\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\rR\x04code\"\"\n" +
 	"\fSignInParams\x12\x12\n" +
-	"\x04uuid\x18\b \x01(\tR\x04uuid\"\x8a\x01\n" +
+	"\x04uuid\x18\b \x01(\tR\x04uuid\"\xb3\x01\n" +
+	"\x12AppleSignInRequest\x12%\n" +
+	"\x0eidentity_token\x18\x01 \x01(\tR\ridentityToken\x12-\n" +
+	"\x12authorization_code\x18\x02 \x01(\tR\x11authorizationCode\x12\x14\n" +
+	"\x05nonce\x18\x03 \x01(\tR\x05nonce\x12\x14\n" +
+	"\x05email\x18\x04 \x01(\tR\x05email\x12\x1b\n" +
+	"\tfull_name\x18\x05 \x01(\tR\bfullName\"\x8a\x01\n" +
 	"\x0eSignInResponse\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x04R\x03uid\x12\x19\n" +
 	"\buc_token\x18\x02 \x01(\tR\aucToken\x12\x17\n" +
 	"\aapp_key\x18\v \x01(\tR\x06appKey\x12\x1b\n" +
 	"\tjwt_token\x18\f \x01(\tR\bjwtToken\x12\x15\n" +
-	"\x06ws_url\x18\x12 \x01(\tR\x05wsUrl2\xa5\x02\n" +
+	"\x06ws_url\x18\x12 \x01(\tR\x05wsUrl2\xe4\x02\n" +
 	"\aSignApi\x129\n" +
 	"\vsignUpMixed\x12\x11.uc.SignInRequest\x1a\x17.uc.SignUpMixedResponse\x12/\n" +
-	"\x06signIn\x12\x11.uc.SignInRequest\x1a\x12.uc.SignInResponse\x12-\n" +
+	"\x06signIn\x12\x11.uc.SignInRequest\x1a\x12.uc.SignInResponse\x12=\n" +
+	"\x0fsignInWithApple\x12\x16.uc.AppleSignInRequest\x1a\x12.uc.SignInResponse\x12-\n" +
 	"\x05token\x12\x10.uc.TokenRequest\x1a\x12.uc.SignInResponse\x129\n" +
 	"\asignOut\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\x12D\n" +
 	"\rdeleteAccount\x12\x18.uc.DeleteAccountRequest\x1a\x19.uc.DeleteAccountResponseB\x10Z\x0espider/api;apib\x06proto3"
@@ -477,7 +565,7 @@ func file_primary_sign_proto_rawDescGZIP() []byte {
 	return file_primary_sign_proto_rawDescData
 }
 
-var file_primary_sign_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_primary_sign_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_primary_sign_proto_goTypes = []any{
 	(*SignInRequest)(nil),         // 0: uc.SignInRequest
 	(*TokenRequest)(nil),          // 1: uc.TokenRequest
@@ -485,23 +573,26 @@ var file_primary_sign_proto_goTypes = []any{
 	(*DeleteAccountResponse)(nil), // 3: uc.DeleteAccountResponse
 	(*SignUpMixedResponse)(nil),   // 4: uc.SignUpMixedResponse
 	(*SignInParams)(nil),          // 5: uc.SignInParams
-	(*SignInResponse)(nil),        // 6: uc.SignInResponse
-	(*emptypb.Empty)(nil),         // 7: google.protobuf.Empty
+	(*AppleSignInRequest)(nil),    // 6: uc.AppleSignInRequest
+	(*SignInResponse)(nil),        // 7: uc.SignInResponse
+	(*emptypb.Empty)(nil),         // 8: google.protobuf.Empty
 }
 var file_primary_sign_proto_depIdxs = []int32{
 	5, // 0: uc.SignInRequest.params:type_name -> uc.SignInParams
 	0, // 1: uc.SignApi.signUpMixed:input_type -> uc.SignInRequest
 	0, // 2: uc.SignApi.signIn:input_type -> uc.SignInRequest
-	1, // 3: uc.SignApi.token:input_type -> uc.TokenRequest
-	7, // 4: uc.SignApi.signOut:input_type -> google.protobuf.Empty
-	2, // 5: uc.SignApi.deleteAccount:input_type -> uc.DeleteAccountRequest
-	4, // 6: uc.SignApi.signUpMixed:output_type -> uc.SignUpMixedResponse
-	6, // 7: uc.SignApi.signIn:output_type -> uc.SignInResponse
-	6, // 8: uc.SignApi.token:output_type -> uc.SignInResponse
-	7, // 9: uc.SignApi.signOut:output_type -> google.protobuf.Empty
-	3, // 10: uc.SignApi.deleteAccount:output_type -> uc.DeleteAccountResponse
-	6, // [6:11] is the sub-list for method output_type
-	1, // [1:6] is the sub-list for method input_type
+	6, // 3: uc.SignApi.signInWithApple:input_type -> uc.AppleSignInRequest
+	1, // 4: uc.SignApi.token:input_type -> uc.TokenRequest
+	8, // 5: uc.SignApi.signOut:input_type -> google.protobuf.Empty
+	2, // 6: uc.SignApi.deleteAccount:input_type -> uc.DeleteAccountRequest
+	4, // 7: uc.SignApi.signUpMixed:output_type -> uc.SignUpMixedResponse
+	7, // 8: uc.SignApi.signIn:output_type -> uc.SignInResponse
+	7, // 9: uc.SignApi.signInWithApple:output_type -> uc.SignInResponse
+	7, // 10: uc.SignApi.token:output_type -> uc.SignInResponse
+	8, // 11: uc.SignApi.signOut:output_type -> google.protobuf.Empty
+	3, // 12: uc.SignApi.deleteAccount:output_type -> uc.DeleteAccountResponse
+	7, // [7:13] is the sub-list for method output_type
+	1, // [1:7] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -518,7 +609,7 @@ func file_primary_sign_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_primary_sign_proto_rawDesc), len(file_primary_sign_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

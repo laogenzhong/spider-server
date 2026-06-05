@@ -75,20 +75,19 @@ func MarkUserAccountDeletedByID(id uint) error {
 		return fmt.Errorf("id is empty")
 	}
 
-	db, err := config.DB()
-	if err != nil {
-		return err
-	}
+	deletedAccount := fmt.Sprintf("del:%d:%d", id, time.Now().Unix())
 
-	result := db.Model(&User{}).Where("id = ?", id).Update("account", "del")
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
+	return config.WithTx(func(tx *gorm.DB) error {
+		result := tx.Model(&User{}).Where("id = ?", id).Update("account", deletedAccount)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
 
-	return nil
+		return tx.Delete(&User{}, id).Error
+	})
 }
 
 func DeleteUserByID(id uint) error {

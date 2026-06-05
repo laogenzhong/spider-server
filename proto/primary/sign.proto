@@ -21,6 +21,8 @@ service SignApi {
   rpc signUpMixed(SignInRequest) returns (SignUpMixedResponse);
   // 登录
   rpc signIn(SignInRequest) returns (SignInResponse);
+  // Apple 登录
+  rpc signInWithApple(AppleSignInRequest) returns (SignInResponse);
   //  ucToken 重连
   rpc token(TokenRequest) returns (SignInResponse);
   // 退出登录
@@ -63,6 +65,19 @@ message SignUpMixedResponse {
 
 message SignInParams {
   string uuid = 8;
+}
+
+message AppleSignInRequest {
+  // Apple 返回的 identityToken/JWT。
+  string identity_token = 1;
+  // Apple 返回的一次性授权码，用于服务器换 refresh_token。
+  string authorization_code = 2;
+  // 客户端发起 Apple 登录时使用的 nonce 原文。
+  string nonce = 3;
+  // 首次授权时客户端可透传的 email，服务器会优先使用 token 内 email。
+  string email = 4;
+  // 首次授权时客户端可透传的用户名称。
+  string full_name = 5;
 }
 
 message SignInResponse {

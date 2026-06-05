@@ -20,11 +20,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SignApi_SignUpMixed_FullMethodName   = "/uc.SignApi/signUpMixed"
-	SignApi_SignIn_FullMethodName        = "/uc.SignApi/signIn"
-	SignApi_Token_FullMethodName         = "/uc.SignApi/token"
-	SignApi_SignOut_FullMethodName       = "/uc.SignApi/signOut"
-	SignApi_DeleteAccount_FullMethodName = "/uc.SignApi/deleteAccount"
+	SignApi_SignUpMixed_FullMethodName     = "/uc.SignApi/signUpMixed"
+	SignApi_SignIn_FullMethodName          = "/uc.SignApi/signIn"
+	SignApi_SignInWithApple_FullMethodName = "/uc.SignApi/signInWithApple"
+	SignApi_Token_FullMethodName           = "/uc.SignApi/token"
+	SignApi_SignOut_FullMethodName         = "/uc.SignApi/signOut"
+	SignApi_DeleteAccount_FullMethodName   = "/uc.SignApi/deleteAccount"
 )
 
 // SignApiClient is the client API for SignApi service.
@@ -37,6 +38,8 @@ type SignApiClient interface {
 	SignUpMixed(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignUpMixedResponse, error)
 	// 登录
 	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*SignInResponse, error)
+	// Apple 登录
+	SignInWithApple(ctx context.Context, in *AppleSignInRequest, opts ...grpc.CallOption) (*SignInResponse, error)
 	// ucToken 重连
 	Token(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*SignInResponse, error)
 	// 退出登录
@@ -67,6 +70,16 @@ func (c *signApiClient) SignIn(ctx context.Context, in *SignInRequest, opts ...g
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SignInResponse)
 	err := c.cc.Invoke(ctx, SignApi_SignIn_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *signApiClient) SignInWithApple(ctx context.Context, in *AppleSignInRequest, opts ...grpc.CallOption) (*SignInResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SignInResponse)
+	err := c.cc.Invoke(ctx, SignApi_SignInWithApple_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +126,8 @@ type SignApiServer interface {
 	SignUpMixed(context.Context, *SignInRequest) (*SignUpMixedResponse, error)
 	// 登录
 	SignIn(context.Context, *SignInRequest) (*SignInResponse, error)
+	// Apple 登录
+	SignInWithApple(context.Context, *AppleSignInRequest) (*SignInResponse, error)
 	// ucToken 重连
 	Token(context.Context, *TokenRequest) (*SignInResponse, error)
 	// 退出登录
@@ -134,6 +149,9 @@ func (UnimplementedSignApiServer) SignUpMixed(context.Context, *SignInRequest) (
 }
 func (UnimplementedSignApiServer) SignIn(context.Context, *SignInRequest) (*SignInResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SignIn not implemented")
+}
+func (UnimplementedSignApiServer) SignInWithApple(context.Context, *AppleSignInRequest) (*SignInResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SignInWithApple not implemented")
 }
 func (UnimplementedSignApiServer) Token(context.Context, *TokenRequest) (*SignInResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Token not implemented")
@@ -197,6 +215,24 @@ func _SignApi_SignIn_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SignApiServer).SignIn(ctx, req.(*SignInRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SignApi_SignInWithApple_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AppleSignInRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SignApiServer).SignInWithApple(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SignApi_SignInWithApple_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SignApiServer).SignInWithApple(ctx, req.(*AppleSignInRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -269,6 +305,10 @@ var SignApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "signIn",
 			Handler:    _SignApi_SignIn_Handler,
+		},
+		{
+			MethodName: "signInWithApple",
+			Handler:    _SignApi_SignInWithApple_Handler,
 		},
 		{
 			MethodName: "token",

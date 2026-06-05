@@ -9,6 +9,7 @@ import (
 	appconfig "spider-server/common/config"
 	applogger "spider-server/common/logger"
 	"spider-server/game"
+	"spider-server/game/appleauth"
 	"spider-server/game/session"
 	"spider-server/gateway"
 	mysqlconfig "spider-server/mysql"
@@ -32,6 +33,7 @@ func main() {
 		MaxAge:       cfg.Logger.MaxAgeDuration(),
 		RotationTime: cfg.Logger.RotationTimeDuration(),
 	})
+	appleauth.Configure(cfg.AppleSignIn)
 	session.ConfigureSignSessionManager(cfg.Session.SignSecret, cfg.Session.DefaultTTLDuration())
 	game.ConfigureAuth(cfg.Auth.PublicGRPCMethodPrefixes)
 	game.ConfigureSign(

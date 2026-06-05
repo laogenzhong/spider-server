@@ -15,13 +15,14 @@ const (
 )
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	MySQL   MySQLConfig   `yaml:"mysql"`
-	Session SessionConfig `yaml:"session"`
-	Auth    AuthConfig    `yaml:"auth"`
-	Sign    SignConfig    `yaml:"sign"`
-	Logger  LoggerConfig  `yaml:"logger"`
-	Client  ClientConfig  `yaml:"client"`
+	Server      ServerConfig      `yaml:"server"`
+	MySQL       MySQLConfig       `yaml:"mysql"`
+	Session     SessionConfig     `yaml:"session"`
+	Auth        AuthConfig        `yaml:"auth"`
+	Sign        SignConfig        `yaml:"sign"`
+	AppleSignIn AppleSignInConfig `yaml:"apple_sign_in"`
+	Logger      LoggerConfig      `yaml:"logger"`
+	Client      ClientConfig      `yaml:"client"`
 }
 
 type ServerConfig struct {
@@ -62,6 +63,15 @@ type SignConfig struct {
 	ReplayNonceTTL        string `yaml:"replay_nonce_ttl"`
 	ReplayNonceCleanup    string `yaml:"replay_nonce_cleanup"`
 	LogMetadataPrefixOnly bool   `yaml:"log_metadata_prefix_only"`
+}
+
+type AppleSignInConfig struct {
+	TeamID          string `yaml:"team_id"`
+	KeyID           string `yaml:"key_id"`
+	ClientID        string `yaml:"client_id"`
+	PrivateKeyPath  string `yaml:"private_key_path"`
+	PrivateKey      string `yaml:"private_key"`
+	ClientSecretTTL string `yaml:"client_secret_ttl"`
 }
 
 type LoggerConfig struct {
@@ -115,6 +125,12 @@ func Default() Config {
 			ReplayNonceCleanup:    "5s",
 			LogMetadataPrefixOnly: true,
 		},
+		AppleSignIn: AppleSignInConfig{
+			TeamID:          "XLVU7GGT6N",
+			KeyID:           "5LFYA472TZ",
+			ClientID:        "hh.spider",
+			ClientSecretTTL: "24h",
+		},
 		Logger: LoggerConfig{
 			Level:        "info",
 			Path:         "stdout",
@@ -149,6 +165,7 @@ func Load(path string) (Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) && !explicit {
+			cfg.Normalize()
 			return cfg, nil
 		}
 		return cfg, fmt.Errorf("read config %s failed: %w", path, err)
@@ -192,6 +209,19 @@ func (c *Config) Normalize() {
 	}
 	if c.Sign.ReplayNonceCleanup == "" {
 		c.Sign.ReplayNonceCleanup = Default().Sign.ReplayNonceCleanup
+	}
+	c.AppleSignIn.ApplyEnv()
+	if c.AppleSignIn.TeamID == "" {
+		c.AppleSignIn.TeamID = Default().AppleSignIn.TeamID
+	}
+	if c.AppleSignIn.KeyID == "" {
+		c.AppleSignIn.KeyID = Default().AppleSignIn.KeyID
+	}
+	if c.AppleSignIn.ClientID == "" {
+		c.AppleSignIn.ClientID = Default().AppleSignIn.ClientID
+	}
+	if c.AppleSignIn.ClientSecretTTL == "" {
+		c.AppleSignIn.ClientSecretTTL = Default().AppleSignIn.ClientSecretTTL
 	}
 	if c.Logger.Level == "" {
 		c.Logger.Level = Default().Logger.Level
@@ -238,6 +268,31 @@ func (c SignConfig) ReplayNonceTTLDuration() time.Duration {
 
 func (c SignConfig) ReplayNonceCleanupDuration() time.Duration {
 	return durationOrDefault(c.ReplayNonceCleanup, 5*time.Second)
+}
+
+func (c *AppleSignInConfig) ApplyEnv() {
+	if value := strings.TrimSpace(os.Getenv("APPLE_TEAM_ID")); value != "" {
+		c.TeamID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APPLE_KEY_ID")); value != "" {
+		c.KeyID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APPLE_CLIENT_ID")); value != "" {
+		c.ClientID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APPLE_PRIVATE_KEY_PATH")); value != "" {
+		c.PrivateKeyPath = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APPLE_PRIVATE_KEY")); value != "" {
+		c.PrivateKey = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APPLE_CLIENT_SECRET_TTL")); value != "" {
+		c.ClientSecretTTL = value
+	}
+}
+
+func (c AppleSignInConfig) ClientSecretTTLDuration() time.Duration {
+	return durationOrDefault(c.ClientSecretTTL, 24*time.Hour)
 }
 
 func (c LoggerConfig) MaxAgeDuration() time.Duration {

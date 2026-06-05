@@ -38,6 +38,8 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 
 	models := []any{
 		&mysqlmodel2.User{},
+		&mysqlmodel2.AppleSignInAccount{},
+		&mysqlmodel2.AppleSignInAccountDeletionLog{},
 		&mysqlmodel2.UserSession{},
 		&mysqlmodel2.WeightRecord{},
 		&mysqlmodel2.TrainingTag{},

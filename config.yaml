@@ -34,6 +34,13 @@ sign:
   replay_nonce_cleanup: "5s"
   log_metadata_prefix_only: true
 
+apple_sign_in:
+  team_id: "XLVU7GGT6N"
+  key_id: "5LFYA472TZ"
+  client_id: "hh.spider"
+  private_key_path: "/Users/huitailang/workdir/spider-secrets/AuthKey_5LFYA472TZ.p8"
+  client_secret_ttl: "24h"
+
 logger:
   level: "info"
   path: "stdout"

@@ -5,6 +5,7 @@
 /vendor/
 *.log
 config.local.yaml
+*.p8
 /bin/
 /gen/node_modules/
 downloads/
