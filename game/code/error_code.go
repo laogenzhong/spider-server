@@ -313,4 +313,37 @@ const (
 
 	// BodyPhotoDailyCreateLimitExceeded 当天照片新增数量超过上限。
 	BodyPhotoDailyCreateLimitExceeded int = 60011
+
+	// VIPStatusQueryFailed 查询 VIP 权益状态失败。
+	VIPStatusQueryFailed int = 70001
+
+	// VIPTransactionJWSMissing Apple 交易签名数据为空。
+	VIPTransactionJWSMissing int = 70002
+
+	// VIPTransactionVerifyConfigInvalid Apple 交易验签配置无效。
+	VIPTransactionVerifyConfigInvalid int = 70003
+
+	// VIPTransactionVerifyFailed Apple 交易验签失败。
+	VIPTransactionVerifyFailed int = 70004
+
+	// VIPProductUnsupported VIP 商品 ID 未配置或不支持。
+	VIPProductUnsupported int = 70005
+
+	// VIPEntitlementSaveFailed 保存 VIP 权益失败。
+	VIPEntitlementSaveFailed int = 70006
+
+	// VIPPurchaseOrderCreateFailed 创建 VIP 支付预订单失败。
+	VIPPurchaseOrderCreateFailed int = 70007
+
+	// VIPPurchaseOrderMissing VIP 支付预订单不存在。
+	VIPPurchaseOrderMissing int = 70008
+
+	// VIPPurchaseOrderExpired VIP 支付预订单已过期。
+	VIPPurchaseOrderExpired int = 70009
+
+	// VIPPurchaseOrderProductMismatch VIP 支付预订单与 Apple 交易商品不一致。
+	VIPPurchaseOrderProductMismatch int = 70010
+
+	// VIPPurchaseOrderRequired VIP 支付确认缺少预订单。
+	VIPPurchaseOrderRequired int = 70011
 )

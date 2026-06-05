@@ -1,0 +1,15 @@
+{
+  "name": "spider-apple-iap-verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "spider-apple-iap-verify-transaction": "./verify_transaction.mjs"
+  },
+  "dependencies": {
+    "@apple/app-store-server-library": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

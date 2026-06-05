@@ -51,6 +51,9 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 		&mysqlmodel2.FriendRequestRecord{},
 		&mysqlmodel2.FriendRelationRecord{},
 		&mysqlmodel2.FriendRemarkRecord{},
+		&mysqlmodel2.UserEntitlement{},
+		&mysqlmodel2.ApplePurchaseOrder{},
+		&mysqlmodel2.AppleTransaction{},
 	}
 
 	if err := config.InitAndAutoMigrate(cfg, models...); err != nil {

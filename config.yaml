@@ -41,6 +41,24 @@ apple_sign_in:
   private_key_path: "/Users/huitailang/workdir/spider-secrets/AuthKey_5LFYA472TZ.p8"
   client_secret_ttl: "24h"
 
+app_store:
+  # Sandbox 测试使用当前配置。
+  # 上线生产环境前改为：
+  # environment: "PRODUCTION"
+  # app_apple_id: 6776698752
+  bundle_id: "hh.spider"
+  environment: "SANDBOX"
+  app_apple_id: 0
+  enable_online_checks: true
+  node_path: "node"
+  verifier_script_path: "apple_iap_verifier/verify_transaction.mjs"
+  root_certificate_paths:
+    - "/Users/huitailang/workdir/spider-secrets/apple-root-certs/AppleRootCA-G2.cer"
+    - "/Users/huitailang/workdir/spider-secrets/apple-root-certs/AppleRootCA-G3.cer"
+  monthly_product_id: "hh.spider.vip.monthly"
+  lifetime_product_id: "hh.spider.vip.lifetime"
+  timeout: "10s"
+
 logger:
   level: "info"
   path: "stdout"

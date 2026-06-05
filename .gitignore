@@ -9,3 +9,4 @@ config.local.yaml
 /bin/
 /gen/node_modules/
 downloads/
+/exercise_body_part_json/

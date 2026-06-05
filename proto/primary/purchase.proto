@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+service VIPService {
+  // 获取当前登录用户的 VIP 权益状态。
+  rpc getVIPStatus(GetVIPStatusRequest) returns (VIPStatusResponse);
+
+  // 进入 Apple 支付前先创建服务端预订单。
+  rpc createApplePurchaseOrder(CreateApplePurchaseOrderRequest) returns (CreateApplePurchaseOrderResponse);
+
+  // 购买完成后提交 Apple 交易，服务端校验预订单与 Apple 交易后授予权益。
+  rpc confirmAppleTransaction(ConfirmAppleTransactionRequest) returns (VIPStatusResponse);
+}
+
+message GetVIPStatusRequest {}
+
+enum VIPKind {
+  VIP_KIND_NONE = 0;
+  VIP_KIND_LIFETIME = 1;
+  VIP_KIND_MONTHLY = 2;
+}
+
+message VIPStatus {
+  bool is_vip = 1;
+  VIPKind kind = 2;
+  // 秒级 Unix time；永久 VIP 或无 VIP 时为 0。
+  int64 expires_at = 3;
+  string product_id = 4;
+  string source = 5;
+  // 服务端当前秒级 Unix time，客户端可用于校准本地缓存。
+  int64 server_time = 6;
+}
+
+message VIPStatusResponse {
+  VIPStatus status = 1;
+}
+
+message CreateApplePurchaseOrderRequest {
+  string product_id = 1;
+}
+
+message CreateApplePurchaseOrderResponse {
+  string order_id = 1;
+  string product_id = 2;
+  // 秒级 Unix time。
+  int64 expires_at = 3;
+  int64 server_time = 4;
+}
+
+message ConfirmAppleTransactionRequest {
+  string product_id = 1;
+  string transaction_id = 2;
+  string original_transaction_id = 3;
+  string signed_transaction_jws = 4;
+  string order_id = 5;
+}

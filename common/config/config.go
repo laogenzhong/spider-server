@@ -21,6 +21,7 @@ type Config struct {
 	Auth        AuthConfig        `yaml:"auth"`
 	Sign        SignConfig        `yaml:"sign"`
 	AppleSignIn AppleSignInConfig `yaml:"apple_sign_in"`
+	AppStore    AppStoreConfig    `yaml:"app_store"`
 	Logger      LoggerConfig      `yaml:"logger"`
 	Client      ClientConfig      `yaml:"client"`
 }
@@ -72,6 +73,19 @@ type AppleSignInConfig struct {
 	PrivateKeyPath  string `yaml:"private_key_path"`
 	PrivateKey      string `yaml:"private_key"`
 	ClientSecretTTL string `yaml:"client_secret_ttl"`
+}
+
+type AppStoreConfig struct {
+	BundleID             string   `yaml:"bundle_id"`
+	Environment          string   `yaml:"environment"`
+	AppAppleID           int64    `yaml:"app_apple_id"`
+	EnableOnlineChecks   bool     `yaml:"enable_online_checks"`
+	NodePath             string   `yaml:"node_path"`
+	VerifierScriptPath   string   `yaml:"verifier_script_path"`
+	RootCertificatePaths []string `yaml:"root_certificate_paths"`
+	MonthlyProductID     string   `yaml:"monthly_product_id"`
+	LifetimeProductID    string   `yaml:"lifetime_product_id"`
+	Timeout              string   `yaml:"timeout"`
 }
 
 type LoggerConfig struct {
@@ -130,6 +144,16 @@ func Default() Config {
 			KeyID:           "5LFYA472TZ",
 			ClientID:        "hh.spider",
 			ClientSecretTTL: "24h",
+		},
+		AppStore: AppStoreConfig{
+			BundleID:           "hh.spider",
+			Environment:        "SANDBOX",
+			EnableOnlineChecks: true,
+			NodePath:           "node",
+			VerifierScriptPath: "apple_iap_verifier/verify_transaction.mjs",
+			MonthlyProductID:   "hh.spider.vip.monthly",
+			LifetimeProductID:  "hh.spider.vip.lifetime",
+			Timeout:            "10s",
 		},
 		Logger: LoggerConfig{
 			Level:        "info",
@@ -223,6 +247,28 @@ func (c *Config) Normalize() {
 	if c.AppleSignIn.ClientSecretTTL == "" {
 		c.AppleSignIn.ClientSecretTTL = Default().AppleSignIn.ClientSecretTTL
 	}
+	c.AppStore.ApplyEnv()
+	if c.AppStore.BundleID == "" {
+		c.AppStore.BundleID = Default().AppStore.BundleID
+	}
+	if c.AppStore.Environment == "" {
+		c.AppStore.Environment = Default().AppStore.Environment
+	}
+	if c.AppStore.NodePath == "" {
+		c.AppStore.NodePath = Default().AppStore.NodePath
+	}
+	if c.AppStore.VerifierScriptPath == "" {
+		c.AppStore.VerifierScriptPath = Default().AppStore.VerifierScriptPath
+	}
+	if c.AppStore.MonthlyProductID == "" {
+		c.AppStore.MonthlyProductID = Default().AppStore.MonthlyProductID
+	}
+	if c.AppStore.LifetimeProductID == "" {
+		c.AppStore.LifetimeProductID = Default().AppStore.LifetimeProductID
+	}
+	if c.AppStore.Timeout == "" {
+		c.AppStore.Timeout = Default().AppStore.Timeout
+	}
 	if c.Logger.Level == "" {
 		c.Logger.Level = Default().Logger.Level
 	}
@@ -295,6 +341,37 @@ func (c AppleSignInConfig) ClientSecretTTLDuration() time.Duration {
 	return durationOrDefault(c.ClientSecretTTL, 24*time.Hour)
 }
 
+func (c *AppStoreConfig) ApplyEnv() {
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_BUNDLE_ID")); value != "" {
+		c.BundleID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_ENVIRONMENT")); value != "" {
+		c.Environment = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_NODE_PATH")); value != "" {
+		c.NodePath = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_VERIFIER_SCRIPT_PATH")); value != "" {
+		c.VerifierScriptPath = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_ROOT_CERTIFICATE_PATHS")); value != "" {
+		c.RootCertificatePaths = splitCSV(value)
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_MONTHLY_PRODUCT_ID")); value != "" {
+		c.MonthlyProductID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_LIFETIME_PRODUCT_ID")); value != "" {
+		c.LifetimeProductID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_TIMEOUT")); value != "" {
+		c.Timeout = value
+	}
+}
+
+func (c AppStoreConfig) TimeoutDuration() time.Duration {
+	return durationOrDefault(c.Timeout, 10*time.Second)
+}
+
 func (c LoggerConfig) MaxAgeDuration() time.Duration {
 	return durationOrDefault(c.MaxAge, 24*time.Hour)
 }
@@ -313,4 +390,16 @@ func durationOrDefault(value string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return duration
+}
+
+func splitCSV(value string) []string {
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }
