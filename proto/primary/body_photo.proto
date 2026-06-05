@@ -11,6 +11,14 @@ enum BodyPhotoKind {
   BODY_PHOTO_KIND_DIET = 2;
 }
 
+// BodyPhotoMediaType 表示记录关联的媒体资源类型。
+enum BodyPhotoMediaType {
+  BODY_PHOTO_MEDIA_TYPE_UNKNOWN = 0;
+  BODY_PHOTO_MEDIA_TYPE_PHOTO = 1;
+  BODY_PHOTO_MEDIA_TYPE_LIVE_PHOTO = 2;
+  BODY_PHOTO_MEDIA_TYPE_VIDEO = 3;
+}
+
 // BodyPhotoRecord 表示一条 App 内照片索引记录。
 // 注意：这里不保存图片二进制，只保存 iOS 照片库 localIdentifier 及展示元数据。
 message BodyPhotoRecord {
@@ -46,6 +54,9 @@ message BodyPhotoRecord {
 
   // 更新时间，毫秒时间戳。
   int64 updated_at = 11;
+
+  // 媒体类型：普通照片/实况照片/视频。
+  BodyPhotoMediaType media_type = 12;
 }
 
 // 新增/更新照片索引。

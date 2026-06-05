@@ -46,6 +46,7 @@ func (a *BodyPhotoApi) SaveBodyPhoto(ctx context.Context, req *pb.SaveBodyPhotoR
 		Weight:              record.GetWeight(),
 		Note:                record.GetNote(),
 		FileName:            record.GetFileName(),
+		MediaType:           int32(record.GetMediaType()),
 	})
 	if errors.Is(err, mysqlmodel.ErrBodyPhotoDailyLimitExceeded) {
 		return session.Error(ctx, gamecode.BodyPhotoDailyLimitExceeded, &pb.SaveBodyPhotoResponse{})
@@ -96,6 +97,7 @@ func convertBodyPhotoRecord(record *mysqlmodel.BodyPhotoRecord) *pb.BodyPhotoRec
 		Weight:              record.Weight,
 		Note:                record.Note,
 		FileName:            record.FileName,
+		MediaType:           pb.BodyPhotoMediaType(record.MediaType),
 		CreatedAt:           millis(record.CreatedAt),
 		UpdatedAt:           millis(record.UpdatedAt),
 	}

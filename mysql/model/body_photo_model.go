@@ -24,6 +24,7 @@ type BodyPhotoRecord struct {
 	Weight              float64        `gorm:"not null;default:0"`
 	Note                string         `gorm:"type:varchar(512);not null;default:''"`
 	FileName            string         `gorm:"type:varchar(256);not null;default:''"`
+	MediaType           int32          `gorm:"not null;default:1;index"`
 	CreatedAt           time.Time      `gorm:"not null"`
 	UpdatedAt           time.Time      `gorm:"not null"`
 	DeletedAt           gorm.DeletedAt `gorm:"index"`
@@ -32,6 +33,10 @@ type BodyPhotoRecord struct {
 const (
 	BodyPhotoKindBody int32 = 1
 	BodyPhotoKindDiet int32 = 2
+
+	BodyPhotoMediaTypePhoto     int32 = 1
+	BodyPhotoMediaTypeLivePhoto int32 = 2
+	BodyPhotoMediaTypeVideo     int32 = 3
 
 	MaxBodyPhotosPerDay       = 100
 	MaxBodyPhotoCreatesPerDay = 500
@@ -61,6 +66,9 @@ func SaveBodyPhotoRecord(record *BodyPhotoRecord) (*BodyPhotoRecord, error) {
 	}
 	if record.RecordAt == 0 {
 		return nil, fmt.Errorf("record_at is empty")
+	}
+	if record.MediaType == 0 {
+		record.MediaType = BodyPhotoMediaTypePhoto
 	}
 
 	db, err := config.DB()
@@ -112,6 +120,7 @@ func SaveBodyPhotoRecord(record *BodyPhotoRecord) (*BodyPhotoRecord, error) {
 				"weight":                 record.Weight,
 				"note":                   record.Note,
 				"file_name":              record.FileName,
+				"media_type":             record.MediaType,
 				"deleted_at":             nil,
 				"updated_at":             time.Now(),
 			}),
