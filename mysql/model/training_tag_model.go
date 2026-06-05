@@ -3,7 +3,9 @@ package mysqlmodel
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"spider-server/mysql/config"
@@ -49,10 +51,41 @@ type WorkoutTagBinding struct {
 	WorkoutType    string         `gorm:"type:varchar(64);not null"`
 	TagID          uint64         `gorm:"not null;index;uniqueIndex:idx_uid_workout_key_tag"`
 	TagName        string         `gorm:"type:varchar(64);not null"`
+	EnergyPercent  float64        `gorm:"not null;default:0"`
 	RecordDate     string         `gorm:"type:varchar(20);not null;index"`
 	CreatedAt      time.Time      `gorm:"not null"`
 	UpdatedAt      time.Time      `gorm:"not null"`
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
+}
+
+// WorkoutLocation 表示某次 HealthKit 训练的单点位置。
+type WorkoutLocation struct {
+	ID             uint64    `gorm:"primaryKey;autoIncrement"`
+	UID            uint64    `gorm:"not null;index;uniqueIndex:idx_uid_workout_location_key"`
+	WorkoutKey     string    `gorm:"type:varchar(256);not null;index;uniqueIndex:idx_uid_workout_location_key"`
+	WorkoutUUID    string    `gorm:"type:varchar(128);not null;index"`
+	WorkoutStartAt int64     `gorm:"not null;index"`
+	WorkoutEndAt   int64     `gorm:"not null;index"`
+	WorkoutType    string    `gorm:"type:varchar(64);not null"`
+	Latitude       float64   `gorm:"not null"`
+	Longitude      float64   `gorm:"not null"`
+	CapturedAt     int64     `gorm:"not null"`
+	CreatedAt      time.Time `gorm:"not null"`
+	UpdatedAt      time.Time `gorm:"not null"`
+}
+
+// WorkoutNote 表示某次 HealthKit 训练的可选备注。
+type WorkoutNote struct {
+	ID             uint64    `gorm:"primaryKey;autoIncrement"`
+	UID            uint64    `gorm:"not null;index;uniqueIndex:idx_uid_workout_note_key"`
+	WorkoutKey     string    `gorm:"type:varchar(256);not null;index;uniqueIndex:idx_uid_workout_note_key"`
+	WorkoutUUID    string    `gorm:"type:varchar(128);not null;index"`
+	WorkoutStartAt int64     `gorm:"not null;index"`
+	WorkoutEndAt   int64     `gorm:"not null;index"`
+	WorkoutType    string    `gorm:"type:varchar(64);not null"`
+	Note           string    `gorm:"type:varchar(300);not null;default:''"`
+	CreatedAt      time.Time `gorm:"not null"`
+	UpdatedAt      time.Time `gorm:"not null"`
 }
 
 // TrainingTagSortItem 表示标签排序更新项。
@@ -83,6 +116,7 @@ const (
 
 	MaxTrainingTagsPerUser      = 100
 	MaxTrainingTagCreatesPerDay = 500
+	MaxWorkoutNoteLength        = 300
 )
 
 var (
@@ -417,7 +451,7 @@ func ReorderTrainingTags(uid uint64, items []TrainingTagSortItem) ([]*TrainingTa
 // 1. 同一个 uid + workout_key + tag_id 已存在时更新绑定信息。
 // 2. 如果旧绑定被软删除，本次保存会恢复 deleted_at。
 // 3. 本次没有传入的旧 tag 绑定会被删除。
-func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string, tagIDs []uint64) ([]*WorkoutTagBinding, error) {
+func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string, tagIDs []uint64, energyPercentages []float64) ([]*WorkoutTagBinding, error) {
 	if uid == 0 {
 		return nil, fmt.Errorf("uid is empty")
 	}
@@ -433,6 +467,7 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 	recordDate := recordDateFromMillis(workoutStartAt)
 	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
 	uniqueTagIDs := uniqueUint64s(tagIDs)
+	energyPercentByTagID := energyPercentagesByTagID(tagIDs, energyPercentages)
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		deleteQuery := tx.Where("uid = ? AND workout_key = ?", uid, workoutKey)
@@ -472,6 +507,7 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 				WorkoutType:    workoutType,
 				TagID:          tag.ID,
 				TagName:        tag.Name,
+				EnergyPercent:  energyPercentByTagID[tag.ID],
 				RecordDate:     recordDate,
 			})
 		}
@@ -488,6 +524,7 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 				"workout_end_at":   workoutEndAt,
 				"workout_type":     workoutType,
 				"tag_name":         gorm.Expr("VALUES(tag_name)"),
+				"energy_percent":   gorm.Expr("VALUES(energy_percent)"),
 				"record_date":      recordDate,
 				"deleted_at":       nil,
 				"updated_at":       time.Now(),
@@ -499,6 +536,173 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 	}
 
 	return GetWorkoutTags(uid, workoutUUID, workoutStartAt, workoutEndAt)
+}
+
+// SaveWorkoutLocation 保存或更新某次训练的单点位置。
+func SaveWorkoutLocation(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string, latitude float64, longitude float64, capturedAt int64) (*WorkoutLocation, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if workoutUUID == "" && (workoutStartAt == 0 || workoutEndAt == 0) {
+		return nil, fmt.Errorf("workout identity is empty")
+	}
+	if !isValidCoordinate(latitude, longitude) {
+		return nil, fmt.Errorf("coordinate is invalid")
+	}
+	if capturedAt <= 0 {
+		capturedAt = time.Now().UnixMilli()
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
+	location := &WorkoutLocation{
+		UID:            uid,
+		WorkoutKey:     workoutKey,
+		WorkoutUUID:    workoutUUID,
+		WorkoutStartAt: workoutStartAt,
+		WorkoutEndAt:   workoutEndAt,
+		WorkoutType:    workoutType,
+		Latitude:       latitude,
+		Longitude:      longitude,
+		CapturedAt:     capturedAt,
+	}
+
+	if err := db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "uid"},
+			{Name: "workout_key"},
+		},
+		DoUpdates: clause.Assignments(map[string]any{
+			"workout_uuid":     workoutUUID,
+			"workout_start_at": workoutStartAt,
+			"workout_end_at":   workoutEndAt,
+			"workout_type":     workoutType,
+			"latitude":         latitude,
+			"longitude":        longitude,
+			"captured_at":      capturedAt,
+			"updated_at":       time.Now(),
+		}),
+	}).Create(location).Error; err != nil {
+		return nil, err
+	}
+
+	return GetWorkoutLocation(uid, workoutUUID, workoutStartAt, workoutEndAt)
+}
+
+// GetWorkoutLocation 获取某次训练的单点位置。
+func GetWorkoutLocation(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64) (*WorkoutLocation, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if workoutUUID == "" && (workoutStartAt == 0 || workoutEndAt == 0) {
+		return nil, fmt.Errorf("workout identity is empty")
+	}
+
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Where("uid = ?", uid)
+	if workoutUUID != "" {
+		query = query.Where("workout_uuid = ?", workoutUUID)
+	} else {
+		query = query.Where("workout_key = ?", workoutKey)
+	}
+
+	var location WorkoutLocation
+	if err := query.Order("updated_at DESC, id DESC").First(&location).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &location, nil
+}
+
+// SaveWorkoutNote 保存或更新某次训练备注，note 为空时表示清空备注。
+func SaveWorkoutNote(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string, note string) (*WorkoutNote, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if workoutUUID == "" && (workoutStartAt == 0 || workoutEndAt == 0) {
+		return nil, fmt.Errorf("workout identity is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	normalizedNote := normalizedWorkoutNote(note)
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
+	record := &WorkoutNote{
+		UID:            uid,
+		WorkoutKey:     workoutKey,
+		WorkoutUUID:    workoutUUID,
+		WorkoutStartAt: workoutStartAt,
+		WorkoutEndAt:   workoutEndAt,
+		WorkoutType:    workoutType,
+		Note:           normalizedNote,
+	}
+
+	if err := db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "uid"},
+			{Name: "workout_key"},
+		},
+		DoUpdates: clause.Assignments(map[string]any{
+			"workout_uuid":     workoutUUID,
+			"workout_start_at": workoutStartAt,
+			"workout_end_at":   workoutEndAt,
+			"workout_type":     workoutType,
+			"note":             normalizedNote,
+			"updated_at":       time.Now(),
+		}),
+	}).Create(record).Error; err != nil {
+		return nil, err
+	}
+
+	return GetWorkoutNote(uid, workoutUUID, workoutStartAt, workoutEndAt)
+}
+
+// GetWorkoutNote 获取某次训练备注。
+func GetWorkoutNote(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64) (*WorkoutNote, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if workoutUUID == "" && (workoutStartAt == 0 || workoutEndAt == 0) {
+		return nil, fmt.Errorf("workout identity is empty")
+	}
+
+	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Where("uid = ?", uid)
+	if workoutUUID != "" {
+		query = query.Where("workout_uuid = ?", workoutUUID)
+	} else {
+		query = query.Where("workout_key = ?", workoutKey)
+	}
+
+	var note WorkoutNote
+	if err := query.Order("updated_at DESC, id DESC").First(&note).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &note, nil
 }
 
 // GetWorkoutTags 获取某次训练绑定的标签列表。
@@ -875,6 +1079,40 @@ func uniqueUint64s(values []uint64) []uint64 {
 		result = append(result, value)
 	}
 	return result
+}
+
+func energyPercentagesByTagID(tagIDs []uint64, energyPercentages []float64) map[uint64]float64 {
+	result := make(map[uint64]float64)
+	for index, tagID := range tagIDs {
+		if tagID == 0 || result[tagID] > 0 || index >= len(energyPercentages) {
+			continue
+		}
+		value := energyPercentages[index]
+		if math.IsNaN(value) || math.IsInf(value, 0) || value <= 0 {
+			continue
+		}
+		if value > 100 {
+			value = 100
+		}
+		result[tagID] = value
+	}
+	return result
+}
+
+func isValidCoordinate(latitude float64, longitude float64) bool {
+	if math.IsNaN(latitude) || math.IsNaN(longitude) || math.IsInf(latitude, 0) || math.IsInf(longitude, 0) {
+		return false
+	}
+	return latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180 && (latitude != 0 || longitude != 0)
+}
+
+func normalizedWorkoutNote(note string) string {
+	trimmed := strings.TrimSpace(note)
+	runes := []rune(trimmed)
+	if len(runes) > MaxWorkoutNoteLength {
+		return string(runes[:MaxWorkoutNoteLength])
+	}
+	return trimmed
 }
 
 func containsUint64(values []uint64, target uint64) bool {

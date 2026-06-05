@@ -3,6 +3,8 @@ package router
 import (
 	"context"
 	"errors"
+	"strings"
+	"unicode/utf8"
 
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
@@ -167,6 +169,7 @@ func (a *TrainingTagApi) SaveWorkoutTags(ctx context.Context, req *pb.SaveWorkou
 		req.GetWorkoutEndAt(),
 		req.GetWorkoutType(),
 		req.GetTagIds(),
+		req.GetEnergyPercentages(),
 	)
 	if err != nil {
 		return session.Error(ctx, gamecode.WorkoutTagsSaveFailed, &pb.SaveWorkoutTagsResponse{})
@@ -228,6 +231,112 @@ func (a *TrainingTagApi) DeleteWorkoutTags(ctx context.Context, req *pb.DeleteWo
 	}
 
 	return &pb.DeleteWorkoutTagsResponse{Success: true}, nil
+}
+
+// SaveWorkoutLocation 保存某次训练的单点位置。
+func (a *TrainingTagApi) SaveWorkoutLocation(ctx context.Context, req *pb.SaveWorkoutLocationRequest) (*pb.SaveWorkoutLocationResponse, error) {
+	uid := session.GetUser(ctx).UID()
+
+	if req.GetWorkoutUuid() == "" && (req.GetWorkoutStartAt() == 0 || req.GetWorkoutEndAt() == 0) {
+		return session.Error(ctx, gamecode.WorkoutLocationTargetEmpty, &pb.SaveWorkoutLocationResponse{})
+	}
+	if req.GetLatitude() == 0 && req.GetLongitude() == 0 {
+		return session.Error(ctx, gamecode.WorkoutLocationInvalid, &pb.SaveWorkoutLocationResponse{})
+	}
+
+	location, err := mysqlmodel.SaveWorkoutLocation(
+		uid,
+		req.GetWorkoutUuid(),
+		req.GetWorkoutStartAt(),
+		req.GetWorkoutEndAt(),
+		req.GetWorkoutType(),
+		req.GetLatitude(),
+		req.GetLongitude(),
+		req.GetCapturedAt(),
+	)
+	if err != nil {
+		return session.Error(ctx, gamecode.WorkoutLocationSaveFailed, &pb.SaveWorkoutLocationResponse{})
+	}
+
+	return &pb.SaveWorkoutLocationResponse{
+		Location: convertWorkoutLocation(location),
+	}, nil
+}
+
+// GetWorkoutLocation 获取某次训练的单点位置。
+func (a *TrainingTagApi) GetWorkoutLocation(ctx context.Context, req *pb.GetWorkoutLocationRequest) (*pb.GetWorkoutLocationResponse, error) {
+	uid := session.GetUser(ctx).UID()
+
+	if req.GetWorkoutUuid() == "" && (req.GetWorkoutStartAt() == 0 || req.GetWorkoutEndAt() == 0) {
+		return session.Error(ctx, gamecode.WorkoutLocationTargetEmpty, &pb.GetWorkoutLocationResponse{})
+	}
+
+	location, err := mysqlmodel.GetWorkoutLocation(
+		uid,
+		req.GetWorkoutUuid(),
+		req.GetWorkoutStartAt(),
+		req.GetWorkoutEndAt(),
+	)
+	if err != nil {
+		return session.Error(ctx, gamecode.WorkoutLocationQueryFailed, &pb.GetWorkoutLocationResponse{})
+	}
+
+	return &pb.GetWorkoutLocationResponse{
+		Location: convertWorkoutLocation(location),
+	}, nil
+}
+
+// SaveWorkoutNote 保存某次训练备注。
+func (a *TrainingTagApi) SaveWorkoutNote(ctx context.Context, req *pb.SaveWorkoutNoteRequest) (*pb.SaveWorkoutNoteResponse, error) {
+	uid := session.GetUser(ctx).UID()
+
+	if req.GetWorkoutUuid() == "" && (req.GetWorkoutStartAt() == 0 || req.GetWorkoutEndAt() == 0) {
+		return session.Error(ctx, gamecode.WorkoutNoteTargetEmpty, &pb.SaveWorkoutNoteResponse{})
+	}
+
+	noteText := strings.TrimSpace(req.GetNote())
+	if utf8.RuneCountInString(noteText) > mysqlmodel.MaxWorkoutNoteLength {
+		return session.Error(ctx, gamecode.WorkoutNoteTooLong, &pb.SaveWorkoutNoteResponse{})
+	}
+
+	note, err := mysqlmodel.SaveWorkoutNote(
+		uid,
+		req.GetWorkoutUuid(),
+		req.GetWorkoutStartAt(),
+		req.GetWorkoutEndAt(),
+		req.GetWorkoutType(),
+		noteText,
+	)
+	if err != nil {
+		return session.Error(ctx, gamecode.WorkoutNoteSaveFailed, &pb.SaveWorkoutNoteResponse{})
+	}
+
+	return &pb.SaveWorkoutNoteResponse{
+		Note: convertWorkoutNote(note),
+	}, nil
+}
+
+// GetWorkoutNote 获取某次训练备注。
+func (a *TrainingTagApi) GetWorkoutNote(ctx context.Context, req *pb.GetWorkoutNoteRequest) (*pb.GetWorkoutNoteResponse, error) {
+	uid := session.GetUser(ctx).UID()
+
+	if req.GetWorkoutUuid() == "" && (req.GetWorkoutStartAt() == 0 || req.GetWorkoutEndAt() == 0) {
+		return session.Error(ctx, gamecode.WorkoutNoteTargetEmpty, &pb.GetWorkoutNoteResponse{})
+	}
+
+	note, err := mysqlmodel.GetWorkoutNote(
+		uid,
+		req.GetWorkoutUuid(),
+		req.GetWorkoutStartAt(),
+		req.GetWorkoutEndAt(),
+	)
+	if err != nil {
+		return session.Error(ctx, gamecode.WorkoutNoteQueryFailed, &pb.GetWorkoutNoteResponse{})
+	}
+
+	return &pb.GetWorkoutNoteResponse{
+		Note: convertWorkoutNote(note),
+	}, nil
 }
 
 // ListDailyWorkoutTags 获取某一天内所有训练及其标签。
@@ -311,6 +420,47 @@ func convertWorkoutTagBinding(binding *mysqlmodel.WorkoutTagBinding) *pb.Workout
 		TagName:        binding.TagName,
 		CreatedAt:      millis(binding.CreatedAt),
 		UpdatedAt:      millis(binding.UpdatedAt),
+		EnergyPercent:  binding.EnergyPercent,
+	}
+}
+
+// convertWorkoutLocation 将 MySQL 训练位置模型转换为 pb 模型。
+func convertWorkoutLocation(location *mysqlmodel.WorkoutLocation) *pb.WorkoutLocation {
+	if location == nil {
+		return nil
+	}
+
+	return &pb.WorkoutLocation{
+		Id:             location.ID,
+		Uid:            location.UID,
+		WorkoutUuid:    location.WorkoutUUID,
+		WorkoutStartAt: location.WorkoutStartAt,
+		WorkoutEndAt:   location.WorkoutEndAt,
+		WorkoutType:    location.WorkoutType,
+		Latitude:       location.Latitude,
+		Longitude:      location.Longitude,
+		CapturedAt:     location.CapturedAt,
+		CreatedAt:      millis(location.CreatedAt),
+		UpdatedAt:      millis(location.UpdatedAt),
+	}
+}
+
+// convertWorkoutNote 将 MySQL 训练备注模型转换为 pb 模型。
+func convertWorkoutNote(note *mysqlmodel.WorkoutNote) *pb.WorkoutNote {
+	if note == nil {
+		return nil
+	}
+
+	return &pb.WorkoutNote{
+		Id:             note.ID,
+		Uid:            note.UID,
+		WorkoutUuid:    note.WorkoutUUID,
+		WorkoutStartAt: note.WorkoutStartAt,
+		WorkoutEndAt:   note.WorkoutEndAt,
+		WorkoutType:    note.WorkoutType,
+		Note:           note.Note,
+		CreatedAt:      millis(note.CreatedAt),
+		UpdatedAt:      millis(note.UpdatedAt),
 	}
 }
 

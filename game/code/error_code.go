@@ -137,6 +137,30 @@ const (
 	// TrainingTagDailyLimitExceeded 当天训练标签新增数量超过上限。
 	TrainingTagDailyLimitExceeded int = 30018
 
+	// WorkoutLocationTargetEmpty 训练位置缺少 workout_uuid 或训练时间。
+	WorkoutLocationTargetEmpty int = 30019
+
+	// WorkoutLocationInvalid 训练位置坐标无效。
+	WorkoutLocationInvalid int = 30020
+
+	// WorkoutLocationSaveFailed 保存训练位置失败。
+	WorkoutLocationSaveFailed int = 30021
+
+	// WorkoutLocationQueryFailed 查询训练位置失败。
+	WorkoutLocationQueryFailed int = 30022
+
+	// WorkoutNoteTargetEmpty 训练备注缺少 workout_uuid 或训练时间。
+	WorkoutNoteTargetEmpty int = 30023
+
+	// WorkoutNoteTooLong 训练备注超过长度限制。
+	WorkoutNoteTooLong int = 30024
+
+	// WorkoutNoteSaveFailed 保存训练备注失败。
+	WorkoutNoteSaveFailed int = 30025
+
+	// WorkoutNoteQueryFailed 查询训练备注失败。
+	WorkoutNoteQueryFailed int = 30026
+
 	// RestoreStartSnapshotInvalid 起始快照无效。
 	RestoreStartSnapshotInvalid int = 40001
 

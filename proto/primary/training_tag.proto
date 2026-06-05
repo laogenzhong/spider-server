@@ -74,6 +74,75 @@ message WorkoutTagBinding {
 
   // 更新时间，毫秒时间戳。
   int64 updated_at = 10;
+
+  // 该标签在本次训练热量中的占比，范围 0-100；为空或 0 时客户端可按标签数均分。
+  double energy_percent = 11;
+}
+
+// WorkoutLocation 表示某次训练的单点位置。
+message WorkoutLocation {
+  // 位置记录 ID，由服务端生成。
+  uint64 id = 1;
+
+  // 用户 ID，通常由服务端从 token/session 中获取。
+  uint64 uid = 2;
+
+  // HealthKit workout uuid，对应 iOS 侧 WorkoutModel.healthKitUUID。
+  string workout_uuid = 3;
+
+  // 训练开始时间，毫秒时间戳。
+  int64 workout_start_at = 4;
+
+  // 训练结束时间，毫秒时间戳。
+  int64 workout_end_at = 5;
+
+  // 训练类型，例如 传统力量训练、跑步、步行。
+  string workout_type = 6;
+
+  // 纬度。
+  double latitude = 7;
+
+  // 经度。
+  double longitude = 8;
+
+  // 位置采集时间，毫秒时间戳。
+  int64 captured_at = 9;
+
+  // 创建时间，毫秒时间戳。
+  int64 created_at = 10;
+
+  // 更新时间，毫秒时间戳。
+  int64 updated_at = 11;
+}
+
+// WorkoutNote 表示某次训练的可选备注，仅用于训练详情展示。
+message WorkoutNote {
+  // 备注记录 ID，由服务端生成。
+  uint64 id = 1;
+
+  // 用户 ID，通常由服务端从 token/session 中获取。
+  uint64 uid = 2;
+
+  // HealthKit workout uuid，对应 iOS 侧 WorkoutModel.healthKitUUID。
+  string workout_uuid = 3;
+
+  // 训练开始时间，毫秒时间戳。
+  int64 workout_start_at = 4;
+
+  // 训练结束时间，毫秒时间戳。
+  int64 workout_end_at = 5;
+
+  // 训练类型，例如 传统力量训练、跑步、步行。
+  string workout_type = 6;
+
+  // 训练备注，最多 300 字；为空表示清空备注。
+  string note = 7;
+
+  // 创建时间，毫秒时间戳。
+  int64 created_at = 8;
+
+  // 更新时间，毫秒时间戳。
+  int64 updated_at = 9;
 }
 
 // CreateTrainingTagRequest 表示新建用户自定义训练标签的请求。
@@ -173,6 +242,9 @@ message SaveWorkoutTagsRequest {
 
   // 当前训练绑定的完整标签 ID 列表；服务端可按覆盖式保存处理。
   repeated uint64 tag_ids = 5;
+
+  // 与 tag_ids 一一对应的热量占比，整体约等于 100；未传时服务端可按标签数量均分。
+  repeated double energy_percentages = 6;
 }
 
 // SaveWorkoutTagsResponse 表示保存某次训练标签后的返回结果。
@@ -215,6 +287,96 @@ message DeleteWorkoutTagsRequest {
 message DeleteWorkoutTagsResponse {
   // 是否删除成功。
   bool success = 1;
+}
+
+// SaveWorkoutLocationRequest 表示保存某次训练位置的请求。
+message SaveWorkoutLocationRequest {
+  // HealthKit workout uuid，优先用它定位某次训练。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳，用于展示和兜底定位。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳，用于展示和兜底定位。
+  int64 workout_end_at = 3;
+
+  // 训练类型，例如 传统力量训练、跑步、步行。
+  string workout_type = 4;
+
+  // 纬度。
+  double latitude = 5;
+
+  // 经度。
+  double longitude = 6;
+
+  // 位置采集时间，毫秒时间戳。
+  int64 captured_at = 7;
+}
+
+// SaveWorkoutLocationResponse 表示保存某次训练位置后的返回结果。
+message SaveWorkoutLocationResponse {
+  // 保存后的训练位置。
+  WorkoutLocation location = 1;
+}
+
+// GetWorkoutLocationRequest 表示查询某次训练位置的请求。
+message GetWorkoutLocationRequest {
+  // HealthKit workout uuid，优先用它查询某次训练位置。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底查询。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底查询。
+  int64 workout_end_at = 3;
+}
+
+// GetWorkoutLocationResponse 表示查询某次训练位置后的返回结果。
+message GetWorkoutLocationResponse {
+  // 当前训练位置；为空表示服务端暂无位置。
+  WorkoutLocation location = 1;
+}
+
+// SaveWorkoutNoteRequest 表示保存某次训练备注的请求。
+message SaveWorkoutNoteRequest {
+  // HealthKit workout uuid，优先用它定位某次训练。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳，用于展示和兜底定位。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳，用于展示和兜底定位。
+  int64 workout_end_at = 3;
+
+  // 训练类型，例如 传统力量训练、跑步、步行。
+  string workout_type = 4;
+
+  // 训练备注，最多 300 字；为空表示清空备注。
+  string note = 5;
+}
+
+// SaveWorkoutNoteResponse 表示保存某次训练备注后的返回结果。
+message SaveWorkoutNoteResponse {
+  // 保存后的训练备注。
+  WorkoutNote note = 1;
+}
+
+// GetWorkoutNoteRequest 表示查询某次训练备注的请求。
+message GetWorkoutNoteRequest {
+  // HealthKit workout uuid，优先用它查询某次训练备注。
+  string workout_uuid = 1;
+
+  // 训练开始时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底查询。
+  int64 workout_start_at = 2;
+
+  // 训练结束时间，毫秒时间戳；当 workout_uuid 为空或旧数据无 uuid 时用于兜底查询。
+  int64 workout_end_at = 3;
+}
+
+// GetWorkoutNoteResponse 表示查询某次训练备注后的返回结果。
+message GetWorkoutNoteResponse {
+  // 当前训练备注；为空表示服务端暂无备注。
+  WorkoutNote note = 1;
 }
 
 // ListDailyWorkoutTagsRequest 表示查询某一天所有训练标签的请求。
@@ -299,6 +461,18 @@ service TrainingTagService {
 
   // 删除某次训练绑定的全部标签。
   rpc DeleteWorkoutTags(DeleteWorkoutTagsRequest) returns (DeleteWorkoutTagsResponse);
+
+  // 保存某次训练的位置。
+  rpc SaveWorkoutLocation(SaveWorkoutLocationRequest) returns (SaveWorkoutLocationResponse);
+
+  // 获取某次训练的位置。
+  rpc GetWorkoutLocation(GetWorkoutLocationRequest) returns (GetWorkoutLocationResponse);
+
+  // 保存某次训练备注。
+  rpc SaveWorkoutNote(SaveWorkoutNoteRequest) returns (SaveWorkoutNoteResponse);
+
+  // 获取某次训练备注。
+  rpc GetWorkoutNote(GetWorkoutNoteRequest) returns (GetWorkoutNoteResponse);
 
   // 获取某一天内所有训练及其标签。
   rpc ListDailyWorkoutTags(ListDailyWorkoutTagsRequest) returns (ListDailyWorkoutTagsResponse);
