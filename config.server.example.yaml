@@ -1,0 +1,69 @@
+server:
+  gateway_addr: ":19080"
+  grpc_addr: ":18000"
+  grpc_target: "127.0.0.1:18000"
+  endpoint_host: "spiderapi.jjai.top"
+  read_header_timeout: "5s"
+
+mysql:
+  user: "spider"
+  password: "Spider1022.."
+  host: "127.0.0.1"
+  port: 3306
+  database: "spider"
+  charset: "utf8mb4"
+  parse_time: true
+  loc: "Local"
+  max_open_conns: 50
+  max_idle_conns: 10
+  conn_max_lifetime: "1h"
+  conn_max_idle_time: "10m"
+  log_level: "warn"
+
+session:
+  sign_secret: "spider-sign-session-secret"
+  default_ttl: "8760h"
+
+auth:
+  public_grpc_method_prefixes:
+    - "/uc."
+
+sign:
+  enabled: true
+  replay_nonce_ttl: "60s"
+  replay_nonce_cleanup: "5s"
+  log_metadata_prefix_only: true
+
+apple_sign_in:
+  team_id: "XLVU7GGT6N"
+  key_id: "5LFYA472TZ"
+  client_id: "hh.spider"
+  private_key_path: "/root/spiderapi/secrets/AuthKey_5LFYA472TZ.p8"
+  client_secret_ttl: "24h"
+
+app_store:
+  bundle_id: "hh.spider"
+  # 沙盒/TestFlight 联调用 SANDBOX；正式上架后改为 PRODUCTION，并保留 app_apple_id。
+  environment: "SANDBOX"
+  app_apple_id: 6776698752
+  enable_online_checks: true
+  node_path: "node"
+  verifier_script_path: "apple_iap_verifier/verify_transaction.mjs"
+  root_certificate_paths:
+    - "/root/spiderapi/secrets/apple-root-certs/AppleRootCA-G2.cer"
+    - "/root/spiderapi/secrets/apple-root-certs/AppleRootCA-G3.cer"
+  monthly_product_id: "hh.spider.vip.monthly"
+  lifetime_product_id: "hh.spider.vip.lifetime"
+  timeout: "10s"
+
+logger:
+  level: "info"
+  path: "logs/spider-server.log"
+  rotate: "%Y%m%d%H"
+  max_age: "24h"
+  rotation_time: "1h"
+
+client:
+  gateway_base_url: "https://spiderapi.jjai.top"
+  timeout: "10s"
+  sign_salt: ""

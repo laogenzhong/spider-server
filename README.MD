@@ -22,3 +22,66 @@ SPIDER_SERVER_CONFIG=config.local.yaml go run ./cmd
 ```
 
 `config.local.yaml` 已加入 `.gitignore`，不会被提交。
+
+## 服务器配置
+
+服务器不要直接改本地 `config.yaml`。当前发布流程把 `config.server.example.yaml` 作为线上真实配置源，`./build.sh` 会自动把它打包为服务器运行时读取的 `config.server.yaml`。
+
+服务器启动时指定配置：
+
+```bash
+SPIDER_SERVER_CONFIG=config.server.yaml ./spider-server
+```
+
+生产配置重点检查：
+
+- `mysql.password`：服务器 MySQL 的 `spider` 用户密码。
+- `session.sign_secret`：换成一串足够长的随机字符串。
+- `apple_sign_in.private_key_path`：服务器上的 `AuthKey_5LFYA472TZ.p8` 路径。
+- `app_store.environment`：沙盒/TestFlight 联调用 `SANDBOX`，正式上架后改为 `PRODUCTION`。
+- `app_store.root_certificate_paths`：服务器上的 Apple 根证书路径。
+- `client.gateway_base_url`：公网 HTTPS 地址，例如 `https://spiderapi.jjai.top`。
+
+## Linux 线上包构建
+
+在本机项目根目录直接执行：
+
+```bash
+./build.sh
+```
+
+脚本会生成 Linux x86_64 线上包：
+
+```bash
+bin/spider-server-online-linux-amd64.tar.gz
+```
+
+`./build.sh` 会把 `config.server.example.yaml` 同时打包为 `config.server.example.yaml` 和 `config.server.yaml`。包内也会包含 `apple_iap_verifier` 和生产 Node 依赖。服务器仍需要已安装 `node` 运行时，`run.sh` 会在启动前检测。
+
+上传到服务器后：
+
+```bash
+tar -xzf spider-server-online-linux-amd64.tar.gz
+cd spider-server-online-linux-amd64
+./run.sh
+```
+
+## 同步线上包
+
+构建完成后，可以直接把 tar 包同步到服务器目录：
+
+```bash
+./sync.sh
+```
+
+默认上传到：
+
+```bash
+root@spiderapi.jjai.top:/root/app/spider/api/
+```
+
+如需临时改服务器或目录：
+
+```bash
+REMOTE_HOST=example.com REMOTE_DIR=/root/app/spider/api ./sync.sh
+```
