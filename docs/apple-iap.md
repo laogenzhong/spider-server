@@ -2,6 +2,10 @@
 
 本文档记录 Apple 内购接入的当前实现、已知问题和后续待办。后续继续做支付时，应先阅读本文，避免重复讨论已经确认过的风险点。
 
+服务端支付详细流程见：
+
+- `docs/apple-iap-server-flow.md`
+
 ## 当前目标
 
 App 需要支持两种 VIP 支付：
@@ -91,16 +95,16 @@ node apple_iap_verifier/verify_transaction.mjs
 
 ## 已知问题与后续待办
 
-### P0: 配置 Apple 根证书
+### P0: 配置并实测 Apple 根证书
 
-当前 `config.yaml` 中 `app_store.root_certificate_paths` 仍为空。未配置前，`confirmAppleTransaction` 会返回“支付校验服务暂未配置完成”，不会授予权益。
+`config.yaml` 已配置本机 Apple 根证书路径。新环境部署时仍必须确认 `app_store.root_certificate_paths` 指向服务器上真实存在的 DER `.cer` 文件。未配置前，`confirmAppleTransaction` 和通知回调会返回验签配置错误，不会授予权益。
 
 待办：
 
 - 下载 Apple PKI 中用于 App Store Server Library 的 DER `.cer` 根证书。
 - 将证书放到服务器安全路径。
 - 配置 `app_store.root_certificate_paths` 或环境变量 `APP_STORE_ROOT_CERTIFICATE_PATHS`。
-- 用 Sandbox 真实交易验证一次完整购买链路。
+- 用 Sandbox 真实交易验证一次完整购买、续订、退款/撤销、过期链路。
 
 ### Done: 客户端 pending 交易队列第一版
 
@@ -132,17 +136,27 @@ node apple_iap_verifier/verify_transaction.mjs
 - 在购买页展示更完整的 pending 同步状态。
 - 区分永久失败与临时失败，例如 product id 错误、验签配置错误、网络失败。
 
-### P0: App Store Server Notifications V2
+### Done: App Store Server Notifications V2
 
-当前只处理客户端主动上报的交易。订阅续期、退款、撤销、过期、账单重试等事件不能只依赖客户端在线。
+服务端已接入 App Store Server Notifications V2，用来补齐订阅续期、退款、撤销、过期、账单重试等客户端不一定在线的事件。
 
-待办：
+当前实现：
 
-- 新增 App Store Server Notifications V2 HTTP 回调。
-- 验证通知 JWS。
-- 按 `notificationType` 和 `subtype` 更新 `apple_transactions` 与 `user_entitlements`。
-- 覆盖续订、过期、退款、撤销、账单失败、宽限期等状态。
-- 保证通知处理幂等。
+- Apple 后台通知 URL 配置为：`https://<你的域名>/app-store/notifications/v2`。
+- 兼容路径：`/app-store-server-notifications/v2`。
+- 网关收到 JSON `{ "signedPayload": "..." }` 后，调用 `apple_iap_verifier/verify_transaction.mjs`。
+- Node 使用 Apple 官方 `@apple/app-store-server-library` 验证通知 JWS，并继续验证通知里的 `signedTransactionInfo` 和 `signedRenewalInfo`。
+- 服务端新增 `app_store_server_notifications` 表，按 `notification_uuid` 幂等处理，保存原始通知 JWS、交易 JWS、续订 JWS、通知类型、子类型和处理状态。
+- 能通过 `original_transaction_id` 匹配到历史 `apple_transactions`、已支付预订单或当前权益时，立即更新交易快照和 VIP 权益。
+- 如果通知先于客户端首次确认交易到达，通知会记录为 `pending_user`；客户端后续确认同一 `original_transaction_id` 后，服务端会回放这些待处理通知。
+
+权益规则：
+
+- `SUBSCRIBED`、`DID_RENEW`、`RENEWAL_EXTENDED`、`RENEWAL_EXTENSION`、`OFFER_REDEEMED`、`REFUND_REVERSED` 等有效交易会授予或延长 VIP。
+- `REFUND`、`REVOKE` 会撤销对应 `original_transaction_id` 的 VIP。
+- `EXPIRED`、`GRACE_PERIOD_EXPIRED` 会关闭对应订阅权益。
+- `DID_FAIL_TO_RENEW` 如果仍在宽限期或交易过期时间未到，会继续保留到有效期；否则关闭权益。
+- `DID_CHANGE_RENEWAL_STATUS`、`DID_CHANGE_RENEWAL_PREF`、`PRICE_INCREASE`、`REFUND_DECLINED` 等只记录状态，不主动改变当前权益。
 
 ### P1: 购买页状态防重复点击
 
@@ -213,9 +227,10 @@ node apple_iap_verifier/verify_transaction.mjs
 
 ## 后续建议顺序
 
-1. 配置 Apple 根证书并跑通 Sandbox 真交易。
-2. 客户端增加 pending 交易队列。
-3. 购买页按服务端 VIP 状态和 StoreKit 当前权益优化 UI。
-4. 服务端接 App Store Server Notifications V2。
-5. 完善订阅状态模型和退款/撤销处理。
-6. 根据真实调用量决定是否把 Node 子进程升级为常驻 HTTP 服务。
+1. 跑通 Sandbox 真实购买、续订、过期、退款/撤销、Server Notifications V2 测试通知。
+2. 接 App Store Server API 主动对账，补齐交易历史、订阅状态和通知历史回放。
+3. 生产环境配置和密钥管理，拆清 Sandbox / Production。
+4. 支付状态观测和告警，重点关注验签失败、通知 5xx、`pending_user` 堆积。
+5. 完善订阅状态模型，让客户端能展示账单重试、宽限期、自动续订等状态。
+6. 增加通知回放/修复工具和状态机测试。
+7. 根据真实调用量决定是否把 Node 子进程升级为常驻 HTTP 服务。

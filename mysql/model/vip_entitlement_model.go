@@ -24,6 +24,10 @@ const (
 	ApplePurchaseOrderStatusCreated = "created"
 	ApplePurchaseOrderStatusPaid    = "paid"
 	ApplePurchaseOrderStatusExpired = "expired"
+
+	AppStoreNotificationStatusProcessed   = "processed"
+	AppStoreNotificationStatusPendingUser = "pending_user"
+	AppStoreNotificationStatusIgnored     = "ignored"
 )
 
 var (
@@ -79,6 +83,48 @@ type ApplePurchaseOrder struct {
 	OriginalTransactionID string `gorm:"size:128;index"`
 	ExpiresAt             time.Time
 	ConfirmedAt           *time.Time
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	DeletedAt             gorm.DeletedAt `gorm:"index"`
+}
+
+type AppStoreServerNotification struct {
+	ID                    uint   `gorm:"primaryKey;autoIncrement"`
+	UID                   uint64 `gorm:"index;not null;default:0"`
+	NotificationUUID      string `gorm:"size:128;uniqueIndex;not null"`
+	NotificationType      string `gorm:"size:64;index"`
+	Subtype               string `gorm:"size:64;index"`
+	Version               string `gorm:"size:16"`
+	BundleID              string `gorm:"size:128;index"`
+	Environment           string `gorm:"size:32;index"`
+	AppAppleID            int64
+	BundleVersion         string `gorm:"size:64"`
+	SubscriptionStatus    int32
+	ConsumptionReason     string `gorm:"size:64"`
+	ProductID             string `gorm:"size:128;index"`
+	TransactionID         string `gorm:"size:128;index"`
+	OriginalTransactionID string `gorm:"size:128;index"`
+	TransactionType       string `gorm:"size:64"`
+	PurchaseAt            *time.Time
+	OriginalPurchaseAt    *time.Time
+	ExpiresAt             *time.Time
+	RevocationAt          *time.Time
+	RevocationReason      int32
+	TransactionSignedAt   *time.Time
+	AutoRenewProductID    string `gorm:"size:128"`
+	AutoRenewStatus       int32
+	ExpirationIntent      int32
+	IsInBillingRetry      bool `gorm:"index;not null;default:false"`
+	GracePeriodExpiresAt  *time.Time
+	RenewalDate           *time.Time
+	RenewalSignedAt       *time.Time
+	NotificationSignedAt  *time.Time
+	SignedPayload         string `gorm:"type:text"`
+	SignedTransactionJWS  string `gorm:"type:text"`
+	SignedRenewalInfoJWS  string `gorm:"type:text"`
+	ProcessingStatus      string `gorm:"size:32;index;not null"`
+	ProcessingError       string `gorm:"type:text"`
+	ProcessedAt           *time.Time
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             gorm.DeletedAt `gorm:"index"`
@@ -142,26 +188,7 @@ func SaveAppleTransactionAndGrantVIP(
 			return ErrApplePurchaseOrderProductMismatch
 		}
 
-		if err := db.Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "transaction_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{
-				"uid",
-				"order_id",
-				"original_transaction_id",
-				"product_id",
-				"bundle_id",
-				"environment",
-				"type",
-				"purchase_at",
-				"original_purchase_at",
-				"expires_at",
-				"revocation_at",
-				"revocation_reason",
-				"signed_at",
-				"signed_transaction_jws",
-				"updated_at",
-			}),
-		}).Create(record).Error; err != nil {
+		if err := upsertAppleTransaction(db, record, true); err != nil {
 			return err
 		}
 
@@ -171,10 +198,16 @@ func SaveAppleTransactionAndGrantVIP(
 
 		active := record.RevocationAt == nil && isVIPEntitlementCurrentlyActive(kind, record.ExpiresAt, now)
 		if !active {
-			return deactivateMatchingVIPEntitlement(db, uid, record.OriginalTransactionID)
+			if err := deactivateMatchingVIPEntitlement(db, uid, record.ProductID, record.OriginalTransactionID, record.ExpiresAt, now); err != nil {
+				return err
+			}
+			return applyPendingAppStoreNotificationsForOriginalTransaction(db, uid, record.OriginalTransactionID, monthlyProductID, lifetimeProductID, now)
 		}
 
-		return upsertVIPEntitlement(db, uid, kind, record.ProductID, record.OriginalTransactionID, record.ExpiresAt)
+		if err := upsertVIPEntitlement(db, uid, kind, record.ProductID, record.OriginalTransactionID, record.ExpiresAt); err != nil {
+			return err
+		}
+		return applyPendingAppStoreNotificationsForOriginalTransaction(db, uid, record.OriginalTransactionID, monthlyProductID, lifetimeProductID, now)
 	})
 }
 
@@ -238,7 +271,356 @@ func GetCurrentVIPStatus(uid uint64, now time.Time) (CurrentVIPStatus, error) {
 	return status, nil
 }
 
+func SaveAppStoreServerNotificationAndApplyVIP(
+	notification appstore.Notification,
+	transaction *appstore.Transaction,
+	renewalInfo *appstore.RenewalInfo,
+	signedPayload string,
+	monthlyProductID string,
+	lifetimeProductID string,
+	now time.Time,
+) error {
+	if strings.TrimSpace(notification.NotificationUUID) == "" {
+		return fmt.Errorf("notification uuid is empty")
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	record := appStoreServerNotificationFromPayload(notification, transaction, renewalInfo, signedPayload)
+	return config.WithTx(func(db *gorm.DB) error {
+		existing := &AppStoreServerNotification{}
+		err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("notification_uuid = ?", record.NotificationUUID).
+			First(existing).Error
+		if err == nil &&
+			(existing.ProcessingStatus == AppStoreNotificationStatusProcessed ||
+				existing.ProcessingStatus == AppStoreNotificationStatusIgnored) {
+			return nil
+		}
+		if err != nil && !isRecordNotFound(err) {
+			return err
+		}
+
+		uid, err := findVIPOwnerUIDForNotification(db, transaction, record.OriginalTransactionID)
+		if err != nil {
+			return err
+		}
+		record.UID = uid
+
+		if transaction == nil || strings.TrimSpace(record.TransactionID) == "" {
+			record.ProcessingStatus = AppStoreNotificationStatusIgnored
+			record.ProcessingError = "notification has no transaction"
+			record.ProcessedAt = &now
+			return upsertAppStoreServerNotification(db, record)
+		}
+
+		if vipKindForProduct(record.ProductID, monthlyProductID, lifetimeProductID) == VIPKindNone {
+			record.ProcessingStatus = AppStoreNotificationStatusIgnored
+			record.ProcessingError = "unsupported product id"
+			record.ProcessedAt = &now
+			return upsertAppStoreServerNotification(db, record)
+		}
+
+		if uid == 0 {
+			record.ProcessingStatus = AppStoreNotificationStatusPendingUser
+			record.ProcessingError = "original transaction owner not found"
+			return upsertAppStoreServerNotification(db, record)
+		}
+
+		return applyAppStoreServerNotificationRecord(db, record, monthlyProductID, lifetimeProductID, now)
+	})
+}
+
+func applyPendingAppStoreNotificationsForOriginalTransaction(
+	db *gorm.DB,
+	uid uint64,
+	originalTransactionID string,
+	monthlyProductID string,
+	lifetimeProductID string,
+	now time.Time,
+) error {
+	originalTransactionID = strings.TrimSpace(originalTransactionID)
+	if uid == 0 || originalTransactionID == "" {
+		return nil
+	}
+
+	var records []AppStoreServerNotification
+	err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("original_transaction_id = ? AND processing_status = ?", originalTransactionID, AppStoreNotificationStatusPendingUser).
+		Order("notification_signed_at ASC, id ASC").
+		Find(&records).Error
+	if err != nil {
+		return err
+	}
+
+	for i := range records {
+		records[i].UID = uid
+		if err := applyAppStoreServerNotificationRecord(db, &records[i], monthlyProductID, lifetimeProductID, now); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func applyAppStoreServerNotificationRecord(
+	db *gorm.DB,
+	record *AppStoreServerNotification,
+	monthlyProductID string,
+	lifetimeProductID string,
+	now time.Time,
+) error {
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	kind := vipKindForProduct(record.ProductID, monthlyProductID, lifetimeProductID)
+	if kind == VIPKindNone {
+		record.ProcessingStatus = AppStoreNotificationStatusIgnored
+		record.ProcessingError = "unsupported product id"
+		record.ProcessedAt = &now
+		return upsertAppStoreServerNotification(db, record)
+	}
+
+	transaction := appleTransactionFromNotificationRecord(record.UID, record)
+	if transaction != nil {
+		if err := upsertAppleTransaction(db, transaction, false); err != nil {
+			return err
+		}
+	}
+
+	if err := applyVIPEntitlementForAppStoreNotification(db, record, kind, now); err != nil {
+		return err
+	}
+
+	record.ProcessingStatus = AppStoreNotificationStatusProcessed
+	record.ProcessingError = ""
+	record.ProcessedAt = &now
+	return upsertAppStoreServerNotification(db, record)
+}
+
+func applyVIPEntitlementForAppStoreNotification(db *gorm.DB, record *AppStoreServerNotification, kind string, now time.Time) error {
+	originalTransactionID := strings.TrimSpace(record.OriginalTransactionID)
+	if originalTransactionID == "" {
+		originalTransactionID = strings.TrimSpace(record.TransactionID)
+	}
+	if record.UID == 0 || originalTransactionID == "" {
+		return nil
+	}
+
+	notificationType := normalizeNotificationName(record.NotificationType)
+	if kind == VIPKindLifetime {
+		if isRevocationNotification(notificationType) || record.RevocationAt != nil {
+			return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, record.ExpiresAt, now)
+		}
+		return upsertVIPEntitlement(db, record.UID, kind, record.ProductID, originalTransactionID, nil)
+	}
+
+	if isRevocationNotification(notificationType) || record.RevocationAt != nil || isExpirationNotification(notificationType) {
+		return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, record.ExpiresAt, now)
+	}
+
+	expiresAt := record.ExpiresAt
+	if shouldUseGracePeriod(record, now) {
+		expiresAt = laterTimePtr(expiresAt, record.GracePeriodExpiresAt)
+	}
+
+	if isVIPEntitlementCurrentlyActive(kind, expiresAt, now) {
+		return upsertVIPEntitlement(db, record.UID, kind, record.ProductID, originalTransactionID, expiresAt)
+	}
+
+	if isEntitlementNeutralNotification(notificationType) {
+		return nil
+	}
+
+	return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, expiresAt, now)
+}
+
+func appStoreServerNotificationFromPayload(
+	notification appstore.Notification,
+	transaction *appstore.Transaction,
+	renewalInfo *appstore.RenewalInfo,
+	signedPayload string,
+) *AppStoreServerNotification {
+	data := notification.Data
+	record := &AppStoreServerNotification{
+		NotificationUUID:     strings.TrimSpace(notification.NotificationUUID),
+		NotificationType:     normalizeNotificationName(notification.NotificationType),
+		Subtype:              normalizeNotificationName(notification.Subtype),
+		Version:              strings.TrimSpace(notification.Version),
+		BundleID:             strings.TrimSpace(data.BundleID),
+		Environment:          normalizeNotificationName(data.Environment),
+		AppAppleID:           data.AppAppleID,
+		BundleVersion:        strings.TrimSpace(data.BundleVersion),
+		SubscriptionStatus:   data.Status,
+		ConsumptionReason:    strings.TrimSpace(data.ConsumptionReason),
+		NotificationSignedAt: millisToTimePtr(notification.SignedDate),
+		SignedPayload:        strings.TrimSpace(signedPayload),
+		SignedTransactionJWS: strings.TrimSpace(data.SignedTransactionInfo),
+		SignedRenewalInfoJWS: strings.TrimSpace(data.SignedRenewalInfo),
+		ProcessingStatus:     AppStoreNotificationStatusPendingUser,
+	}
+
+	if transaction != nil {
+		record.TransactionID = strings.TrimSpace(transaction.TransactionID)
+		record.OriginalTransactionID = strings.TrimSpace(transaction.OriginalTransactionID)
+		record.ProductID = strings.TrimSpace(transaction.ProductID)
+		record.BundleID = firstNonEmpty(record.BundleID, transaction.BundleID)
+		record.Environment = firstNonEmpty(record.Environment, normalizeNotificationName(transaction.Environment))
+		record.TransactionType = strings.TrimSpace(transaction.Type)
+		record.PurchaseAt = millisToTimePtr(transaction.PurchaseDate)
+		record.OriginalPurchaseAt = millisToTimePtr(transaction.OriginalPurchaseDate)
+		record.ExpiresAt = millisToTimePtr(transaction.ExpiresDate)
+		record.RevocationAt = millisToTimePtr(transaction.RevocationDate)
+		record.RevocationReason = transaction.RevocationReason
+		record.TransactionSignedAt = millisToTimePtr(transaction.SignedDate)
+	}
+
+	if renewalInfo != nil {
+		record.OriginalTransactionID = firstNonEmpty(record.OriginalTransactionID, renewalInfo.OriginalTransactionID)
+		record.ProductID = firstNonEmpty(record.ProductID, renewalInfo.ProductID)
+		record.Environment = firstNonEmpty(record.Environment, normalizeNotificationName(renewalInfo.Environment))
+		record.AutoRenewProductID = strings.TrimSpace(renewalInfo.AutoRenewProductID)
+		record.AutoRenewStatus = renewalInfo.AutoRenewStatus
+		record.ExpirationIntent = renewalInfo.ExpirationIntent
+		record.IsInBillingRetry = renewalInfo.IsInBillingRetryPeriod
+		record.GracePeriodExpiresAt = millisToTimePtr(renewalInfo.GracePeriodExpiresDate)
+		record.RenewalDate = millisToTimePtr(renewalInfo.RenewalDate)
+		record.RenewalSignedAt = millisToTimePtr(renewalInfo.SignedDate)
+	}
+
+	return record
+}
+
+func findVIPOwnerUIDForNotification(db *gorm.DB, transaction *appstore.Transaction, originalTransactionID string) (uint64, error) {
+	ids := normalizedTransactionIDs(originalTransactionID)
+	if transaction != nil {
+		ids = append(ids, normalizedTransactionIDs(transaction.OriginalTransactionID, transaction.TransactionID)...)
+	}
+	ids = uniqueNonEmptyStrings(ids)
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	appleTransaction := &AppleTransaction{}
+	err := db.Where("original_transaction_id IN ? OR transaction_id IN ?", ids, ids).
+		Order("updated_at DESC, id DESC").
+		First(appleTransaction).Error
+	if err == nil && appleTransaction.UID != 0 {
+		return appleTransaction.UID, nil
+	}
+	if err != nil && !isRecordNotFound(err) {
+		return 0, err
+	}
+
+	order := &ApplePurchaseOrder{}
+	err = db.Where("(original_transaction_id IN ? OR transaction_id IN ?) AND status = ?", ids, ids, ApplePurchaseOrderStatusPaid).
+		Order("updated_at DESC, id DESC").
+		First(order).Error
+	if err == nil && order.UID != 0 {
+		return order.UID, nil
+	}
+	if err != nil && !isRecordNotFound(err) {
+		return 0, err
+	}
+
+	entitlement := &UserEntitlement{}
+	err = db.Where("entitlement = ? AND original_transaction_id IN ?", UserEntitlementVIP, ids).
+		Order("updated_at DESC, id DESC").
+		First(entitlement).Error
+	if err == nil && entitlement.UID != 0 {
+		return entitlement.UID, nil
+	}
+	if err != nil && !isRecordNotFound(err) {
+		return 0, err
+	}
+
+	return 0, nil
+}
+
+func upsertAppleTransaction(db *gorm.DB, record *AppleTransaction, updateOrderID bool) error {
+	columns := []string{
+		"uid",
+		"original_transaction_id",
+		"product_id",
+		"bundle_id",
+		"environment",
+		"type",
+		"purchase_at",
+		"original_purchase_at",
+		"expires_at",
+		"revocation_at",
+		"revocation_reason",
+		"signed_at",
+		"signed_transaction_jws",
+		"updated_at",
+	}
+	if updateOrderID {
+		columns = append(columns, "order_id")
+	}
+
+	return db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "transaction_id"}},
+		DoUpdates: clause.AssignmentColumns(columns),
+	}).Create(record).Error
+}
+
+func upsertAppStoreServerNotification(db *gorm.DB, record *AppStoreServerNotification) error {
+	return db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "notification_uuid"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"uid",
+			"notification_type",
+			"subtype",
+			"version",
+			"bundle_id",
+			"environment",
+			"app_apple_id",
+			"bundle_version",
+			"subscription_status",
+			"consumption_reason",
+			"product_id",
+			"transaction_id",
+			"original_transaction_id",
+			"transaction_type",
+			"purchase_at",
+			"original_purchase_at",
+			"expires_at",
+			"revocation_at",
+			"revocation_reason",
+			"transaction_signed_at",
+			"auto_renew_product_id",
+			"auto_renew_status",
+			"expiration_intent",
+			"is_in_billing_retry",
+			"grace_period_expires_at",
+			"renewal_date",
+			"renewal_signed_at",
+			"notification_signed_at",
+			"signed_payload",
+			"signed_transaction_jws",
+			"signed_renewal_info_jws",
+			"processing_status",
+			"processing_error",
+			"processed_at",
+			"updated_at",
+		}),
+	}).Create(record).Error
+}
+
 func upsertVIPEntitlement(db *gorm.DB, uid uint64, kind string, productID string, originalTransactionID string, expiresAt *time.Time) error {
+	kind = normalizeVIPKind(kind)
+	productID = strings.TrimSpace(productID)
+	originalTransactionID = strings.TrimSpace(originalTransactionID)
+	if kind == VIPKindMonthly {
+		latestExpiresAt, err := latestAppleTransactionExpiresAt(db, uid, originalTransactionID)
+		if err != nil {
+			return err
+		}
+		expiresAt = laterTimePtr(expiresAt, latestExpiresAt)
+	}
+
 	existing := &UserEntitlement{}
 	err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("uid = ? AND entitlement = ?", uid, UserEntitlementVIP).
@@ -247,6 +629,9 @@ func upsertVIPEntitlement(db *gorm.DB, uid uint64, kind string, productID string
 		existingActive := existing.Active && isVIPEntitlementCurrentlyActive(existing.Kind, existing.ExpiresAt, time.Now())
 		if existingActive && normalizeVIPKind(existing.Kind) == VIPKindLifetime && kind == VIPKindMonthly {
 			return nil
+		}
+		if kind == VIPKindMonthly {
+			expiresAt = laterTimePtr(existing.ExpiresAt, expiresAt)
 		}
 		existing.Kind = kind
 		existing.Active = true
@@ -273,16 +658,50 @@ func upsertVIPEntitlement(db *gorm.DB, uid uint64, kind string, productID string
 	return db.Create(entitlement).Error
 }
 
-func deactivateMatchingVIPEntitlement(db *gorm.DB, uid uint64, originalTransactionID string) error {
-	if strings.TrimSpace(originalTransactionID) == "" {
+func deactivateMatchingVIPEntitlement(db *gorm.DB, uid uint64, productID string, originalTransactionID string, expiresAt *time.Time, now time.Time) error {
+	productID = strings.TrimSpace(productID)
+	originalTransactionID = strings.TrimSpace(originalTransactionID)
+	if uid == 0 || originalTransactionID == "" {
 		return nil
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	latestActiveTransaction, err := latestActiveAppleTransactionForOriginalTransaction(db, uid, originalTransactionID, now)
+	if err != nil {
+		return err
+	}
+	if latestActiveTransaction != nil {
+		return upsertVIPEntitlement(
+			db,
+			uid,
+			VIPKindMonthly,
+			firstNonEmpty(latestActiveTransaction.ProductID, productID),
+			originalTransactionID,
+			laterTimePtr(expiresAt, latestActiveTransaction.ExpiresAt),
+		)
+	}
+
+	latestExpiresAt, err := latestAppleTransactionExpiresAt(db, uid, originalTransactionID)
+	if err != nil {
+		return err
+	}
+	expiresAt = laterTimePtr(expiresAt, latestExpiresAt)
+
+	updates := map[string]any{
+		"active": false,
+		"kind":   VIPKindNone,
+	}
+	if expiresAt != nil {
+		updates["expires_at"] = expiresAt
+	}
+	if productID != "" {
+		updates["product_id"] = productID
 	}
 	return db.Model(&UserEntitlement{}).
 		Where("uid = ? AND entitlement = ? AND original_transaction_id = ?", uid, UserEntitlementVIP, originalTransactionID).
-		Updates(map[string]any{
-			"active": false,
-			"kind":   VIPKindNone,
-		}).Error
+		Updates(updates).Error
 }
 
 func appleTransactionFromVerifiedPayload(uid uint64, tx appstore.Transaction, signedTransactionJWS string) *AppleTransaction {
@@ -302,6 +721,179 @@ func appleTransactionFromVerifiedPayload(uid uint64, tx appstore.Transaction, si
 		SignedAt:              millisToTimePtr(tx.SignedDate),
 		SignedTransactionJWS:  strings.TrimSpace(signedTransactionJWS),
 	}
+}
+
+func appleTransactionFromNotificationRecord(uid uint64, notification *AppStoreServerNotification) *AppleTransaction {
+	if uid == 0 || strings.TrimSpace(notification.TransactionID) == "" {
+		return nil
+	}
+	return &AppleTransaction{
+		UID:                   uid,
+		TransactionID:         strings.TrimSpace(notification.TransactionID),
+		OriginalTransactionID: strings.TrimSpace(notification.OriginalTransactionID),
+		ProductID:             strings.TrimSpace(notification.ProductID),
+		BundleID:              strings.TrimSpace(notification.BundleID),
+		Environment:           strings.TrimSpace(notification.Environment),
+		Type:                  strings.TrimSpace(notification.TransactionType),
+		PurchaseAt:            notification.PurchaseAt,
+		OriginalPurchaseAt:    notification.OriginalPurchaseAt,
+		ExpiresAt:             notification.ExpiresAt,
+		RevocationAt:          notification.RevocationAt,
+		RevocationReason:      notification.RevocationReason,
+		SignedAt:              notification.TransactionSignedAt,
+		SignedTransactionJWS:  strings.TrimSpace(notification.SignedTransactionJWS),
+	}
+}
+
+func normalizeNotificationName(value string) string {
+	return strings.ToUpper(strings.TrimSpace(value))
+}
+
+func isRevocationNotification(notificationType string) bool {
+	switch normalizeNotificationName(notificationType) {
+	case "REFUND", "REVOKE":
+		return true
+	default:
+		return false
+	}
+}
+
+func isExpirationNotification(notificationType string) bool {
+	switch normalizeNotificationName(notificationType) {
+	case "EXPIRED", "GRACE_PERIOD_EXPIRED":
+		return true
+	default:
+		return false
+	}
+}
+
+func isEntitlementNeutralNotification(notificationType string) bool {
+	switch normalizeNotificationName(notificationType) {
+	case "CONSUMPTION_REQUEST",
+		"DID_CHANGE_RENEWAL_PREF",
+		"DID_CHANGE_RENEWAL_STATUS",
+		"PRICE_INCREASE",
+		"REFUND_DECLINED",
+		"TEST":
+		return true
+	default:
+		return false
+	}
+}
+
+func shouldUseGracePeriod(notification *AppStoreServerNotification, now time.Time) bool {
+	if notification == nil || notification.GracePeriodExpiresAt == nil {
+		return false
+	}
+	if notification.GracePeriodExpiresAt.Before(now) {
+		return false
+	}
+	notificationType := normalizeNotificationName(notification.NotificationType)
+	subtype := normalizeNotificationName(notification.Subtype)
+	return notificationType == "DID_FAIL_TO_RENEW" || subtype == "GRACE_PERIOD" || notification.IsInBillingRetry
+}
+
+func laterTimePtr(a *time.Time, b *time.Time) *time.Time {
+	if a == nil {
+		return b
+	}
+	if b == nil {
+		return a
+	}
+	if b.After(*a) {
+		return b
+	}
+	return a
+}
+
+func latestAppleTransactionExpiresAt(db *gorm.DB, uid uint64, originalTransactionID string) (*time.Time, error) {
+	originalTransactionID = strings.TrimSpace(originalTransactionID)
+	if uid == 0 || originalTransactionID == "" {
+		return nil, nil
+	}
+
+	transaction := &AppleTransaction{}
+	err := db.Where(
+		"uid = ? AND (original_transaction_id = ? OR transaction_id = ?) AND expires_at IS NOT NULL",
+		uid,
+		originalTransactionID,
+		originalTransactionID,
+	).
+		Order("expires_at DESC, id DESC").
+		First(transaction).Error
+	if err != nil {
+		if isRecordNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return transaction.ExpiresAt, nil
+}
+
+func latestActiveAppleTransactionForOriginalTransaction(db *gorm.DB, uid uint64, originalTransactionID string, now time.Time) (*AppleTransaction, error) {
+	originalTransactionID = strings.TrimSpace(originalTransactionID)
+	if uid == 0 || originalTransactionID == "" {
+		return nil, nil
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	transaction := &AppleTransaction{}
+	err := db.Where(
+		"uid = ? AND (original_transaction_id = ? OR transaction_id = ?) AND revocation_at IS NULL AND expires_at IS NOT NULL AND expires_at > ?",
+		uid,
+		originalTransactionID,
+		originalTransactionID,
+		now,
+	).
+		Order("expires_at DESC, id DESC").
+		First(transaction).Error
+	if err != nil {
+		if isRecordNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return transaction, nil
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func normalizedTransactionIDs(values ...string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func uniqueNonEmptyStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	return result
 }
 
 func lockApplePurchaseOrder(db *gorm.DB, uid uint64, orderID string) (*ApplePurchaseOrder, error) {

@@ -46,10 +46,8 @@ function writeJSON(value) {
 try {
   const raw = await readStdin();
   const request = JSON.parse(raw || "{}");
+  const signedPayload = String(request.signedPayload || request.signedNotificationPayload || "").trim();
   const signedTransaction = String(request.signedTransactionJWS || "").trim();
-  if (!signedTransaction) {
-    throw new Error("signedTransactionJWS is empty");
-  }
 
   const environment = environmentFromString(request.environment);
   const rootCertificates = loadRootCertificates(request.rootCertificatePaths);
@@ -67,11 +65,32 @@ try {
     appAppleId,
   );
 
-  const transaction = await verifier.verifyAndDecodeTransaction(signedTransaction);
-  writeJSON({
-    ok: true,
-    transaction,
-  });
+  if (signedPayload) {
+    const notification = await verifier.verifyAndDecodeNotification(signedPayload);
+    const signedTransactionInfo = String(notification?.data?.signedTransactionInfo || "").trim();
+    const signedRenewalInfo = String(notification?.data?.signedRenewalInfo || "").trim();
+    const transaction = signedTransactionInfo
+      ? await verifier.verifyAndDecodeTransaction(signedTransactionInfo)
+      : undefined;
+    const renewalInfo = signedRenewalInfo
+      ? await verifier.verifyAndDecodeRenewalInfo(signedRenewalInfo)
+      : undefined;
+
+    writeJSON({
+      ok: true,
+      notification,
+      transaction,
+      renewalInfo,
+    });
+  } else if (signedTransaction) {
+    const transaction = await verifier.verifyAndDecodeTransaction(signedTransaction);
+    writeJSON({
+      ok: true,
+      transaction,
+    });
+  } else {
+    throw new Error("signedTransactionJWS or signedPayload is empty");
+  }
 } catch (error) {
   writeJSON({
     ok: false,

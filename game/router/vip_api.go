@@ -3,9 +3,11 @@ package router
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
+	appconfig "spider-server/common/config"
 	"spider-server/game/appstore"
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
@@ -73,9 +75,11 @@ func (s *VIPApi) ConfirmAppleTransaction(ctx context.Context, req *pb.ConfirmApp
 	verifier := appstore.DefaultVerifier()
 	transaction, err := verifier.VerifyTransaction(ctx, req.GetSignedTransactionJws())
 	if errors.Is(err, appstore.ErrVerifierConfigInvalid) {
+		logAppleTransactionVerifyFailure(user.UIDOrDefault(), req, verifier.Config(), err)
 		return session.Error(ctx, gamecode.VIPTransactionVerifyConfigInvalid, &pb.VIPStatusResponse{})
 	}
 	if err != nil {
+		logAppleTransactionVerifyFailure(user.UIDOrDefault(), req, verifier.Config(), err)
 		return session.Error(ctx, gamecode.VIPTransactionVerifyFailed, &pb.VIPStatusResponse{})
 	}
 
@@ -153,4 +157,24 @@ func toPBVIPKind(kind string) pb.VIPKind {
 	default:
 		return pb.VIPKind_VIP_KIND_NONE
 	}
+}
+
+func logAppleTransactionVerifyFailure(uid uint64, req *pb.ConfirmAppleTransactionRequest, cfg appconfig.AppStoreConfig, err error) {
+	jws := strings.TrimSpace(req.GetSignedTransactionJws())
+	log.Printf(
+		"apple transaction verify failed uid=%d order=%s product=%s transaction=%s original=%s bundle=%s environment=%s appAppleId=%d onlineChecks=%t rootCerts=%d jwsLength=%d jwsDots=%d err=%v",
+		uid,
+		req.GetOrderId(),
+		req.GetProductId(),
+		req.GetTransactionId(),
+		req.GetOriginalTransactionId(),
+		cfg.BundleID,
+		cfg.Environment,
+		cfg.AppAppleID,
+		cfg.EnableOnlineChecks,
+		len(cfg.RootCertificatePaths),
+		len(jws),
+		strings.Count(jws, "."),
+		err,
+	)
 }

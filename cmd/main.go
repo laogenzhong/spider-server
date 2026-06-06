@@ -86,6 +86,7 @@ func startGateway(cfg appconfig.ServerConfig) {
 	log.Printf("http  endpoint: http://%s%s/ping", cfg.EndpointHost, cfg.GatewayAddr)
 	log.Printf("binary endpoint: http://%s%s/rpc", cfg.EndpointHost, cfg.GatewayAddr)
 	log.Printf("ws    endpoint: ws://%s%s/ws", cfg.EndpointHost, cfg.GatewayAddr)
+	log.Printf("app store notifications endpoint: http://%s%s/app-store/notifications/v2", cfg.EndpointHost, cfg.GatewayAddr)
 
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("gateway server failed: %v", err)

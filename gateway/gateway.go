@@ -49,6 +49,8 @@ func (s *GatewayServer) Router() *gin.Engine {
 
 	// 普通 HTTP JSON 接口。
 	router.GET("/ping", s.pingHandler)
+	router.POST("/app-store/notifications/v2", s.appStoreServerNotificationV2Handler)
+	router.POST("/app-store-server-notifications/v2", s.appStoreServerNotificationV2Handler)
 
 	// 普通 HTTP 二进制接口。
 	router.POST("/rpc", s.httpHandler)
