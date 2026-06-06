@@ -48,6 +48,12 @@ func (s *GatewayServer) Router() *gin.Engine {
 	router := gin.Default()
 
 	// 普通 HTTP JSON 接口。
+	router.GET("/", s.indexHandler)
+	router.GET("/index.html", s.indexHandler)
+	router.GET("/support", s.supportHandler)
+	router.GET("/support.html", s.supportHandler)
+	router.GET("/privacy", s.privacyHandler)
+	router.GET("/privacy.html", s.privacyHandler)
 	router.GET("/ping", s.pingHandler)
 	router.POST("/app-store/notifications/v2", s.appStoreServerNotificationV2Handler)
 	router.POST("/app-store-server-notifications/v2", s.appStoreServerNotificationV2Handler)

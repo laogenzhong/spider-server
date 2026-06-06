@@ -38,7 +38,7 @@ apple_sign_in:
   team_id: "XLVU7GGT6N"
   key_id: "5LFYA472TZ"
   client_id: "hh.spider"
-  private_key_path: "/root/spiderapi/secrets/AuthKey_5LFYA472TZ.p8"
+  private_key_path: "/root/app/spiderapi/spider-secrets/AuthKey_5LFYA472TZ.p8"
   client_secret_ttl: "24h"
 
 app_store:
@@ -50,8 +50,8 @@ app_store:
   node_path: "node"
   verifier_script_path: "apple_iap_verifier/verify_transaction.mjs"
   root_certificate_paths:
-    - "/root/spiderapi/secrets/apple-root-certs/AppleRootCA-G2.cer"
-    - "/root/spiderapi/secrets/apple-root-certs/AppleRootCA-G3.cer"
+    - "/root/app/spiderapi/spider-secrets/apple-root-certs/AppleRootCA-G2.cer"
+    - "/root/app/spiderapi/spider-secrets/apple-root-certs/AppleRootCA-G3.cer"
   monthly_product_id: "hh.spider.vip.monthly"
   lifetime_product_id: "hh.spider.vip.lifetime"
   timeout: "10s"

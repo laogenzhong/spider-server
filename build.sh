@@ -20,6 +20,11 @@ if [[ ! -f "${ROOT_DIR}/config.server.example.yaml" ]]; then
   exit 1
 fi
 
+if [[ ! -f "${ROOT_DIR}/public/index.html" ]] || [[ ! -f "${ROOT_DIR}/public/support.html" ]] || [[ ! -f "${ROOT_DIR}/public/privacy.html" ]]; then
+  echo "public/index.html, public/support.html or public/privacy.html not found. Online package requires public pages." >&2
+  exit 1
+fi
+
 if command -v npm >/dev/null 2>&1; then
   :
 else
@@ -28,7 +33,7 @@ else
 fi
 
 rm -rf "${RELEASE_DIR}" "${TARBALL}"
-mkdir -p "${RELEASE_DIR}/apple_iap_verifier" "${RELEASE_DIR}/logs"
+mkdir -p "${RELEASE_DIR}/apple_iap_verifier" "${RELEASE_DIR}/logs" "${RELEASE_DIR}/public"
 
 cd "${ROOT_DIR}"
 
@@ -38,6 +43,9 @@ CGO_ENABLED=0 GOOS="${TARGET_OS}" GOARCH="${TARGET_ARCH}" \
 cp config.server.example.yaml "${RELEASE_DIR}/config.server.example.yaml"
 cp config.server.example.yaml "${RELEASE_DIR}/config.server.yaml"
 echo "==> Included config.server.example.yaml as config.server.yaml in release package"
+
+cp -R public/. "${RELEASE_DIR}/public/"
+echo "==> Included public HTML pages"
 
 cp apple_iap_verifier/verify_transaction.mjs "${RELEASE_DIR}/apple_iap_verifier/"
 cp apple_iap_verifier/package.json "${RELEASE_DIR}/apple_iap_verifier/"
@@ -58,6 +66,13 @@ if [[ ! -f config.server.yaml ]]; then
   echo "config.server.yaml not found. Release package is incomplete." >&2
   exit 1
 fi
+
+for page in public/index.html public/support.html public/privacy.html; do
+  if [[ ! -f "${page}" ]]; then
+    echo "${page} not found. Release package is incomplete." >&2
+    exit 1
+  fi
+done
 
 if ! command -v node >/dev/null 2>&1; then
   echo "node not found. Install Node.js on this server before starting spider-server." >&2
@@ -87,8 +102,18 @@ LOG_FILE="logs/spider-server.out.log"
 if [[ -f "${PID_FILE}" ]]; then
   OLD_PID="$(cat "${PID_FILE}")"
   if [[ -n "${OLD_PID}" ]] && kill -0 "${OLD_PID}" >/dev/null 2>&1; then
-    echo "spider-server is already running, pid=${OLD_PID}"
-    exit 0
+    echo "stopping existing spider-server, pid=${OLD_PID}"
+    kill "${OLD_PID}" >/dev/null 2>&1 || true
+    for _ in {1..20}; do
+      if ! kill -0 "${OLD_PID}" >/dev/null 2>&1; then
+        break
+      fi
+      sleep 0.25
+    done
+    if kill -0 "${OLD_PID}" >/dev/null 2>&1; then
+      echo "existing spider-server did not stop in time, killing pid=${OLD_PID}"
+      kill -9 "${OLD_PID}" >/dev/null 2>&1 || true
+    fi
   fi
   rm -f "${PID_FILE}"
 fi
