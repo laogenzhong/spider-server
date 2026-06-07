@@ -44,25 +44,31 @@ SPIDER_SERVER_CONFIG=config.server.yaml ./spider-server
 
 ## 公开页面
 
-线上网关提供无需登录的首页，方便审核人员直接访问域名：
+Cloudflare 提供无需登录的首页，方便审核人员直接访问：
 
 ```text
-https://jjai.top
+https://lifttags-legal.laogenzhong.workers.dev/
 ```
 
-线上网关提供无需登录的技术支持页，供 App Store Connect 填写：
+Cloudflare 提供无需登录的技术支持页，供 App Store Connect 填写：
 
 ```text
-https://jjai.top/support
+https://lifttags-legal.laogenzhong.workers.dev/support.html
 ```
 
-线上网关也提供无需登录的隐私政策页，供 App Store Connect 填写：
+Cloudflare 也提供无需登录的隐私政策页，供 App Store Connect 填写：
 
 ```text
-https://jjai.top/privacy
+https://lifttags-legal.laogenzhong.workers.dev/privacy.html
 ```
 
-这些公开页面由 Go 网关直接读取 `public/*.html` 返回，不依赖数据库、Node 或 RPC 服务。
+Cloudflare 也提供无需登录的使用条款页，供 App Store Connect 的 EULA 链接填写：
+
+```text
+https://lifttags-legal.laogenzhong.workers.dev/terms/
+```
+
+服务器网关也保留同样的公开页面路由作为备用入口。Cloudflare 页面和服务器页面都来自 `public` 目录下的 HTML 文件，不依赖数据库、Node 或 RPC 服务。
 
 以后只需要替换服务器运行目录中的 HTML 文件即可更新页面，无需重新编译 Go：
 
@@ -70,6 +76,7 @@ https://jjai.top/privacy
 public/support.html
 public/privacy.html
 public/index.html
+public/terms/index.html
 ```
 
 替换后直接刷新浏览器即可生效。

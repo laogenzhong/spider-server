@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -82,10 +83,20 @@ type AppStoreConfig struct {
 	EnableOnlineChecks   bool     `yaml:"enable_online_checks"`
 	NodePath             string   `yaml:"node_path"`
 	VerifierScriptPath   string   `yaml:"verifier_script_path"`
+	APIScriptPath        string   `yaml:"api_script_path"`
 	RootCertificatePaths []string `yaml:"root_certificate_paths"`
+	APIKeyID             string   `yaml:"api_key_id"`
+	APIIssuerID          string   `yaml:"api_issuer_id"`
+	APIPrivateKeyPath    string   `yaml:"api_private_key_path"`
+	APIPrivateKey        string   `yaml:"api_private_key"`
 	MonthlyProductID     string   `yaml:"monthly_product_id"`
 	LifetimeProductID    string   `yaml:"lifetime_product_id"`
 	Timeout              string   `yaml:"timeout"`
+	ReconcileEnabled     bool     `yaml:"reconcile_enabled"`
+	ReconcileInterval    string   `yaml:"reconcile_interval"`
+	ReconcileLookback    string   `yaml:"reconcile_lookback"`
+	ReconcileBatchSize   int      `yaml:"reconcile_batch_size"`
+	ReconcileMaxPages    int      `yaml:"reconcile_max_pages"`
 }
 
 type LoggerConfig struct {
@@ -151,9 +162,15 @@ func Default() Config {
 			EnableOnlineChecks: true,
 			NodePath:           "node",
 			VerifierScriptPath: "apple_iap_verifier/verify_transaction.mjs",
+			APIScriptPath:      "apple_iap_verifier/app_store_api.mjs",
 			MonthlyProductID:   "hh.spider.vip.monthly",
 			LifetimeProductID:  "hh.spider.vip.lifetime",
 			Timeout:            "10s",
+			ReconcileEnabled:   false,
+			ReconcileInterval:  "6h",
+			ReconcileLookback:  "720h",
+			ReconcileBatchSize: 50,
+			ReconcileMaxPages:  10,
 		},
 		Logger: LoggerConfig{
 			Level:        "info",
@@ -260,6 +277,9 @@ func (c *Config) Normalize() {
 	if c.AppStore.VerifierScriptPath == "" {
 		c.AppStore.VerifierScriptPath = Default().AppStore.VerifierScriptPath
 	}
+	if c.AppStore.APIScriptPath == "" {
+		c.AppStore.APIScriptPath = Default().AppStore.APIScriptPath
+	}
 	if c.AppStore.MonthlyProductID == "" {
 		c.AppStore.MonthlyProductID = Default().AppStore.MonthlyProductID
 	}
@@ -268,6 +288,18 @@ func (c *Config) Normalize() {
 	}
 	if c.AppStore.Timeout == "" {
 		c.AppStore.Timeout = Default().AppStore.Timeout
+	}
+	if c.AppStore.ReconcileInterval == "" {
+		c.AppStore.ReconcileInterval = Default().AppStore.ReconcileInterval
+	}
+	if c.AppStore.ReconcileLookback == "" {
+		c.AppStore.ReconcileLookback = Default().AppStore.ReconcileLookback
+	}
+	if c.AppStore.ReconcileBatchSize <= 0 {
+		c.AppStore.ReconcileBatchSize = Default().AppStore.ReconcileBatchSize
+	}
+	if c.AppStore.ReconcileMaxPages <= 0 {
+		c.AppStore.ReconcileMaxPages = Default().AppStore.ReconcileMaxPages
 	}
 	if c.Logger.Level == "" {
 		c.Logger.Level = Default().Logger.Level
@@ -348,14 +380,35 @@ func (c *AppStoreConfig) ApplyEnv() {
 	if value := strings.TrimSpace(os.Getenv("APP_STORE_ENVIRONMENT")); value != "" {
 		c.Environment = value
 	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_APPLE_ID")); value != "" {
+		c.AppAppleID = int64OrDefault(value, c.AppAppleID)
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_APP_APPLE_ID")); value != "" {
+		c.AppAppleID = int64OrDefault(value, c.AppAppleID)
+	}
 	if value := strings.TrimSpace(os.Getenv("APP_STORE_NODE_PATH")); value != "" {
 		c.NodePath = value
 	}
 	if value := strings.TrimSpace(os.Getenv("APP_STORE_VERIFIER_SCRIPT_PATH")); value != "" {
 		c.VerifierScriptPath = value
 	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_API_SCRIPT_PATH")); value != "" {
+		c.APIScriptPath = value
+	}
 	if value := strings.TrimSpace(os.Getenv("APP_STORE_ROOT_CERTIFICATE_PATHS")); value != "" {
 		c.RootCertificatePaths = splitCSV(value)
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_API_KEY_ID")); value != "" {
+		c.APIKeyID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_API_ISSUER_ID")); value != "" {
+		c.APIIssuerID = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_API_PRIVATE_KEY_PATH")); value != "" {
+		c.APIPrivateKeyPath = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_API_PRIVATE_KEY")); value != "" {
+		c.APIPrivateKey = value
 	}
 	if value := strings.TrimSpace(os.Getenv("APP_STORE_MONTHLY_PRODUCT_ID")); value != "" {
 		c.MonthlyProductID = value
@@ -366,10 +419,33 @@ func (c *AppStoreConfig) ApplyEnv() {
 	if value := strings.TrimSpace(os.Getenv("APP_STORE_TIMEOUT")); value != "" {
 		c.Timeout = value
 	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_RECONCILE_ENABLED")); value != "" {
+		c.ReconcileEnabled = boolOrDefault(value, c.ReconcileEnabled)
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_RECONCILE_INTERVAL")); value != "" {
+		c.ReconcileInterval = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_RECONCILE_LOOKBACK")); value != "" {
+		c.ReconcileLookback = value
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_RECONCILE_BATCH_SIZE")); value != "" {
+		c.ReconcileBatchSize = intOrDefault(value, c.ReconcileBatchSize)
+	}
+	if value := strings.TrimSpace(os.Getenv("APP_STORE_RECONCILE_MAX_PAGES")); value != "" {
+		c.ReconcileMaxPages = intOrDefault(value, c.ReconcileMaxPages)
+	}
 }
 
 func (c AppStoreConfig) TimeoutDuration() time.Duration {
 	return durationOrDefault(c.Timeout, 10*time.Second)
+}
+
+func (c AppStoreConfig) ReconcileIntervalDuration() time.Duration {
+	return durationOrDefault(c.ReconcileInterval, 6*time.Hour)
+}
+
+func (c AppStoreConfig) ReconcileLookbackDuration() time.Duration {
+	return durationOrDefault(c.ReconcileLookback, 30*24*time.Hour)
 }
 
 func (c LoggerConfig) MaxAgeDuration() time.Duration {
@@ -390,6 +466,30 @@ func durationOrDefault(value string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return duration
+}
+
+func boolOrDefault(value string, fallback bool) bool {
+	parsed, err := strconv.ParseBool(strings.TrimSpace(value))
+	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func intOrDefault(value string, fallback int) int {
+	parsed, err := strconv.Atoi(strings.TrimSpace(value))
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+	return parsed
+}
+
+func int64OrDefault(value string, fallback int64) int64 {
+	parsed, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+	return parsed
 }
 
 func splitCSV(value string) []string {

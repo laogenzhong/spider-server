@@ -177,4 +177,45 @@ func logAppleTransactionVerifyFailure(uid uint64, req *pb.ConfirmAppleTransactio
 		strings.Count(jws, "."),
 		err,
 	)
+	severity := mysqlmodel.ApplePaymentFailureSeverityWarning
+	errorCode := gamecode.VIPTransactionVerifyFailed
+	problem := "Apple transaction JWS verification failed, so the VIP entitlement was not granted."
+	if errors.Is(err, appstore.ErrVerifierConfigInvalid) {
+		severity = mysqlmodel.ApplePaymentFailureSeverityCritical
+		errorCode = gamecode.VIPTransactionVerifyConfigInvalid
+		problem = "Apple transaction verifier configuration is invalid, so all transaction confirmations may fail until the server config is fixed."
+	}
+	mysqlmodel.RecordApplePaymentFailureBestEffort(mysqlmodel.ApplePaymentFailure{
+		Category:              mysqlmodel.ApplePaymentFailureCategoryTransactionVerify,
+		Stage:                 mysqlmodel.ApplePaymentFailureStageTransactionVerify,
+		Severity:              severity,
+		UID:                   uid,
+		OrderID:               req.GetOrderId(),
+		ProductID:             req.GetProductId(),
+		TransactionID:         req.GetTransactionId(),
+		OriginalTransactionID: req.GetOriginalTransactionId(),
+		BundleID:              cfg.BundleID,
+		Environment:           cfg.Environment,
+		ErrorCode:             errorCode,
+		Reason:                errString(err),
+		Problem:               problem,
+		ErrorMessage:          errString(err),
+		ContextJSON: mysqlmodel.ApplePaymentFailureContext(map[string]any{
+			"appAppleID":         cfg.AppAppleID,
+			"enableOnlineChecks": cfg.EnableOnlineChecks,
+			"rootCertCount":      len(cfg.RootCertificatePaths),
+			"jwsLength":          len(jws),
+			"jwsDots":            strings.Count(jws, "."),
+			"nodePath":           cfg.NodePath,
+			"verifierScriptPath": cfg.VerifierScriptPath,
+		}),
+		OccurredAt: time.Now(),
+	})
+}
+
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }

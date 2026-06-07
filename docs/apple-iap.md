@@ -5,6 +5,7 @@
 服务端支付详细流程见：
 
 - `docs/apple-iap-server-flow.md`
+- `docs/apple-iap-ops-and-admin.md`
 
 ## 当前目标
 
@@ -31,8 +32,11 @@ rpc confirmAppleTransaction(ConfirmAppleTransactionRequest) returns (VIPStatusRe
 - `proto/primary/purchase.proto`
 - `game/router/vip_api.go`
 - `game/appstore/verifier.go`
+- `game/appstore/server_api.go`
+- `game/reconcile/app_store_reconciler.go`
 - `mysql/model/vip_entitlement_model.go`
 - `apple_iap_verifier/verify_transaction.mjs`
+- `apple_iap_verifier/app_store_api.mjs`
 
 当前确认交易流程：
 
@@ -158,6 +162,36 @@ node apple_iap_verifier/verify_transaction.mjs
 - `DID_FAIL_TO_RENEW` 如果仍在宽限期或交易过期时间未到，会继续保留到有效期；否则关闭权益。
 - `DID_CHANGE_RENEWAL_STATUS`、`DID_CHANGE_RENEWAL_PREF`、`PRICE_INCREASE`、`REFUND_DECLINED` 等只记录状态，不主动改变当前权益。
 
+### Done: App Store Server API 主动对账
+
+服务端已接入 App Store Server API 主动对账。打开配置 `app_store.reconcile_enabled` 后，后台任务会定时：
+
+- 拉取 App Store Server Notification History，补处理 Apple 发送失败或服务端漏处理的通知。
+- 按本地已有 `apple_transactions` 拉取交易历史。
+- 对月订阅拉取当前订阅状态。
+- 把结果回写 `apple_transactions`、`app_store_server_notifications` 和 `user_entitlements`。
+
+启用前需要在 App Store Connect 创建具备 App 内购买相关权限的 App Store Server API Key，并配置：
+
+- `app_store.api_key_id`
+- `app_store.api_issuer_id`
+- `app_store.api_private_key_path`
+
+注意：不要直接假设 Sign in with Apple 的 `.p8` 可以复用；主动对账需要 App Store Server API 可用的密钥。
+
+### Done: 支付失败监控表
+
+服务端已新增 `apple_payment_failures` 表，统一记录支付链路失败和告警事件。当前重点覆盖：
+
+- 交易 JWS 验签失败。
+- App Store Server Notification 验签失败。
+- 通知入口 5xx。
+- `pending_user` 无法匹配 uid 和堆积。
+- 退款/撤销处理失败。
+- 主动对账失败。
+
+每条记录包含失败类别、阶段、严重程度、uid、订单、商品、交易号、通知 uuid、错误原因、业务问题说明和排查上下文。退款/撤销处理失败会按 `critical` 记录。
+
 ### P1: 购买页状态防重复点击
 
 如果客户端尚未拿到服务端最新 VIP 状态，购买页可能仍显示购买按钮。Apple 对非消耗型和订阅商品本身会防止真正重复购买，但 UI 体验仍然可能让用户困惑。
@@ -228,9 +262,9 @@ node apple_iap_verifier/verify_transaction.mjs
 ## 后续建议顺序
 
 1. 跑通 Sandbox 真实购买、续订、过期、退款/撤销、Server Notifications V2 测试通知。
-2. 接 App Store Server API 主动对账，补齐交易历史、订阅状态和通知历史回放。
-3. 生产环境配置和密钥管理，拆清 Sandbox / Production。
-4. 支付状态观测和告警，重点关注验签失败、通知 5xx、`pending_user` 堆积。
+2. 生产环境配置和密钥管理，拆清 Sandbox / Production。
+3. 配置 App Store Server API Key，在线上打开 `app_store.reconcile_enabled` 并观察首轮对账结果。
+4. 后台系统接入 `apple_payment_failures`，先做失败列表、详情、critical 告警和 resolved 标记。
 5. 完善订阅状态模型，让客户端能展示账单重试、宽限期、自动续订等状态。
 6. 增加通知回放/修复工具和状态机测试。
 7. 根据真实调用量决定是否把 Node 子进程升级为常驻 HTTP 服务。

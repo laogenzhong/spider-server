@@ -21,6 +21,10 @@ func (s *GatewayServer) privacyHandler(c *gin.Context) {
 	servePublicHTML(c, "privacy.html")
 }
 
+func (s *GatewayServer) termsHandler(c *gin.Context) {
+	servePublicHTML(c, filepath.Join("terms", "index.html"))
+}
+
 func servePublicHTML(c *gin.Context, filename string) {
 	path, err := resolvePublicHTML(filename)
 	if err != nil {

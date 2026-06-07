@@ -28,6 +28,12 @@ const (
 	AppStoreNotificationStatusProcessed   = "processed"
 	AppStoreNotificationStatusPendingUser = "pending_user"
 	AppStoreNotificationStatusIgnored     = "ignored"
+
+	AppStoreSubscriptionStatusActive             int32 = 1
+	AppStoreSubscriptionStatusExpired            int32 = 2
+	AppStoreSubscriptionStatusBillingRetry       int32 = 3
+	AppStoreSubscriptionStatusBillingGracePeriod int32 = 4
+	AppStoreSubscriptionStatusRevoked            int32 = 5
 )
 
 var (
@@ -136,6 +142,14 @@ type CurrentVIPStatus struct {
 	ExpiresAt *time.Time
 	ProductID string
 	Source    string
+}
+
+type AppleTransactionReconcileRef struct {
+	UID                   uint64
+	TransactionID         string
+	OriginalTransactionID string
+	ProductID             string
+	UpdatedAt             time.Time
 }
 
 func SaveAppleTransactionAndGrantVIP(
@@ -271,6 +285,147 @@ func GetCurrentVIPStatus(uid uint64, now time.Time) (CurrentVIPStatus, error) {
 	return status, nil
 }
 
+func ListAppleTransactionsForAppStoreReconcile(limit int) ([]AppleTransactionReconcileRef, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var transactions []AppleTransaction
+	if err := db.Where("uid > 0 AND transaction_id <> ''").
+		Order("updated_at ASC, id ASC").
+		Limit(limit * 3).
+		Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]struct{}, len(transactions))
+	refs := make([]AppleTransactionReconcileRef, 0, limit)
+	for _, transaction := range transactions {
+		transactionID := strings.TrimSpace(transaction.TransactionID)
+		originalTransactionID := strings.TrimSpace(transaction.OriginalTransactionID)
+		reconcileTransactionID := firstNonEmpty(originalTransactionID, transactionID)
+		if transaction.UID == 0 || reconcileTransactionID == "" {
+			continue
+		}
+
+		key := fmt.Sprintf("%d:%s", transaction.UID, reconcileTransactionID)
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+
+		refs = append(refs, AppleTransactionReconcileRef{
+			UID:                   transaction.UID,
+			TransactionID:         transactionID,
+			OriginalTransactionID: originalTransactionID,
+			ProductID:             strings.TrimSpace(transaction.ProductID),
+			UpdatedAt:             transaction.UpdatedAt,
+		})
+		if len(refs) >= limit {
+			break
+		}
+	}
+
+	return refs, nil
+}
+
+func ApplyAppStoreServerAPITransactions(
+	uid uint64,
+	transactions []appstore.VerifiedTransaction,
+	monthlyProductID string,
+	lifetimeProductID string,
+	now time.Time,
+) error {
+	if uid == 0 {
+		return fmt.Errorf("uid is empty")
+	}
+	if len(transactions) == 0 {
+		return nil
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	return config.WithTx(func(db *gorm.DB) error {
+		for _, verifiedTransaction := range transactions {
+			transaction := verifiedTransaction.Transaction
+			if strings.TrimSpace(transaction.TransactionID) == "" {
+				continue
+			}
+
+			kind := vipKindForProduct(transaction.ProductID, monthlyProductID, lifetimeProductID)
+			if kind == VIPKindNone {
+				continue
+			}
+
+			record := appleTransactionFromVerifiedPayload(uid, transaction, verifiedTransaction.SignedTransactionJWS)
+			record.OriginalTransactionID = firstNonEmpty(record.OriginalTransactionID, record.TransactionID)
+			if err := upsertAppleTransaction(db, record, false); err != nil {
+				return err
+			}
+			if err := applyAppleTransactionRecordForReconcile(db, record, kind, now); err != nil {
+				return err
+			}
+			if err := applyPendingAppStoreNotificationsForOriginalTransaction(db, uid, record.OriginalTransactionID, monthlyProductID, lifetimeProductID, now); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func ApplyAppStoreSubscriptionStatuses(
+	uid uint64,
+	items []appstore.SubscriptionStatusItem,
+	monthlyProductID string,
+	lifetimeProductID string,
+	now time.Time,
+) error {
+	if uid == 0 {
+		return fmt.Errorf("uid is empty")
+	}
+	if len(items) == 0 {
+		return nil
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	return config.WithTx(func(db *gorm.DB) error {
+		for _, item := range items {
+			if item.Transaction == nil || strings.TrimSpace(item.Transaction.TransactionID) == "" {
+				continue
+			}
+
+			transaction := *item.Transaction
+			kind := vipKindForProduct(transaction.ProductID, monthlyProductID, lifetimeProductID)
+			if kind == VIPKindNone {
+				continue
+			}
+
+			record := appleTransactionFromVerifiedPayload(uid, transaction, item.SignedTransactionJWS)
+			record.OriginalTransactionID = firstNonEmpty(record.OriginalTransactionID, item.OriginalTransactionID, record.TransactionID)
+			if err := upsertAppleTransaction(db, record, false); err != nil {
+				return err
+			}
+			if err := applySubscriptionStatusItemForReconcile(db, record, item, kind, now); err != nil {
+				return err
+			}
+			if err := applyPendingAppStoreNotificationsForOriginalTransaction(db, uid, record.OriginalTransactionID, monthlyProductID, lifetimeProductID, now); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 func SaveAppStoreServerNotificationAndApplyVIP(
 	notification appstore.Notification,
 	transaction *appstore.Transaction,
@@ -325,7 +480,39 @@ func SaveAppStoreServerNotificationAndApplyVIP(
 		if uid == 0 {
 			record.ProcessingStatus = AppStoreNotificationStatusPendingUser
 			record.ProcessingError = "original transaction owner not found"
-			return upsertAppStoreServerNotification(db, record)
+			if err := upsertAppStoreServerNotification(db, record); err != nil {
+				return err
+			}
+			createApplePaymentFailureInTxBestEffort(db, ApplePaymentFailure{
+				Category:              ApplePaymentFailureCategoryPendingUser,
+				Stage:                 ApplePaymentFailureStagePendingUserMatch,
+				Severity:              ApplePaymentFailureSeverityWarning,
+				UID:                   uid,
+				ProductID:             record.ProductID,
+				TransactionID:         record.TransactionID,
+				OriginalTransactionID: record.OriginalTransactionID,
+				NotificationUUID:      record.NotificationUUID,
+				NotificationType:      record.NotificationType,
+				Subtype:               record.Subtype,
+				BundleID:              record.BundleID,
+				Environment:           record.Environment,
+				Reason:                record.ProcessingError,
+				Problem:               "App Store notification could not be matched to a local uid, so the entitlement change is waiting for a later client transaction confirmation.",
+				ContextJSON: ApplePaymentFailureContext(map[string]any{
+					"subscriptionStatus":    record.SubscriptionStatus,
+					"autoRenewProductID":    record.AutoRenewProductID,
+					"autoRenewStatus":       record.AutoRenewStatus,
+					"expirationIntent":      record.ExpirationIntent,
+					"isInBillingRetry":      record.IsInBillingRetry,
+					"gracePeriodExpiresAt":  record.GracePeriodExpiresAt,
+					"notificationSignedAt":  record.NotificationSignedAt,
+					"transactionSignedAt":   record.TransactionSignedAt,
+					"signedPayloadLength":   len(strings.TrimSpace(record.SignedPayload)),
+					"signedTransactionDots": strings.Count(strings.TrimSpace(record.SignedTransactionJWS), "."),
+				}),
+				OccurredAt: now,
+			})
+			return nil
 		}
 
 		return applyAppStoreServerNotificationRecord(db, record, monthlyProductID, lifetimeProductID, now)
@@ -435,6 +622,73 @@ func applyVIPEntitlementForAppStoreNotification(db *gorm.DB, record *AppStoreSer
 	}
 
 	return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, expiresAt, now)
+}
+
+func applyAppleTransactionRecordForReconcile(db *gorm.DB, record *AppleTransaction, kind string, now time.Time) error {
+	if record == nil || record.UID == 0 {
+		return nil
+	}
+	originalTransactionID := firstNonEmpty(record.OriginalTransactionID, record.TransactionID)
+	if originalTransactionID == "" {
+		return nil
+	}
+
+	if kind == VIPKindLifetime {
+		if record.RevocationAt != nil {
+			return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, record.ExpiresAt, now)
+		}
+		return upsertVIPEntitlement(db, record.UID, kind, record.ProductID, originalTransactionID, nil)
+	}
+
+	if record.RevocationAt != nil {
+		return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, record.ExpiresAt, now)
+	}
+	if isVIPEntitlementCurrentlyActive(kind, record.ExpiresAt, now) {
+		return upsertVIPEntitlement(db, record.UID, kind, record.ProductID, originalTransactionID, record.ExpiresAt)
+	}
+	return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, record.ExpiresAt, now)
+}
+
+func applySubscriptionStatusItemForReconcile(
+	db *gorm.DB,
+	record *AppleTransaction,
+	item appstore.SubscriptionStatusItem,
+	kind string,
+	now time.Time,
+) error {
+	if record == nil || record.UID == 0 {
+		return nil
+	}
+	originalTransactionID := firstNonEmpty(record.OriginalTransactionID, item.OriginalTransactionID, record.TransactionID)
+	if originalTransactionID == "" {
+		return nil
+	}
+
+	if kind == VIPKindLifetime {
+		return applyAppleTransactionRecordForReconcile(db, record, kind, now)
+	}
+
+	expiresAt := record.ExpiresAt
+	if item.RenewalInfo != nil && item.RenewalInfo.GracePeriodExpiresDate > 0 {
+		expiresAt = laterTimePtr(expiresAt, millisToTimePtr(item.RenewalInfo.GracePeriodExpiresDate))
+	}
+
+	switch item.Status {
+	case AppStoreSubscriptionStatusActive:
+		if isVIPEntitlementCurrentlyActive(kind, expiresAt, now) {
+			return upsertVIPEntitlement(db, record.UID, kind, record.ProductID, originalTransactionID, expiresAt)
+		}
+		return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, expiresAt, now)
+	case AppStoreSubscriptionStatusBillingRetry, AppStoreSubscriptionStatusBillingGracePeriod:
+		if isVIPEntitlementCurrentlyActive(kind, expiresAt, now) {
+			return upsertVIPEntitlement(db, record.UID, kind, record.ProductID, originalTransactionID, expiresAt)
+		}
+		return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, expiresAt, now)
+	case AppStoreSubscriptionStatusExpired, AppStoreSubscriptionStatusRevoked:
+		return deactivateMatchingVIPEntitlement(db, record.UID, record.ProductID, originalTransactionID, expiresAt, now)
+	default:
+		return applyAppleTransactionRecordForReconcile(db, record, kind, now)
+	}
 }
 
 func appStoreServerNotificationFromPayload(

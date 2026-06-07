@@ -54,4 +54,21 @@ Output JSON:
 Notification output also includes the verified decoded notification and, when
 present, the verified decoded `signedTransactionInfo` and `signedRenewalInfo`.
 
+The Go server also uses `app_store_api.mjs` to call App Store Server API for
+active reconciliation:
+
+```bash
+node app_store_api.mjs < request.json
+```
+
+Supported actions:
+
+- `transactionHistory`
+- `subscriptionStatus`
+- `notificationHistory`
+
+This script requires an App Store Server API key from App Store Connect:
+`apiKeyId`, `apiIssuerId`, and either `apiPrivateKeyPath` or `apiPrivateKey`.
+Do not assume a Sign in with Apple key can be reused for this API.
+
 Configure the Go server's `app_store.root_certificate_paths` with DER-encoded Apple root certificates from Apple PKI.

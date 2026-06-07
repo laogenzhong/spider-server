@@ -11,6 +11,7 @@ import (
 	"spider-server/game"
 	"spider-server/game/appleauth"
 	"spider-server/game/appstore"
+	"spider-server/game/reconcile"
 	"spider-server/game/session"
 	"spider-server/gateway"
 	mysqlconfig "spider-server/mysql"
@@ -46,6 +47,8 @@ func main() {
 	)
 
 	mysqlconfig.InitWithConfig(cfg.MySQL)
+	reconcile.StartAppStoreReconciler(ctx, cfg.AppStore)
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {

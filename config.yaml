@@ -52,12 +52,22 @@ app_store:
   enable_online_checks: true
   node_path: "node"
   verifier_script_path: "apple_iap_verifier/verify_transaction.mjs"
+  api_script_path: "apple_iap_verifier/app_store_api.mjs"
   root_certificate_paths:
     - "/Users/huitailang/workdir/spider-secrets/apple-root-certs/AppleRootCA-G2.cer"
     - "/Users/huitailang/workdir/spider-secrets/apple-root-certs/AppleRootCA-G3.cer"
+  # App Store Server API 对账密钥，需要在 App Store Connect 里创建有 App 内购买权限的 API Key。
+  api_key_id: ""
+  api_issuer_id: ""
+  api_private_key_path: ""
   monthly_product_id: "hh.spider.vip.monthly"
   lifetime_product_id: "hh.spider.vip.lifetime"
   timeout: "10s"
+  reconcile_enabled: false
+  reconcile_interval: "6h"
+  reconcile_lookback: "720h"
+  reconcile_batch_size: 50
+  reconcile_max_pages: 10
 
 logger:
   level: "info"

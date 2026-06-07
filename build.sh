@@ -20,10 +20,19 @@ if [[ ! -f "${ROOT_DIR}/config.server.example.yaml" ]]; then
   exit 1
 fi
 
-if [[ ! -f "${ROOT_DIR}/public/index.html" ]] || [[ ! -f "${ROOT_DIR}/public/support.html" ]] || [[ ! -f "${ROOT_DIR}/public/privacy.html" ]]; then
-  echo "public/index.html, public/support.html or public/privacy.html not found. Online package requires public pages." >&2
-  exit 1
-fi
+required_public_pages=(
+  "${ROOT_DIR}/public/index.html"
+  "${ROOT_DIR}/public/support.html"
+  "${ROOT_DIR}/public/privacy.html"
+  "${ROOT_DIR}/public/terms/index.html"
+)
+
+for page in "${required_public_pages[@]}"; do
+  if [[ ! -f "${page}" ]]; then
+    echo "${page} not found. Online package requires public pages." >&2
+    exit 1
+  fi
+done
 
 if command -v npm >/dev/null 2>&1; then
   :
@@ -48,6 +57,7 @@ cp -R public/. "${RELEASE_DIR}/public/"
 echo "==> Included public HTML pages"
 
 cp apple_iap_verifier/verify_transaction.mjs "${RELEASE_DIR}/apple_iap_verifier/"
+cp apple_iap_verifier/app_store_api.mjs "${RELEASE_DIR}/apple_iap_verifier/"
 cp apple_iap_verifier/package.json "${RELEASE_DIR}/apple_iap_verifier/"
 cp apple_iap_verifier/package-lock.json "${RELEASE_DIR}/apple_iap_verifier/"
 cp apple_iap_verifier/README.md "${RELEASE_DIR}/apple_iap_verifier/"
@@ -67,7 +77,7 @@ if [[ ! -f config.server.yaml ]]; then
   exit 1
 fi
 
-for page in public/index.html public/support.html public/privacy.html; do
+for page in public/index.html public/support.html public/privacy.html public/terms/index.html; do
   if [[ ! -f "${page}" ]]; then
     echo "${page} not found. Release package is incomplete." >&2
     exit 1
@@ -81,6 +91,11 @@ fi
 
 if [[ ! -f apple_iap_verifier/verify_transaction.mjs ]]; then
   echo "apple_iap_verifier/verify_transaction.mjs not found. Release package is incomplete." >&2
+  exit 1
+fi
+
+if [[ ! -f apple_iap_verifier/app_store_api.mjs ]]; then
+  echo "apple_iap_verifier/app_store_api.mjs not found. Release package is incomplete." >&2
   exit 1
 fi
 

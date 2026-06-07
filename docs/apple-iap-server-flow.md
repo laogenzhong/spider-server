@@ -2,6 +2,8 @@
 
 本文档记录 spider-server 当前 Apple 内购服务端流程，包括客户端主动确认、App Store Server Notifications V2、权益落库和后续服务端支付待办。
 
+后台接入和运维查询说明见：`docs/apple-iap-ops-and-admin.md`。
+
 ## 目标
 
 - 服务端是 VIP 权益最终权威。
@@ -15,15 +17,19 @@
 - `proto/primary/purchase.proto`: VIPService protobuf 定义。
 - `game/router/vip_api.go`: 客户端创建预订单、确认交易、查询 VIP 状态。
 - `game/appstore/verifier.go`: Go 到 Node 验签脚本的适配层。
+- `game/appstore/server_api.go`: Go 到 App Store Server API Node 脚本的适配层。
+- `game/reconcile/app_store_reconciler.go`: 定时主动拉交易历史、订阅状态和通知历史。
 - `gateway/app_store_notification.go`: App Store Server Notifications V2 HTTP 回调。
 - `mysql/model/vip_entitlement_model.go`: 预订单、交易、通知、当前权益模型和处理规则。
 - `apple_iap_verifier/verify_transaction.mjs`: 使用 Apple 官方 Node 库验证交易和通知 JWS。
+- `apple_iap_verifier/app_store_api.mjs`: 使用 Apple 官方 Node 库调用 App Store Server API。
 
 ## 数据表职责
 
 - `apple_purchase_orders`: 客户端发起购买前创建的服务端预订单。只代表支付意图，不代表已付款。
 - `apple_transactions`: Apple 交易快照，按 `transaction_id` 唯一，保存商品、原始交易、过期、退款/撤销、签名时间等信息。
 - `app_store_server_notifications`: App Store Server Notifications V2 原始通知和处理状态，按 `notification_uuid` 唯一幂等。
+- `apple_payment_failures`: 支付失败和告警事件统一表，记录验签失败、通知 5xx、`pending_user` 堆积、退款/撤销处理失败及主动对账失败。
 - `user_entitlements`: 当前用户 VIP 权益快照，客户端 `getVIPStatus` 只读这里。
 
 ## 客户端主动确认流程
@@ -104,6 +110,7 @@ https://<你的域名>/app-store-server-notifications/v2
 - Sandbox 配置 `app_store.environment: "SANDBOX"`。
 - Production 配置 `app_store.environment: "PRODUCTION"`，并设置真实 `app_store.app_apple_id`。
 - `app_store.root_certificate_paths` 指向 Apple 根证书 DER `.cer` 文件。
+- 主动对账需要配置 `app_store.api_key_id`、`app_store.api_issuer_id`、`app_store.api_private_key_path`，并打开 `app_store.reconcile_enabled`。
 - 服务器外网域名支持 HTTPS，并能被 Apple 访问。
 - App Store Connect 的 App Store Server Notifications V2 URL 指向 `/app-store/notifications/v2`。
 - 服务端日志能看到 `app store notifications endpoint` 启动输出。
@@ -118,16 +125,22 @@ https://<你的域名>/app-store-server-notifications/v2
 - 在 App Store Connect 发送 Server Notifications V2 测试通知，确认回调能验签和入库。
 - 实测续订、过期、退款/撤销、账单失败或宽限期能正确改变权益。
 
-### P0: App Store Server API 主动对账
+### Done: App Store Server API 主动对账
 
-当前服务端有客户端主动确认和 Apple 通知，但还缺主动拉 Apple 状态的能力。后续需要接 App Store Server API:
+服务端已接入主动拉 Apple 状态的能力。打开 `app_store.reconcile_enabled` 后，后台任务会按 `app_store.reconcile_interval` 定时执行:
 
-- 查询交易历史。
-- 查询订阅当前状态。
-- 查询通知历史并补处理漏掉的通知。
-- 定时对账 `apple_transactions`、`app_store_server_notifications`、`user_entitlements`。
+- 查询通知历史，并优先补处理 Apple 发送失败的通知。
+- 基于本地 `apple_transactions` 里的历史交易批量查询交易历史。
+- 对月订阅查询订阅当前状态。
+- 将拉回来的交易、订阅状态和通知历史回写到 `apple_transactions`、`app_store_server_notifications`、`user_entitlements`。
 
-这一步需要新增 App Store Server API 的 issuer id、key id、private key 配置，不能复用 Sign in with Apple 的用途假设。
+主动对账需要 App Store Connect 里的 App Store Server API Key:
+
+- `app_store.api_key_id`
+- `app_store.api_issuer_id`
+- `app_store.api_private_key_path`
+
+不要直接假设 Sign in with Apple 的 `.p8` 可以复用；需要使用具备 App 内购买相关权限的 App Store Server API 密钥。
 
 ### P0: 生产环境配置与密钥管理
 
@@ -136,11 +149,27 @@ https://<你的域名>/app-store-server-notifications/v2
 - `.p8`、Apple 根证书、数据库密码只走服务器安全路径或环境变量。
 - 确认 `.gitignore` 覆盖 `*.p8` 和 `config.local.yaml`。
 
-### P1: 支付状态观测和告警
+### Done: 支付状态观测和告警基础表
 
-- 记录验签耗时、失败原因、超时次数。
-- 对通知 5xx、验签失败、`pending_user` 堆积、连续退款/撤销失败加日志或告警。
-- 增加运维查询接口或命令，方便按 uid、transaction id、original transaction id 查支付状态。
+已新增 `apple_payment_failures` 表作为支付失败和告警事件统一入口，当前会记录:
+
+- 客户端交易 JWS 验签失败，包括 uid、订单、商品、transaction id、original transaction id、环境、JWS 长度和错误原因。
+- App Store Server Notification 验签失败，包括 signedPayload 长度、点号数量和错误原因。
+- 通知入口返回 5xx，包括验签配置错误导致的 503、通知处理失败导致的 500。
+- `pending_user` 通知无法匹配 uid，以及主动对账时发现的 `pending_user` 堆积数量。
+- `REFUND`、`REVOKE` 或带 `revocationDate` 的交易处理失败，按 `critical` 记录。
+- App Store Server API 主动对账拉取或应用失败。
+
+表内重点字段:
+
+- `category`: 失败类别，例如 `transaction_verify_failed`、`notification_5xx`、`pending_user_backlog`、`refund_revoke_failed`。
+- `stage`: 失败阶段，例如 `transaction_verify`、`notification_apply`、`refund_revoke_apply`。
+- `severity`: 告警级别，`warning` 或 `critical`。
+- `reason`: 直接错误原因。
+- `problem`: 对业务影响的解释。
+- `context_json`: 额外排查上下文。
+
+后续仍建议增加运维查询接口或命令，方便按 uid、transaction id、original transaction id 查支付状态。
 
 ### P1: 订阅状态模型增强
 
@@ -174,4 +203,3 @@ https://<你的域名>/app-store-server-notifications/v2
 - 给 `vip_entitlement_model.go` 增加通知状态机单元测试。
 - 覆盖续订、过期、退款、撤销、宽限期、通知乱序、重复通知、pending_user 回放。
 - 给网关通知 handler 加无效 JSON、空 payload、验签失败、处理成功的测试。
-

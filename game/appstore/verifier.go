@@ -107,6 +107,7 @@ type RenewalInfo struct {
 
 func Configure(cfg appconfig.AppStoreConfig) {
 	defaultVerifier = NewVerifier(cfg)
+	ConfigureServerAPI(cfg)
 }
 
 func DefaultVerifier() *Verifier {

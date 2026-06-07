@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>练后记 LiftTags</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --accent: #18c5c6;
+      --accent-dark: #0d8f91;
+      --ink: #101418;
+      --muted: #5d6874;
+      --line: #e5eaef;
+      --bg: #f6f8fa;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.65;
+    }
+    main {
+      width: min(960px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 52px 0 60px;
+    }
+    .hero {
+      padding: 38px 30px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #e9fbfb 0%, #ffffff 58%, #fff8e6 100%);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 44px rgba(18, 38, 48, 0.08);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(24, 197, 198, 0.14);
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+    .badge-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 5px rgba(24, 197, 198, 0.14);
+    }
+    h1 {
+      margin: 22px 0 12px;
+      font-size: clamp(36px, 7vw, 64px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .lead {
+      max-width: 720px;
+      font-size: 18px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #041415;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .button.secondary {
+      background: #ffffff;
+      color: var(--accent-dark);
+      border: 1px solid #cceff0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    section {
+      padding: 22px;
+      border-radius: 18px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      box-shadow: 0 12px 30px rgba(18, 38, 48, 0.05);
+    }
+    a {
+      color: var(--accent-dark);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    footer {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 24px, 960px);
+        padding-top: 26px;
+      }
+      .hero, section { border-radius: 18px; }
+      .grid { grid-template-columns: 1fr; }
+      .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <div class="badge"><span class="badge-dot"></span>练后记 / LiftTags</div>
+      <h1>训练之后，认真记录。</h1>
+      <p class="lead">练后记是一款面向力量训练、日常健身和体型管理的记录工具，支持训练标签、体重记录、体型照片、Apple Watch 同步、VIP 内购和相册分享。</p>
+      <div class="actions">
+        <a class="button" href="https://lifttags-legal.laogenzhong.workers.dev/privacy.html">查看隐私政策</a>
+        <a class="button secondary" href="https://lifttags-legal.laogenzhong.workers.dev/support.html">技术支持</a>
+        <a class="button secondary" href="https://lifttags-legal.laogenzhong.workers.dev/terms/">使用条款</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section>
+        <h2>训练记录</h2>
+        <p>记录每日训练内容、标签、备注和训练趋势，帮助你复盘长期训练节奏。</p>
+      </section>
+      <section>
+        <h2>健康数据</h2>
+        <p>在用户授权后读取 Apple Health / HealthKit 数据，用于训练、体重和趋势展示。</p>
+      </section>
+      <section>
+        <h2>用户支持</h2>
+        <p>如有登录、同步、订阅、Apple Watch 或 HealthKit 问题，可通过 <a href="mailto:laogenzhong@gmail.com">laogenzhong@gmail.com</a> 联系我们。</p>
+      </section>
+    </div>
+
+    <footer>Copyright © 2026 LiftTags. Official site: https://lifttags-legal.laogenzhong.workers.dev/</footer>
+  </main>
+</body>
+</html>
