@@ -22,6 +22,8 @@
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
       line-height: 1.65;
+      -webkit-text-size-adjust: 100%;
+      overflow-wrap: break-word;
     }
     main {
       width: min(920px, calc(100% - 32px));
@@ -54,7 +56,7 @@
     }
     h1 {
       margin: 22px 0 10px;
-      font-size: clamp(32px, 6vw, 54px);
+      font-size: clamp(30px, 7vw, 54px);
       line-height: 1.08;
       letter-spacing: 0;
     }
@@ -68,6 +70,7 @@
       margin: 0;
       color: var(--muted);
       font-size: 16px;
+      word-break: break-word;
     }
     .lead {
       max-width: 700px;
@@ -97,6 +100,7 @@
       color: var(--accent-dark);
       font-weight: 700;
       text-decoration: none;
+      overflow-wrap: anywhere;
     }
     a:hover { text-decoration: underline; }
     .contact {
@@ -123,13 +127,79 @@
     @media (max-width: 720px) {
       main {
         width: min(100% - 24px, 920px);
-        padding-top: 22px;
+        padding: 22px 0 40px;
       }
-      .hero, section { border-radius: 18px; }
-      .grid { grid-template-columns: 1fr; }
+      .hero {
+        padding: 24px 18px;
+        border-radius: 18px;
+      }
+      .badge {
+        gap: 8px;
+        padding: 7px 12px;
+        font-size: 13px;
+      }
+      .badge-dot {
+        width: 9px;
+        height: 9px;
+      }
+      h1 {
+        margin-top: 18px;
+      }
+      .lead {
+        font-size: 16px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 14px;
+      }
+      section {
+        padding: 18px 16px;
+        border-radius: 16px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      ul {
+        padding-left: 18px;
+      }
       .contact {
         align-items: flex-start;
         flex-direction: column;
+        padding: 12px 14px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      main {
+        width: min(100% - 20px, 920px);
+        padding-top: 16px;
+      }
+      .hero {
+        padding: 20px 14px;
+      }
+      h1 {
+        font-size: 28px;
+        line-height: 1.14;
+      }
+      h2 {
+        font-size: 19px;
+      }
+      p,
+      li {
+        font-size: 15px;
+      }
+      section {
+        padding: 16px 14px;
+      }
+      .contact {
+        padding: 10px 12px;
+      }
+      .contact span {
+        font-size: 13px;
+      }
+      footer {
+        font-size: 12px;
       }
     }
   </style>
