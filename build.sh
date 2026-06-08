@@ -109,10 +109,10 @@ fi
   node -e "import('@apple/app-store-server-library').then(() => process.exit(0)).catch((err) => { console.error(err); process.exit(1) })"
 )
 
-mkdir -p logs
+mkdir -p /root/log
 
 PID_FILE="spider-server.pid"
-LOG_FILE="logs/spider-server.out.log"
+LOG_FILE="/root/log/spider-server.out.log"
 
 if [[ -f "${PID_FILE}" ]]; then
   OLD_PID="$(cat "${PID_FILE}")"

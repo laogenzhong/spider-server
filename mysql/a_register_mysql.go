@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"log"
 	appconfig "spider-server/common/config"
+	applogger "spider-server/common/logger"
 	"spider-server/mysql/config"
 	mysqlmodel2 "spider-server/mysql/model"
 	"strings"
@@ -13,7 +13,7 @@ import (
 func Init() {
 	cfg, err := appconfig.LoadDefault()
 	if err != nil {
-		log.Fatal(err)
+		applogger.Fatal(err)
 		return
 	}
 	InitWithConfig(cfg.MySQL)
@@ -60,7 +60,7 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 	}
 
 	if err := config.InitAndAutoMigrate(cfg, models...); err != nil {
-		log.Fatal(err)
+		applogger.Fatal(err)
 		return
 	}
 }

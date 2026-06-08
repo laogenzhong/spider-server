@@ -3,8 +3,8 @@ package game
 import (
 	"context"
 	"errors"
-	"log"
 	"net"
+	applogger "spider-server/common/logger"
 	"sync"
 
 	"google.golang.org/grpc"
@@ -71,7 +71,7 @@ func (s *GRPCServer) Start() error {
 	}
 	s.listener = listener
 
-	log.Printf("grpc server listening on %s", s.addr)
+	applogger.Printf("grpc server listening on %s", s.addr)
 
 	if err := s.server.Serve(listener); err != nil {
 		return err
@@ -83,7 +83,7 @@ func (s *GRPCServer) Start() error {
 func (s *GRPCServer) StartAsync() {
 	go func() {
 		if err := s.Start(); err != nil {
-			log.Printf("grpc server stopped: %v", err)
+			applogger.Printf("grpc server stopped: %v", err)
 		}
 	}()
 }

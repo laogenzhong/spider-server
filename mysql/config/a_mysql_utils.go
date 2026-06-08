@@ -3,12 +3,13 @@ package config
 import (
 	"errors"
 	"fmt"
+	applogger "spider-server/common/logger"
 	"sync"
 	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 type Config struct {
@@ -24,7 +25,7 @@ type Config struct {
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
 	ConnMaxIdleTime time.Duration
-	LogLevel        logger.LogLevel
+	LogLevel        gormlogger.LogLevel
 }
 
 var db *gorm.DB
@@ -62,11 +63,15 @@ func InitDb(cfg Config) error {
 		cfg.ConnMaxIdleTime = 10 * time.Minute
 	}
 	if cfg.LogLevel == 0 {
-		cfg.LogLevel = logger.Warn
+		cfg.LogLevel = gormlogger.Warn
 	}
 
 	gormDB, err := gorm.Open(mysql.Open(buildDSN(cfg)), &gorm.Config{
-		Logger: logger.Default.LogMode(cfg.LogLevel),
+		Logger: gormlogger.New(gormLogWriter{}, gormlogger.Config{
+			SlowThreshold: 200 * time.Millisecond,
+			LogLevel:      cfg.LogLevel,
+			Colorful:      false,
+		}),
 	})
 	if err != nil {
 		return fmt.Errorf("open mysql failed: %w", err)
@@ -101,6 +106,12 @@ func InitDb(cfg Config) error {
 	}
 
 	return nil
+}
+
+type gormLogWriter struct{}
+
+func (gormLogWriter) Printf(format string, args ...interface{}) {
+	applogger.Printf(format, args...)
 }
 
 func buildDSN(cfg Config) string {

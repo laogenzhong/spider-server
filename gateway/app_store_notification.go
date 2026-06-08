@@ -2,8 +2,8 @@ package gateway
 
 import (
 	"errors"
-	"log"
 	"net/http"
+	applogger "spider-server/common/logger"
 	"strings"
 	"time"
 
@@ -39,7 +39,7 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 	verifier := appstore.DefaultVerifier()
 	notification, transaction, renewalInfo, err := verifier.VerifyNotification(c.Request.Context(), signedPayload)
 	if errors.Is(err, appstore.ErrVerifierConfigInvalid) {
-		log.Printf("app store notification verifier config invalid: %v", err)
+		applogger.Printf("app store notification verifier config invalid: %v", err)
 		recordAppStoreNotificationVerifyFailure(
 			signedPayload,
 			http.StatusServiceUnavailable,
@@ -55,7 +55,7 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		log.Printf("app store notification verify failed: %v", err)
+		applogger.Printf("app store notification verify failed: %v", err)
 		recordAppStoreNotificationVerifyFailure(
 			signedPayload,
 			http.StatusBadRequest,
@@ -81,7 +81,7 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 		cfg.LifetimeProductID,
 		time.Now(),
 	); err != nil {
-		log.Printf("app store notification save/apply failed: uuid=%s type=%s subtype=%s err=%v",
+		applogger.Printf("app store notification save/apply failed: uuid=%s type=%s subtype=%s err=%v",
 			notification.NotificationUUID,
 			notification.NotificationType,
 			notification.Subtype,

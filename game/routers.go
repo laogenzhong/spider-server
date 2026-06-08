@@ -2,7 +2,7 @@ package game
 
 import (
 	"google.golang.org/grpc"
-	"log"
+	applogger "spider-server/common/logger"
 	"spider-server/game/router"
 	pb "spider-server/gen/spider/api"
 )
@@ -18,6 +18,6 @@ func (s *GRPCServer) Init() {
 		pb.RegisterFriendServiceServer(server, &router.FriendApi{})
 		pb.RegisterVIPServiceServer(server, &router.VIPApi{})
 	}); err != nil {
-		log.Fatalf("register room sync grpc router failed: %v", err)
+		applogger.Fatalf("register room sync grpc router failed: %v", err)
 	}
 }

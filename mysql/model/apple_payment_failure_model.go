@@ -3,7 +3,7 @@ package mysqlmodel
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	applogger "spider-server/common/logger"
 	"spider-server/mysql/config"
 	"strings"
 	"time"
@@ -68,7 +68,7 @@ type ApplePaymentFailure struct {
 
 func RecordApplePaymentFailureBestEffort(record ApplePaymentFailure) {
 	if err := RecordApplePaymentFailure(record); err != nil {
-		log.Printf("record apple payment failure failed: category=%s stage=%s err=%v", record.Category, record.Stage, err)
+		applogger.Printf("record apple payment failure failed: category=%s stage=%s err=%v", record.Category, record.Stage, err)
 	}
 }
 
@@ -164,7 +164,7 @@ func RecordPendingAppStoreNotificationBacklog(now time.Time) error {
 func createApplePaymentFailureInTxBestEffort(db *gorm.DB, record ApplePaymentFailure) {
 	normalizeApplePaymentFailure(&record)
 	if err := db.Create(&record).Error; err != nil {
-		log.Printf("record apple payment failure in tx failed: category=%s stage=%s err=%v", record.Category, record.Stage, err)
+		applogger.Printf("record apple payment failure in tx failed: category=%s stage=%s err=%v", record.Category, record.Stage, err)
 	}
 }
 

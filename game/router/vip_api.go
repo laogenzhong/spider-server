@@ -3,7 +3,7 @@ package router
 import (
 	"context"
 	"errors"
-	"log"
+	applogger "spider-server/common/logger"
 	"strings"
 	"time"
 
@@ -173,7 +173,7 @@ func toPBVIPKind(kind string) pb.VIPKind {
 
 func logAppleTransactionVerifyFailure(uid uint64, req *pb.ConfirmAppleTransactionRequest, cfg appconfig.AppStoreConfig, err error) {
 	jws := strings.TrimSpace(req.GetSignedTransactionJws())
-	log.Printf(
+	applogger.Printf(
 		"apple transaction verify failed uid=%d order=%s product=%s transaction=%s original=%s bundle=%s environment=%s appAppleId=%d onlineChecks=%t rootCerts=%d jwsLength=%d jwsDots=%d err=%v",
 		uid,
 		req.GetOrderId(),

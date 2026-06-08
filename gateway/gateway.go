@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
+	applogger "spider-server/common/logger"
 	"spider-server/gateway/refgrpc"
 	"strings"
 	"time"
@@ -45,7 +45,11 @@ type BinaryRPCRequest struct {
 }
 
 func (s *GatewayServer) Router() *gin.Engine {
-	router := gin.Default()
+	router := gin.New()
+	router.Use(
+		gin.LoggerWithWriter(applogger.Writer()),
+		gin.RecoveryWithWriter(applogger.Writer()),
+	)
 
 	// 普通 HTTP JSON 接口。
 	router.GET("/", s.indexHandler)
@@ -85,16 +89,16 @@ func (s *GatewayServer) pingHandler(c *gin.Context) {
 func (s *GatewayServer) httpHandler(c *gin.Context) {
 	requestBody, err := c.GetRawData()
 	if err != nil {
-		log.Printf("read rpc request body failed: %v", err)
+		applogger.Printf("read rpc request body failed: %v", err)
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
-	//log.Printf("http rpc receive binary request, path=%s, bytes=%d", c.Request.URL.Path, len(requestBody))
+	//applogger.Printf("http rpc receive binary request, path=%s, bytes=%d", c.Request.URL.Path, len(requestBody))
 
 	responseBody, code := s.handleBinaryRPC(requestBody)
 	if code != http.StatusOK {
-		log.Printf("handle binary rpc failed: %v", err)
+		applogger.Printf("handle binary rpc failed: %v", err)
 		c.Status(code)
 		return
 	}
@@ -112,7 +116,7 @@ func (s *GatewayServer) handleBinaryRPC(requestBody []byte) ([]byte, int) {
 	// 这里直接透传业务服务器不用解析的..
 	path := strings.TrimPrefix(rpcRequest.Path, "/")
 	url := fmt.Sprintf("http://%s/%s", s.host, path)
-	log.Printf("grpc invoke url: %s", url)
+	applogger.Printf("grpc invoke url: %s", url)
 
 	header := s.binaryRPCHeadersToHTTPHeader(rpcRequest.Headers)
 	resp, err := refgrpc.GrpcInvoke(url, rpcRequest.Body, header)
@@ -147,7 +151,7 @@ func (s *GatewayServer) buildBinaryRPCResponse(trailer http.Header, header http.
 
 	protobufBody, err := s.unwrapGRPCBody(body)
 	if err != nil {
-		log.Printf("unwrap grpc response body failed, return raw body: %v", err)
+		applogger.Printf("unwrap grpc response body failed, return raw body: %v", err)
 		buffer.Write(body)
 		return buffer.Bytes()
 	}
@@ -244,24 +248,24 @@ func (s *GatewayServer) parseBinaryRPCHeaders(rawHeaders string) []BinaryRPCHead
 func (s *GatewayServer) wsHandler(c *gin.Context) {
 	conn, err := s.wsUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Printf("upgrade websocket failed: %v", err)
+		applogger.Printf("upgrade websocket failed: %v", err)
 		return
 	}
 	defer conn.Close()
 
-	log.Printf("websocket connected: %s", c.Request.RemoteAddr)
+	applogger.Printf("websocket connected: %s", c.Request.RemoteAddr)
 
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Printf("websocket disconnected: %s, err: %v", c.Request.RemoteAddr, err)
+			applogger.Printf("websocket disconnected: %s, err: %v", c.Request.RemoteAddr, err)
 			return
 		}
 
-		log.Printf("websocket receive: %s", string(message))
+		applogger.Printf("websocket receive: %s", string(message))
 
 		if err := conn.WriteMessage(messageType, message); err != nil {
-			log.Printf("websocket write failed: %v", err)
+			applogger.Printf("websocket write failed: %v", err)
 			return
 		}
 	}

@@ -9,11 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/textproto"
 	"sort"
 	appconfig "spider-server/common/config"
+	applogger "spider-server/common/logger"
 	"spider-server/gen/spider/api"
 	"strconv"
 	"strings"
@@ -264,7 +264,7 @@ func parseHTTPHeaderBinary(rawHeaders []byte) http.Header {
 func exampleCallGateway() {
 	cfg, err := appconfig.LoadDefault()
 	if err != nil {
-		log.Printf("load config failed: %v", err)
+		applogger.Printf("load config failed: %v", err)
 		return
 	}
 
@@ -283,29 +283,29 @@ func exampleCallGateway() {
 		&api.SyncRequest{},
 	)
 	if err != nil {
-		log.Printf("call gateway failed: %v", err)
+		applogger.Printf("call gateway failed: %v", err)
 		return
 	}
 
 	rpcResponse, err := parseBinaryRPCResponse(responseBody)
 	if err != nil {
-		log.Printf("parse gateway response failed: %v", err)
+		applogger.Printf("parse gateway response failed: %v", err)
 		return
 	}
 
-	log.Printf("gateway response bytes: %d", len(responseBody))
-	log.Printf("gateway response trailer: %+v", rpcResponse.Trailer)
-	log.Printf("gateway response header: %+v", rpcResponse.Header)
-	log.Printf("gateway response body bytes: %d", len(rpcResponse.Body))
+	applogger.Printf("gateway response bytes: %d", len(responseBody))
+	applogger.Printf("gateway response trailer: %+v", rpcResponse.Trailer)
+	applogger.Printf("gateway response header: %+v", rpcResponse.Header)
+	applogger.Printf("gateway response body bytes: %d", len(rpcResponse.Body))
 
 	syncResponse := &api.SyncResponse{}
 	if err := proto.Unmarshal(rpcResponse.Body, syncResponse); err != nil {
-		log.Printf("unmarshal SyncResponse failed: %v", err)
+		applogger.Printf("unmarshal SyncResponse failed: %v", err)
 		return
 	}
 
-	log.Printf("sync response: %+v", syncResponse)
-	log.Printf("sync response time: %d", syncResponse.Time)
+	applogger.Printf("sync response: %+v", syncResponse)
+	applogger.Printf("sync response time: %d", syncResponse.Time)
 }
 
 func main() {

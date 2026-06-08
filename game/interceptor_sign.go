@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
-	"log"
 	"sort"
 	appconfig "spider-server/common/config"
+	applogger "spider-server/common/logger"
 	"spider-server/game/session"
 	"strings"
 	"sync"
@@ -129,7 +129,7 @@ func MetadataLogInterceptor(
 			}
 		}
 
-		log.Printf("grpc method=%s metadata=%v", info.FullMethod, xxMeta)
+		applogger.Printf("grpc method=%s metadata=%v", info.FullMethod, xxMeta)
 	}
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok && signVerificationEnabled {

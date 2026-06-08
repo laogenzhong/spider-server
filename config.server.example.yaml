@@ -69,10 +69,11 @@ app_store:
 
 logger:
   level: "info"
-  path: "logs/spider-server.log"
-  rotate: "%Y%m%d%H"
-  max_age: "24h"
-  rotation_time: "1h"
+  path: "/root/log/spider-server.log"
+  rotate: "%Y%m%d"
+  max_age: "168h"
+  rotation_time: "24h"
+  max_size_mb: 100
 
 client:
   gateway_base_url: "https://spiderapi.jjai.top"

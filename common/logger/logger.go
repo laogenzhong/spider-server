@@ -3,8 +3,12 @@ package logger
 import (
 	"errors"
 	"fmt"
+	"io"
+	stdlog "log"
 	"os"
+	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -29,6 +33,7 @@ type Config struct {
 	Rotate       string
 	MaxAge       time.Duration
 	RotationTime time.Duration
+	MaxSizeMB    int
 }
 
 var closer = func() error {
@@ -36,7 +41,7 @@ var closer = func() error {
 }
 
 func init() {
-	Configure(Config{Level: "info", Path: "stdout", Rotate: "%Y%m%d%H", MaxAge: 24 * time.Hour, RotationTime: time.Hour})
+	Configure(Config{Level: "info", Path: "stdout", Rotate: "%Y%m%d%H", MaxAge: 24 * time.Hour, RotationTime: time.Hour, MaxSizeMB: 0})
 }
 
 func Configure(logCfg Config) {
@@ -99,8 +104,10 @@ func Configure(logCfg Config) {
 		fallthrough
 	case "stdout":
 		newLogger.SetOutput(colorable.NewColorableStdout())
+		stdlog.SetOutput(colorable.NewColorableStdout())
 	case "stderr":
 		newLogger.SetOutput(colorable.NewColorableStderr())
+		stdlog.SetOutput(colorable.NewColorableStderr())
 	default:
 		// 检查文件路径
 		fileInfo, err := os.Stat(logCfg.Path)
@@ -110,20 +117,184 @@ func Configure(logCfg Config) {
 			// https://golangnote.com/topic/92.html
 			panic("path is dir")
 		}
-		// 存在 日志分割配置
-		logs, err := rotatelogs.New(
-			logCfg.Path+"."+logCfg.Rotate,
-			rotatelogs.WithLinkName(logCfg.Path),
-			rotatelogs.WithMaxAge(logCfg.MaxAge),
-			rotatelogs.WithRotationTime(logCfg.RotationTime),
-		)
-		if err != nil {
-			panic(fmt.Sprintf("rotate log init error: %v", err))
+		var logs interface {
+			Write([]byte) (int, error)
+			Close() error
+		}
+		var rotateErr error
+		if logCfg.MaxSizeMB > 0 {
+			logs, rotateErr = newDailySizeRotateWriter(logCfg.Path, logCfg.MaxSizeMB, logCfg.MaxAge)
+		} else {
+			logs, rotateErr = rotatelogs.New(
+				logCfg.Path+"."+logCfg.Rotate,
+				rotatelogs.WithLinkName(logCfg.Path),
+				rotatelogs.WithMaxAge(logCfg.MaxAge),
+				rotatelogs.WithRotationTime(logCfg.RotationTime),
+			)
+		}
+		if rotateErr != nil {
+			panic(fmt.Sprintf("rotate log init error: %v", rotateErr))
 		}
 		newLogger.SetOutput(logs)
+		stdlog.SetOutput(logs)
 		closer = logs.Close
 	}
+	stdlog.SetFlags(stdlog.LstdFlags | stdlog.Lshortfile)
 	LogEntry = log.NewEntry(newLogger)
+}
+
+type dailySizeRotateWriter struct {
+	mu        sync.Mutex
+	basePath  string
+	maxSizeMB int
+	maxAge    time.Duration
+	date      string
+	file      *os.File
+	size      int64
+}
+
+func newDailySizeRotateWriter(basePath string, maxSizeMB int, maxAge time.Duration) (*dailySizeRotateWriter, error) {
+	if err := os.MkdirAll(filepath.Dir(basePath), 0755); err != nil {
+		return nil, err
+	}
+	writer := &dailySizeRotateWriter{
+		basePath:  basePath,
+		maxSizeMB: maxSizeMB,
+		maxAge:    maxAge,
+	}
+	if err := writer.rotateIfNeeded(time.Now()); err != nil {
+		return nil, err
+	}
+	return writer, nil
+}
+
+func (w *dailySizeRotateWriter) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if err := w.rotateIfNeeded(time.Now()); err != nil {
+		return 0, err
+	}
+	if w.size > 0 && w.maxSizeBytes() > 0 && w.size+int64(len(p)) > w.maxSizeBytes() {
+		if err := w.rotateBySize(); err != nil {
+			return 0, err
+		}
+	}
+	n, err := w.file.Write(p)
+	w.size += int64(n)
+	return n, err
+}
+
+func (w *dailySizeRotateWriter) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.file == nil {
+		return nil
+	}
+	return w.file.Close()
+}
+
+func (w *dailySizeRotateWriter) rotateIfNeeded(now time.Time) error {
+	date := now.Format("20060102")
+	if w.file != nil && w.date == date {
+		return nil
+	}
+	if w.file != nil {
+		_ = w.file.Close()
+	}
+
+	filename := dailyLogPath(w.basePath, date)
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	info, err := file.Stat()
+	if err != nil {
+		_ = file.Close()
+		return err
+	}
+	w.date = date
+	w.file = file
+	w.size = info.Size()
+	updateCurrentLogLink(w.basePath, filename)
+	w.cleanupExpiredDailyLogs(now)
+	return nil
+}
+
+func (w *dailySizeRotateWriter) rotateBySize() error {
+	if w.file != nil {
+		_ = w.file.Close()
+	}
+
+	currentPath := dailyLogPath(w.basePath, w.date)
+	archivePath, err := nextArchivePath(w.basePath, w.date)
+	if err != nil {
+		return err
+	}
+	if err := os.Rename(currentPath, archivePath); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	file, err := os.OpenFile(currentPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	w.file = file
+	w.size = 0
+	updateCurrentLogLink(w.basePath, currentPath)
+	return nil
+}
+
+func (w *dailySizeRotateWriter) maxSizeBytes() int64 {
+	return int64(w.maxSizeMB) * 1024 * 1024
+}
+
+func dailyLogPath(basePath string, date string) string {
+	ext := filepath.Ext(basePath)
+	prefix := strings.TrimSuffix(basePath, ext)
+	if ext == "" {
+		return prefix + "." + date
+	}
+	return prefix + "." + date + ext
+}
+
+func updateCurrentLogLink(linkPath string, targetPath string) {
+	_ = os.Remove(linkPath)
+	_ = os.Symlink(filepath.Base(targetPath), linkPath)
+}
+
+func nextArchivePath(basePath string, date string) (string, error) {
+	ext := filepath.Ext(basePath)
+	prefix := strings.TrimSuffix(basePath, ext)
+	for index := 1; index <= 9999; index++ {
+		name := fmt.Sprintf("%s.%s.%03d%s", prefix, date, index, ext)
+		if _, err := os.Stat(name); os.IsNotExist(err) {
+			return name, nil
+		}
+	}
+	return "", fmt.Errorf("too many rotated log files for %s", date)
+}
+
+func (w *dailySizeRotateWriter) cleanupExpiredDailyLogs(now time.Time) {
+	if w.maxAge <= 0 {
+		return
+	}
+	cutoff := now.Add(-w.maxAge)
+	ext := filepath.Ext(w.basePath)
+	prefix := strings.TrimSuffix(filepath.Base(w.basePath), ext)
+	pattern := filepath.Join(filepath.Dir(w.basePath), prefix+".*"+ext+"*")
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return
+	}
+	for _, match := range matches {
+		info, err := os.Stat(match)
+		if err != nil || info.IsDir() || info.ModTime().After(cutoff) {
+			continue
+		}
+		_ = os.Remove(match)
+	}
 }
 
 func PrintError(err error) {
@@ -145,9 +316,31 @@ func Fatalf(format string, args ...interface{}) {
 	LogEntry.Fatalf(format, args...)
 }
 
+func Fatal(args ...interface{}) {
+	LogEntry.Fatal(args...)
+}
+
 // 直接暴露 error 函数，简化调用
 func Printf(format string, args ...interface{}) {
 	LogEntry.Printf(format, args...)
+}
+
+func Println(args ...interface{}) {
+	LogEntry.Println(args...)
+}
+
+func Writer() io.Writer {
+	return logEntryWriter{}
+}
+
+type logEntryWriter struct{}
+
+func (logEntryWriter) Write(p []byte) (int, error) {
+	message := strings.TrimSpace(string(p))
+	if message != "" {
+		LogEntry.Print(message)
+	}
+	return len(p), nil
 }
 
 // 直接暴露 error 函数，简化调用

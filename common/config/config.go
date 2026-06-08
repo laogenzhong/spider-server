@@ -105,6 +105,7 @@ type LoggerConfig struct {
 	Rotate       string `yaml:"rotate"`
 	MaxAge       string `yaml:"max_age"`
 	RotationTime string `yaml:"rotation_time"`
+	MaxSizeMB    int    `yaml:"max_size_mb"`
 }
 
 type ClientConfig struct {
@@ -175,9 +176,10 @@ func Default() Config {
 		Logger: LoggerConfig{
 			Level:        "info",
 			Path:         "stdout",
-			Rotate:       "%Y%m%d%H",
-			MaxAge:       "24h",
-			RotationTime: "1h",
+			Rotate:       "%Y%m%d",
+			MaxAge:       "168h",
+			RotationTime: "24h",
+			MaxSizeMB:    100,
 		},
 		Client: ClientConfig{
 			GatewayBaseURL: "http://127.0.0.1:19080",
@@ -315,6 +317,9 @@ func (c *Config) Normalize() {
 	}
 	if c.Logger.RotationTime == "" {
 		c.Logger.RotationTime = Default().Logger.RotationTime
+	}
+	if c.Logger.MaxSizeMB < 0 {
+		c.Logger.MaxSizeMB = 0
 	}
 	if c.Client.GatewayBaseURL == "" {
 		c.Client.GatewayBaseURL = Default().Client.GatewayBaseURL

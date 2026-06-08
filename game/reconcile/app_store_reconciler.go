@@ -3,8 +3,8 @@ package reconcile
 import (
 	"context"
 	"fmt"
-	"log"
 	appconfig "spider-server/common/config"
+	applogger "spider-server/common/logger"
 	"spider-server/game/appstore"
 	mysqlmodel "spider-server/mysql/model"
 	"strings"
@@ -18,12 +18,12 @@ func StartAppStoreReconciler(ctx context.Context, cfg appconfig.AppStoreConfig) 
 
 	api := appstore.DefaultServerAPI()
 	if !api.Configured() {
-		log.Println("app store reconcile disabled: server api config is incomplete")
+		applogger.Println("app store reconcile disabled: server api config is incomplete")
 		return
 	}
 
 	interval := cfg.ReconcileIntervalDuration()
-	log.Printf("app store reconcile started: interval=%s lookback=%s batch=%d max_pages=%d", interval, cfg.ReconcileLookbackDuration(), cfg.ReconcileBatchSize, cfg.ReconcileMaxPages)
+	applogger.Printf("app store reconcile started: interval=%s lookback=%s batch=%d max_pages=%d", interval, cfg.ReconcileLookbackDuration(), cfg.ReconcileBatchSize, cfg.ReconcileMaxPages)
 
 	go func() {
 		timer := time.NewTimer(10 * time.Second)
@@ -32,11 +32,11 @@ func StartAppStoreReconciler(ctx context.Context, cfg appconfig.AppStoreConfig) 
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("app store reconcile stopped")
+				applogger.Println("app store reconcile stopped")
 				return
 			case <-timer.C:
 				if err := RunAppStoreReconcileOnce(ctx, cfg); err != nil {
-					log.Printf("app store reconcile completed with errors: %v", err)
+					applogger.Printf("app store reconcile completed with errors: %v", err)
 				}
 				timer.Reset(interval)
 			}
@@ -57,7 +57,7 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 	onlyFailures := true
 	if history, err := api.GetNotificationHistory(ctx, "", startAt, now, &onlyFailures, cfg.ReconcileMaxPages); err != nil {
 		failures++
-		log.Printf("app store reconcile notification history failed: %v", err)
+		applogger.Printf("app store reconcile notification history failed: %v", err)
 		recordAppStoreReconcileFailure(
 			mysqlmodel.ApplePaymentFailureStageReconcile,
 			"App Store notification history query failed, so missed notifications may remain unapplied.",
@@ -66,7 +66,7 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 		)
 	} else if count, err := applyNotificationHistory(history, cfg, now); err != nil {
 		failures++
-		log.Printf("app store reconcile apply notification history failed: count=%d err=%v", count, err)
+		applogger.Printf("app store reconcile apply notification history failed: count=%d err=%v", count, err)
 	}
 
 	refs, err := mysqlmodel.ListAppleTransactionsForAppStoreReconcile(cfg.ReconcileBatchSize)
@@ -82,7 +82,7 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 
 		if history, err := api.GetTransactionHistory(ctx, transactionID, startAt, now, cfg.ReconcileMaxPages); err != nil {
 			failures++
-			log.Printf("app store reconcile transaction history failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
+			applogger.Printf("app store reconcile transaction history failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
 			recordAppStoreReconcileFailure(
 				mysqlmodel.ApplePaymentFailureStageReconcile,
 				"App Store transaction history query failed, so local transaction and entitlement snapshots may be stale.",
@@ -91,7 +91,7 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 			)
 		} else if err := mysqlmodel.ApplyAppStoreServerAPITransactions(ref.UID, history.Transactions, cfg.MonthlyProductID, cfg.LifetimeProductID, now); err != nil {
 			failures++
-			log.Printf("app store reconcile apply transaction history failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
+			applogger.Printf("app store reconcile apply transaction history failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
 			if transactionHistoryHasRevocation(history.Transactions) {
 				recordRefundRevokeReconcileFailure(
 					ref.UID,
@@ -113,7 +113,7 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 		if strings.TrimSpace(ref.ProductID) == strings.TrimSpace(cfg.MonthlyProductID) {
 			if status, err := api.GetSubscriptionStatus(ctx, transactionID); err != nil {
 				failures++
-				log.Printf("app store reconcile subscription status failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
+				applogger.Printf("app store reconcile subscription status failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
 				recordAppStoreReconcileFailure(
 					mysqlmodel.ApplePaymentFailureStageReconcile,
 					"App Store subscription status query failed, so monthly VIP status may be stale.",
@@ -122,7 +122,7 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 				)
 			} else if err := mysqlmodel.ApplyAppStoreSubscriptionStatuses(ref.UID, status.Items, cfg.MonthlyProductID, cfg.LifetimeProductID, now); err != nil {
 				failures++
-				log.Printf("app store reconcile apply subscription status failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
+				applogger.Printf("app store reconcile apply subscription status failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
 				if subscriptionStatusHasRevocation(status.Items) {
 					recordRefundRevokeReconcileFailure(
 						ref.UID,
@@ -144,7 +144,7 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 
 		if history, err := api.GetNotificationHistory(ctx, transactionID, startAt, now, nil, cfg.ReconcileMaxPages); err != nil {
 			failures++
-			log.Printf("app store reconcile transaction notification history failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
+			applogger.Printf("app store reconcile transaction notification history failed: uid=%d tx=%s err=%v", ref.UID, transactionID, err)
 			recordAppStoreReconcileFailure(
 				mysqlmodel.ApplePaymentFailureStageReconcile,
 				"App Store transaction notification history query failed, so missed notifications may remain unapplied.",
@@ -153,19 +153,19 @@ func RunAppStoreReconcileOnce(ctx context.Context, cfg appconfig.AppStoreConfig)
 			)
 		} else if count, err := applyNotificationHistory(history, cfg, now); err != nil {
 			failures++
-			log.Printf("app store reconcile apply transaction notification history failed: uid=%d tx=%s count=%d err=%v", ref.UID, transactionID, count, err)
+			applogger.Printf("app store reconcile apply transaction notification history failed: uid=%d tx=%s count=%d err=%v", ref.UID, transactionID, count, err)
 		}
 	}
 
 	if err := mysqlmodel.RecordPendingAppStoreNotificationBacklog(now); err != nil {
 		failures++
-		log.Printf("app store reconcile pending_user backlog check failed: %v", err)
+		applogger.Printf("app store reconcile pending_user backlog check failed: %v", err)
 	}
 
 	if failures > 0 {
 		return fmt.Errorf("%d app store reconcile step(s) failed", failures)
 	}
-	log.Printf("app store reconcile completed: refs=%d", len(refs))
+	applogger.Printf("app store reconcile completed: refs=%d", len(refs))
 	return nil
 }
 
