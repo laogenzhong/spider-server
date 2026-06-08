@@ -2,7 +2,7 @@ server:
   gateway_addr: ":19080"
   grpc_addr: ":18000"
   grpc_target: "127.0.0.1:18000"
-  endpoint_host: "spiderapi.jjai.top"
+  endpoint_host: "jjai.top"
   read_header_timeout: "5s"
 
 mysql:
@@ -78,6 +78,6 @@ logger:
   max_size_mb: 100
 
 client:
-  gateway_base_url: "https://spiderapi.jjai.top"
+  gateway_base_url: "https://jjai.top"
   timeout: "10s"
   sign_salt: ""
