@@ -72,6 +72,7 @@ app_store:
 logger:
   level: "info"
   path: "stdout"
+  format: "plain"
   rotate: "%Y%m%d"
   max_age: "168h"
   rotation_time: "24h"

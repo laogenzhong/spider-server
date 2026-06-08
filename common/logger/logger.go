@@ -30,10 +30,12 @@ func GetLoggerEntry() *log.Entry {
 type Config struct {
 	Level        string
 	Path         string
+	ErrorPath    string
 	Rotate       string
 	MaxAge       time.Duration
 	RotationTime time.Duration
 	MaxSizeMB    int
+	Format       string
 }
 
 var closer = func() error {
@@ -65,19 +67,17 @@ func Configure(logCfg Config) {
 	if logCfg.RotationTime <= 0 {
 		logCfg.RotationTime = time.Hour
 	}
+	if logCfg.Format == "" {
+		logCfg.Format = "plain"
+	}
 
 	newLogger := log.New()
-	// 如果是终端输出，使用带颜色的文本格式；否则用JSON格式
+	formatter := formatterForConfig(logCfg)
+	// 终端输出保留带颜色文本；文件输出支持 plain/json 两种格式。
 	if logCfg.Path == "" || logCfg.Path == "stdout" || logCfg.Path == "stderr" {
-		newLogger.SetFormatter(&log.TextFormatter{
-			ForceColors:     true,
-			FullTimestamp:   true,
-			TimestampFormat: "2006-01-02 15:04:05",
-		})
+		newLogger.SetFormatter(formatter)
 	} else {
-		newLogger.SetFormatter(&log.JSONFormatter{
-			TimestampFormat: "2006-01-02 15:04:05",
-		})
+		newLogger.SetFormatter(formatter)
 	}
 
 	// Log as JSON instead of the default ASCII formatter.
@@ -117,30 +117,120 @@ func Configure(logCfg Config) {
 			// https://golangnote.com/topic/92.html
 			panic("path is dir")
 		}
-		var logs interface {
-			Write([]byte) (int, error)
-			Close() error
-		}
-		var rotateErr error
-		if logCfg.MaxSizeMB > 0 {
-			logs, rotateErr = newDailySizeRotateWriter(logCfg.Path, logCfg.MaxSizeMB, logCfg.MaxAge)
-		} else {
-			logs, rotateErr = rotatelogs.New(
-				logCfg.Path+"."+logCfg.Rotate,
-				rotatelogs.WithLinkName(logCfg.Path),
-				rotatelogs.WithMaxAge(logCfg.MaxAge),
-				rotatelogs.WithRotationTime(logCfg.RotationTime),
-			)
-		}
+		logs, rotateErr := newRotateWriter(logCfg.Path, logCfg)
 		if rotateErr != nil {
 			panic(fmt.Sprintf("rotate log init error: %v", rotateErr))
 		}
 		newLogger.SetOutput(logs)
 		stdlog.SetOutput(logs)
 		closer = logs.Close
+
+		if strings.TrimSpace(logCfg.ErrorPath) != "" {
+			errorLogs, rotateErr := newRotateWriter(logCfg.ErrorPath, logCfg)
+			if rotateErr != nil {
+				_ = logs.Close()
+				panic(fmt.Sprintf("error rotate log init error: %v", rotateErr))
+			}
+			newLogger.AddHook(&errorMirrorHook{
+				writer:    errorLogs,
+				formatter: formatter,
+			})
+			closer = closeAll(logs.Close, errorLogs.Close)
+		}
 	}
 	stdlog.SetFlags(stdlog.LstdFlags | stdlog.Lshortfile)
 	LogEntry = log.NewEntry(newLogger)
+}
+
+type rotateWriter interface {
+	Write([]byte) (int, error)
+	Close() error
+}
+
+func formatterForConfig(logCfg Config) log.Formatter {
+	if logCfg.Path == "" || logCfg.Path == "stdout" || logCfg.Path == "stderr" {
+		return &log.TextFormatter{
+			ForceColors:     true,
+			FullTimestamp:   true,
+			TimestampFormat: "2006-01-02 15:04:05",
+		}
+	}
+
+	switch strings.ToLower(strings.TrimSpace(logCfg.Format)) {
+	case "json":
+		return &log.JSONFormatter{
+			TimestampFormat: "2006-01-02 15:04:05",
+		}
+	case "", "plain", "text":
+		return plainFormatter{
+			TimestampFormat: "2006-01-02 15:04:05",
+		}
+	default:
+		panic(errors.New("LogFormat " + logCfg.Format + " not found"))
+	}
+}
+
+func newRotateWriter(path string, logCfg Config) (rotateWriter, error) {
+	if logCfg.MaxSizeMB > 0 {
+		return newDailySizeRotateWriter(path, logCfg.MaxSizeMB, logCfg.MaxAge)
+	}
+	return rotatelogs.New(
+		path+"."+logCfg.Rotate,
+		rotatelogs.WithLinkName(path),
+		rotatelogs.WithMaxAge(logCfg.MaxAge),
+		rotatelogs.WithRotationTime(logCfg.RotationTime),
+	)
+}
+
+func closeAll(closers ...func() error) func() error {
+	return func() error {
+		var firstErr error
+		for _, closeFn := range closers {
+			if closeFn == nil {
+				continue
+			}
+			if err := closeFn(); err != nil && firstErr == nil {
+				firstErr = err
+			}
+		}
+		return firstErr
+	}
+}
+
+type errorMirrorHook struct {
+	mu        sync.Mutex
+	writer    io.Writer
+	formatter log.Formatter
+}
+
+func (h *errorMirrorHook) Levels() []log.Level {
+	return []log.Level{log.PanicLevel, log.FatalLevel, log.ErrorLevel}
+}
+
+func (h *errorMirrorHook) Fire(entry *log.Entry) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	data, err := h.formatter.Format(entry)
+	if err != nil {
+		return err
+	}
+	_, err = h.writer.Write(data)
+	return err
+}
+
+type plainFormatter struct {
+	TimestampFormat string
+}
+
+func (f plainFormatter) Format(entry *log.Entry) ([]byte, error) {
+	timestampFormat := f.TimestampFormat
+	if timestampFormat == "" {
+		timestampFormat = time.RFC3339
+	}
+
+	message := strings.TrimRight(entry.Message, "\r\n")
+	return []byte(entry.Time.Format(timestampFormat) + " " + message + "\n"), nil
 }
 
 type dailySizeRotateWriter struct {

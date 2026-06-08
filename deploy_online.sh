@@ -22,6 +22,31 @@ if [[ -f "${PID_FILE}" ]]; then
   OLD_PID="$(tr -d '[:space:]' < "${PID_FILE}" || true)"
 fi
 
+is_process_alive() {
+  local pid="${1:-}"
+  if [[ -z "${pid}" ]] || ! kill -0 "${pid}" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local state=""
+  state="$(ps -o stat= -p "${pid}" 2>/dev/null | awk '{print $1}' || true)"
+  if [[ "${state}" == Z* ]]; then
+    return 1
+  fi
+  return 0
+}
+
+wait_process_exit() {
+  local pid="${1:-}"
+  for _ in {1..40}; do
+    if ! is_process_alive "${pid}"; then
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 1
+}
+
 if [[ -d "${RELEASE_DIR}" ]]; then
   echo "==> stop existing extracted server"
 
@@ -30,19 +55,17 @@ if [[ -d "${RELEASE_DIR}" ]]; then
       echo "ERROR: stop failed: ${RELEASE_DIR}/stop.sh returned non-zero" >&2
       exit 1
     fi
-  elif [[ -n "${OLD_PID}" ]] && kill -0 "${OLD_PID}" >/dev/null 2>&1; then
+    if [[ -n "${OLD_PID}" ]] && ! wait_process_exit "${OLD_PID}"; then
+      echo "ERROR: stop failed: process still alive pid=${OLD_PID}" >&2
+      exit 1
+    fi
+  elif [[ -n "${OLD_PID}" ]] && is_process_alive "${OLD_PID}"; then
     echo "stop.sh not found, fallback stop pid=${OLD_PID}"
     if ! kill "${OLD_PID}" >/dev/null 2>&1; then
       echo "ERROR: stop failed: kill ${OLD_PID} returned non-zero" >&2
       exit 1
     fi
-    for _ in {1..20}; do
-      if ! kill -0 "${OLD_PID}" >/dev/null 2>&1; then
-        break
-      fi
-      sleep 0.25
-    done
-    if kill -0 "${OLD_PID}" >/dev/null 2>&1; then
+    if ! wait_process_exit "${OLD_PID}"; then
       echo "ERROR: stop failed: process still alive pid=${OLD_PID}" >&2
       exit 1
     fi
@@ -51,7 +74,7 @@ if [[ -d "${RELEASE_DIR}" ]]; then
     echo "existing release dir found, but no running pid detected"
   fi
 
-  if [[ -n "${OLD_PID}" ]] && kill -0 "${OLD_PID}" >/dev/null 2>&1; then
+  if [[ -n "${OLD_PID}" ]] && is_process_alive "${OLD_PID}"; then
     echo "ERROR: stop failed: process still alive pid=${OLD_PID}" >&2
     exit 1
   fi

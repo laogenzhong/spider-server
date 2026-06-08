@@ -109,32 +109,72 @@ fi
   node -e "import('@apple/app-store-server-library').then(() => process.exit(0)).catch((err) => { console.error(err); process.exit(1) })"
 )
 
-mkdir -p /root/log
+RUN_ENV="${SPIDER_SERVER_ENV:-online}"
+if [[ "${RUN_ENV}" == "online" ]]; then
+  LOG_DIR="/root/app/spiderapi/log"
+else
+  LOG_DIR="log"
+fi
+mkdir -p "${LOG_DIR}"
 
 PID_FILE="spider-server.pid"
-LOG_FILE="/root/log/spider-server.out.log"
+LOG_FILE="${LOG_DIR}/spider-server.out.log"
+
+is_process_alive() {
+  local pid="${1:-}"
+  if [[ -z "${pid}" ]] || ! kill -0 "${pid}" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local state=""
+  state="$(ps -o stat= -p "${pid}" 2>/dev/null | awk '{print $1}' || true)"
+  if [[ "${state}" == Z* ]]; then
+    return 1
+  fi
+  return 0
+}
+
+wait_process_exit() {
+  local pid="${1:-}"
+  for _ in {1..40}; do
+    if ! is_process_alive "${pid}"; then
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 1
+}
 
 if [[ -f "${PID_FILE}" ]]; then
   OLD_PID="$(cat "${PID_FILE}")"
-  if [[ -n "${OLD_PID}" ]] && kill -0 "${OLD_PID}" >/dev/null 2>&1; then
+  if [[ -n "${OLD_PID}" ]] && is_process_alive "${OLD_PID}"; then
     echo "stopping existing spider-server, pid=${OLD_PID}"
     kill "${OLD_PID}" >/dev/null 2>&1 || true
-    for _ in {1..20}; do
-      if ! kill -0 "${OLD_PID}" >/dev/null 2>&1; then
-        break
-      fi
-      sleep 0.25
-    done
-    if kill -0 "${OLD_PID}" >/dev/null 2>&1; then
+    if ! wait_process_exit "${OLD_PID}"; then
       echo "existing spider-server did not stop in time, killing pid=${OLD_PID}"
       kill -9 "${OLD_PID}" >/dev/null 2>&1 || true
+      if ! wait_process_exit "${OLD_PID}"; then
+        echo "existing spider-server still alive after SIGKILL, pid=${OLD_PID}" >&2
+        exit 1
+      fi
     fi
   fi
   rm -f "${PID_FILE}"
 fi
 
-export SPIDER_SERVER_CONFIG="${SPIDER_SERVER_CONFIG:-config.server.yaml}"
-nohup ./spider-server >> "${LOG_FILE}" 2>&1 &
+if [[ "${RUN_ENV}" == "online" ]]; then
+  export SPIDER_SERVER_CONFIG="${SPIDER_SERVER_CONFIG:-config.server.yaml}"
+else
+  export SPIDER_SERVER_CONFIG="${SPIDER_SERVER_CONFIG:-config.yaml}"
+fi
+
+timestamp_out() {
+  while IFS= read -r line; do
+    printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "${line}"
+  done >> "${LOG_FILE}"
+}
+
+nohup ./spider-server > >(timestamp_out) 2>&1 &
 PID="$!"
 echo "${PID}" > "${PID_FILE}"
 
@@ -156,13 +196,46 @@ if [[ ! -f "${PID_FILE}" ]]; then
 fi
 
 PID="$(cat "${PID_FILE}")"
-if [[ -z "${PID}" ]] || ! kill -0 "${PID}" >/dev/null 2>&1; then
+is_process_alive() {
+  local pid="${1:-}"
+  if [[ -z "${pid}" ]] || ! kill -0 "${pid}" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local state=""
+  state="$(ps -o stat= -p "${pid}" 2>/dev/null | awk '{print $1}' || true)"
+  if [[ "${state}" == Z* ]]; then
+    return 1
+  fi
+  return 0
+}
+
+wait_process_exit() {
+  local pid="${1:-}"
+  for _ in {1..40}; do
+    if ! is_process_alive "${pid}"; then
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 1
+}
+
+if [[ -z "${PID}" ]] || ! is_process_alive "${PID}"; then
   rm -f "${PID_FILE}"
   echo "spider-server is not running"
   exit 0
 fi
 
 kill "${PID}"
+if ! wait_process_exit "${PID}"; then
+  echo "spider-server did not stop in time, killing pid=${PID}"
+  kill -9 "${PID}" >/dev/null 2>&1 || true
+  if ! wait_process_exit "${PID}"; then
+    echo "spider-server still alive after SIGKILL, pid=${PID}" >&2
+    exit 1
+  fi
+fi
 rm -f "${PID_FILE}"
 echo "spider-server stopped, pid=${PID}"
 EOF

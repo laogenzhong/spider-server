@@ -30,6 +30,8 @@ func main() {
 	applogger.Configure(applogger.Config{
 		Level:        cfg.Logger.Level,
 		Path:         cfg.Logger.Path,
+		ErrorPath:    cfg.Logger.ErrorPath,
+		Format:       cfg.Logger.Format,
 		Rotate:       cfg.Logger.Rotate,
 		MaxAge:       cfg.Logger.MaxAgeDuration(),
 		RotationTime: cfg.Logger.RotationTimeDuration(),

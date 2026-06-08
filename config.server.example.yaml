@@ -69,7 +69,9 @@ app_store:
 
 logger:
   level: "info"
-  path: "/root/log/spider-server.log"
+  path: "/root/app/spiderapi/log/info/spider-server.log"
+  error_path: "/root/app/spiderapi/log/error/spider-server.log"
+  format: "plain"
   rotate: "%Y%m%d"
   max_age: "168h"
   rotation_time: "24h"

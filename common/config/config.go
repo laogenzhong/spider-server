@@ -102,6 +102,8 @@ type AppStoreConfig struct {
 type LoggerConfig struct {
 	Level        string `yaml:"level"`
 	Path         string `yaml:"path"`
+	ErrorPath    string `yaml:"error_path"`
+	Format       string `yaml:"format"`
 	Rotate       string `yaml:"rotate"`
 	MaxAge       string `yaml:"max_age"`
 	RotationTime string `yaml:"rotation_time"`
@@ -176,6 +178,7 @@ func Default() Config {
 		Logger: LoggerConfig{
 			Level:        "info",
 			Path:         "stdout",
+			Format:       "plain",
 			Rotate:       "%Y%m%d",
 			MaxAge:       "168h",
 			RotationTime: "24h",
@@ -308,6 +311,9 @@ func (c *Config) Normalize() {
 	}
 	if c.Logger.Path == "" {
 		c.Logger.Path = Default().Logger.Path
+	}
+	if c.Logger.Format == "" {
+		c.Logger.Format = Default().Logger.Format
 	}
 	if c.Logger.Rotate == "" {
 		c.Logger.Rotate = Default().Logger.Rotate
