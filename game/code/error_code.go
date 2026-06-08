@@ -346,4 +346,10 @@ const (
 
 	// VIPPurchaseOrderRequired VIP 支付确认缺少预订单。
 	VIPPurchaseOrderRequired int = 70011
+
+	// VIPAppleTransactionAlreadyBound Apple 交易已绑定其他账号。
+	VIPAppleTransactionAlreadyBound int = 70012
+
+	// VIPPurchaseOrderTransactionMismatch VIP 支付预订单与 Apple 交易不一致。
+	VIPPurchaseOrderTransactionMismatch int = 70013
 )

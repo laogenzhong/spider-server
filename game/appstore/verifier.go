@@ -89,6 +89,7 @@ type Transaction struct {
 	RevocationDate        int64  `json:"revocationDate"`
 	RevocationReason      int32  `json:"revocationReason"`
 	SignedDate            int64  `json:"signedDate"`
+	AppAccountToken       string `json:"appAccountToken"`
 }
 
 type RenewalInfo struct {

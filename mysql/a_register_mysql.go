@@ -54,6 +54,7 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 		&mysqlmodel2.UserEntitlement{},
 		&mysqlmodel2.ApplePurchaseOrder{},
 		&mysqlmodel2.AppleTransaction{},
+		&mysqlmodel2.AppleTransactionOwnership{},
 		&mysqlmodel2.AppStoreServerNotification{},
 		&mysqlmodel2.ApplePaymentFailure{},
 	}

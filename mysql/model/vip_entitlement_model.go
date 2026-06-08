@@ -34,12 +34,16 @@ const (
 	AppStoreSubscriptionStatusBillingRetry       int32 = 3
 	AppStoreSubscriptionStatusBillingGracePeriod int32 = 4
 	AppStoreSubscriptionStatusRevoked            int32 = 5
+
+	applePurchaseOrderTransactionClockSkew = 5 * time.Minute
 )
 
 var (
-	ErrApplePurchaseOrderNotFound        = errors.New("apple purchase order not found")
-	ErrApplePurchaseOrderExpired         = errors.New("apple purchase order expired")
-	ErrApplePurchaseOrderProductMismatch = errors.New("apple purchase order product mismatch")
+	ErrApplePurchaseOrderNotFound            = errors.New("apple purchase order not found")
+	ErrApplePurchaseOrderExpired             = errors.New("apple purchase order expired")
+	ErrApplePurchaseOrderProductMismatch     = errors.New("apple purchase order product mismatch")
+	ErrApplePurchaseOrderTransactionMismatch = errors.New("apple purchase order transaction mismatch")
+	ErrAppleTransactionOwnedByOtherUser      = errors.New("apple transaction owned by other user")
 )
 
 type UserEntitlement struct {
@@ -74,6 +78,16 @@ type AppleTransaction struct {
 	RevocationReason      int32
 	SignedAt              *time.Time
 	SignedTransactionJWS  string `gorm:"type:text"`
+	AppAccountToken       string `gorm:"size:64;index"`
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	DeletedAt             gorm.DeletedAt `gorm:"index"`
+}
+
+type AppleTransactionOwnership struct {
+	ID                    uint   `gorm:"primaryKey;autoIncrement"`
+	UID                   uint64 `gorm:"index;not null"`
+	OriginalTransactionID string `gorm:"size:128;uniqueIndex;not null"`
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             gorm.DeletedAt `gorm:"index"`
@@ -187,12 +201,6 @@ func SaveAppleTransactionAndGrantVIP(
 		if err != nil {
 			return err
 		}
-		if order.ExpiresAt.Before(now) && order.Status != ApplePurchaseOrderStatusPaid {
-			if updateErr := markApplePurchaseOrderExpired(db, order); updateErr != nil {
-				return updateErr
-			}
-			return ErrApplePurchaseOrderExpired
-		}
 		if strings.TrimSpace(order.ProductID) != strings.TrimSpace(tx.ProductID) {
 			return ErrApplePurchaseOrderProductMismatch
 		}
@@ -200,6 +208,9 @@ func SaveAppleTransactionAndGrantVIP(
 			strings.TrimSpace(order.TransactionID) != "" &&
 			strings.TrimSpace(order.TransactionID) != strings.TrimSpace(tx.TransactionID) {
 			return ErrApplePurchaseOrderProductMismatch
+		}
+		if err := validateApplePurchaseOrderTransactionWindow(order, record); err != nil {
+			return err
 		}
 
 		if err := upsertAppleTransaction(db, record, true); err != nil {
@@ -768,6 +779,17 @@ func findVIPOwnerUIDForNotification(db *gorm.DB, transaction *appstore.Transacti
 		return 0, err
 	}
 
+	ownership := &AppleTransactionOwnership{}
+	err = db.Where("original_transaction_id IN ?", ids).
+		Order("updated_at DESC, id DESC").
+		First(ownership).Error
+	if err == nil && ownership.UID != 0 {
+		return ownership.UID, nil
+	}
+	if err != nil && !isRecordNotFound(err) {
+		return 0, err
+	}
+
 	order := &ApplePurchaseOrder{}
 	err = db.Where("(original_transaction_id IN ? OR transaction_id IN ?) AND status = ?", ids, ids, ApplePurchaseOrderStatusPaid).
 		Order("updated_at DESC, id DESC").
@@ -794,8 +816,11 @@ func findVIPOwnerUIDForNotification(db *gorm.DB, transaction *appstore.Transacti
 }
 
 func upsertAppleTransaction(db *gorm.DB, record *AppleTransaction, updateOrderID bool) error {
+	if err := ensureAppleTransactionOwnership(db, record); err != nil {
+		return err
+	}
+
 	columns := []string{
-		"uid",
 		"original_transaction_id",
 		"product_id",
 		"bundle_id",
@@ -808,6 +833,7 @@ func upsertAppleTransaction(db *gorm.DB, record *AppleTransaction, updateOrderID
 		"revocation_reason",
 		"signed_at",
 		"signed_transaction_jws",
+		"app_account_token",
 		"updated_at",
 	}
 	if updateOrderID {
@@ -818,6 +844,88 @@ func upsertAppleTransaction(db *gorm.DB, record *AppleTransaction, updateOrderID
 		Columns:   []clause.Column{{Name: "transaction_id"}},
 		DoUpdates: clause.AssignmentColumns(columns),
 	}).Create(record).Error
+}
+
+func ensureAppleTransactionOwnership(db *gorm.DB, record *AppleTransaction) error {
+	if record == nil || record.UID == 0 {
+		return nil
+	}
+
+	transactionID := strings.TrimSpace(record.TransactionID)
+	originalTransactionID := firstNonEmpty(record.OriginalTransactionID, transactionID)
+	if transactionID == "" && originalTransactionID == "" {
+		return nil
+	}
+	if err := claimAppleTransactionOwnership(db, record.UID, originalTransactionID); err != nil {
+		return err
+	}
+
+	var existing AppleTransaction
+	query := db.Clauses(clause.Locking{Strength: "UPDATE"})
+	if transactionID != "" && originalTransactionID != "" {
+		query = query.Where("transaction_id = ? OR original_transaction_id = ?", transactionID, originalTransactionID)
+	} else if transactionID != "" {
+		query = query.Where("transaction_id = ?", transactionID)
+	} else {
+		query = query.Where("original_transaction_id = ?", originalTransactionID)
+	}
+	err := query.Order("updated_at DESC, id DESC").First(&existing).Error
+	if err == nil {
+		if existing.UID != 0 && existing.UID != record.UID {
+			return ErrAppleTransactionOwnedByOtherUser
+		}
+		return nil
+	}
+	if err != nil && !isRecordNotFound(err) {
+		return err
+	}
+
+	var existingEntitlement UserEntitlement
+	err = db.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("entitlement = ? AND original_transaction_id = ?", UserEntitlementVIP, originalTransactionID).
+		Order("updated_at DESC, id DESC").
+		First(&existingEntitlement).Error
+	if err == nil {
+		if existingEntitlement.UID != 0 && existingEntitlement.UID != record.UID {
+			return ErrAppleTransactionOwnedByOtherUser
+		}
+		return nil
+	}
+	if err != nil && !isRecordNotFound(err) {
+		return err
+	}
+
+	return nil
+}
+
+func claimAppleTransactionOwnership(db *gorm.DB, uid uint64, originalTransactionID string) error {
+	originalTransactionID = strings.TrimSpace(originalTransactionID)
+	if uid == 0 || originalTransactionID == "" {
+		return nil
+	}
+
+	ownership := &AppleTransactionOwnership{
+		UID:                   uid,
+		OriginalTransactionID: originalTransactionID,
+	}
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "original_transaction_id"}},
+		DoNothing: true,
+	}).Create(ownership).Error; err != nil {
+		return err
+	}
+
+	existing := &AppleTransactionOwnership{}
+	err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("original_transaction_id = ?", originalTransactionID).
+		First(existing).Error
+	if err != nil {
+		return err
+	}
+	if existing.UID != 0 && existing.UID != uid {
+		return ErrAppleTransactionOwnedByOtherUser
+	}
+	return nil
 }
 
 func upsertAppStoreServerNotification(db *gorm.DB, record *AppStoreServerNotification) error {
@@ -974,6 +1082,7 @@ func appleTransactionFromVerifiedPayload(uid uint64, tx appstore.Transaction, si
 		RevocationReason:      tx.RevocationReason,
 		SignedAt:              millisToTimePtr(tx.SignedDate),
 		SignedTransactionJWS:  strings.TrimSpace(signedTransactionJWS),
+		AppAccountToken:       strings.TrimSpace(tx.AppAccountToken),
 	}
 }
 
@@ -1177,12 +1286,40 @@ func markApplePurchaseOrderPaid(db *gorm.DB, order *ApplePurchaseOrder, transact
 	return db.Save(order).Error
 }
 
+func validateApplePurchaseOrderTransactionWindow(order *ApplePurchaseOrder, record *AppleTransaction) error {
+	if order == nil || record == nil || record.PurchaseAt == nil {
+		return ErrApplePurchaseOrderTransactionMismatch
+	}
+	if strings.TrimSpace(record.AppAccountToken) == "" ||
+		strings.TrimSpace(record.AppAccountToken) != strings.TrimSpace(order.OrderID) {
+		return ErrApplePurchaseOrderTransactionMismatch
+	}
+
+	earliest := order.CreatedAt.Add(-applePurchaseOrderTransactionClockSkew)
+	latest := order.ExpiresAt.Add(applePurchaseOrderTransactionClockSkew)
+	if record.PurchaseAt.Before(earliest) || record.PurchaseAt.After(latest) {
+		return ErrApplePurchaseOrderTransactionMismatch
+	}
+	return nil
+}
+
 func generateApplePurchaseOrderID() (string, error) {
 	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
-	return "iap_" + hex.EncodeToString(bytes), nil
+	bytes[6] = (bytes[6] & 0x0f) | 0x40
+	bytes[8] = (bytes[8] & 0x3f) | 0x80
+
+	encoded := hex.EncodeToString(bytes)
+	return fmt.Sprintf(
+		"%s-%s-%s-%s-%s",
+		encoded[0:8],
+		encoded[8:12],
+		encoded[12:16],
+		encoded[16:20],
+		encoded[20:32],
+	), nil
 }
 
 func vipKindForProduct(productID string, monthlyProductID string, lifetimeProductID string) string {

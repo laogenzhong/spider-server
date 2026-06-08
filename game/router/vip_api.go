@@ -83,8 +83,14 @@ func (s *VIPApi) ConfirmAppleTransaction(ctx context.Context, req *pb.ConfirmApp
 		return session.Error(ctx, gamecode.VIPTransactionVerifyFailed, &pb.VIPStatusResponse{})
 	}
 
-	if requestProductID := strings.TrimSpace(req.GetProductId()); requestProductID != "" && requestProductID != transaction.ProductID {
+	if requestProductID := strings.TrimSpace(req.GetProductId()); requestProductID == "" || requestProductID != strings.TrimSpace(transaction.ProductID) {
 		return session.Error(ctx, gamecode.VIPProductUnsupported, &pb.VIPStatusResponse{})
+	}
+	if requestTransactionID := strings.TrimSpace(req.GetTransactionId()); requestTransactionID == "" || requestTransactionID != strings.TrimSpace(transaction.TransactionID) {
+		return session.Error(ctx, gamecode.VIPPurchaseOrderTransactionMismatch, &pb.VIPStatusResponse{})
+	}
+	if requestOriginalTransactionID := strings.TrimSpace(req.GetOriginalTransactionId()); requestOriginalTransactionID == "" || requestOriginalTransactionID != strings.TrimSpace(transaction.OriginalTransactionID) {
+		return session.Error(ctx, gamecode.VIPPurchaseOrderTransactionMismatch, &pb.VIPStatusResponse{})
 	}
 
 	cfg := verifier.Config()
@@ -108,6 +114,12 @@ func (s *VIPApi) ConfirmAppleTransaction(ctx context.Context, req *pb.ConfirmApp
 		}
 		if errors.Is(err, mysqlmodel.ErrApplePurchaseOrderProductMismatch) {
 			return session.Error(ctx, gamecode.VIPPurchaseOrderProductMismatch, &pb.VIPStatusResponse{})
+		}
+		if errors.Is(err, mysqlmodel.ErrApplePurchaseOrderTransactionMismatch) {
+			return session.Error(ctx, gamecode.VIPPurchaseOrderTransactionMismatch, &pb.VIPStatusResponse{})
+		}
+		if errors.Is(err, mysqlmodel.ErrAppleTransactionOwnedByOtherUser) {
+			return session.Error(ctx, gamecode.VIPAppleTransactionAlreadyBound, &pb.VIPStatusResponse{})
 		}
 		return session.Error(ctx, gamecode.VIPEntitlementSaveFailed, &pb.VIPStatusResponse{})
 	}
