@@ -27,6 +27,7 @@ func NewGRPCServer(addr string, registers ...GRPCServiceRegister) *GRPCServer {
 		server: grpc.NewServer(
 			grpc.ChainUnaryInterceptor(
 				authUnaryInterceptor,
+				uidLockUnaryInterceptor,
 				MetadataLogInterceptor,
 			),
 		),

@@ -147,25 +147,25 @@ func CreateTrainingTag(uid uint64, name string, sortOrder int32) (*TrainingTag, 
 	}
 
 	if err := db.Transaction(func(tx *gorm.DB) error {
-		var activeTags []*TrainingTag
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		var activeCount int64
+		if err := tx.Model(&TrainingTag{}).
 			Where("uid = ?", uid).
-			Find(&activeTags).Error; err != nil {
+			Count(&activeCount).Error; err != nil {
 			return err
 		}
-		if len(activeTags) >= MaxTrainingTagsPerUser {
+		if activeCount >= MaxTrainingTagsPerUser {
 			return ErrTrainingTagLimitExceeded
 		}
 
 		startAt, endAt := dayBoundsTime(time.Now())
-		var dailyTags []*TrainingTag
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Unscoped().
+		var dailyCount int64
+		if err := tx.Unscoped().
+			Model(&TrainingTag{}).
 			Where("uid = ? AND created_at >= ? AND created_at < ?", uid, startAt, endAt).
-			Find(&dailyTags).Error; err != nil {
+			Count(&dailyCount).Error; err != nil {
 			return err
 		}
-		if len(dailyTags) >= MaxTrainingTagCreatesPerDay {
+		if dailyCount >= MaxTrainingTagCreatesPerDay {
 			return ErrTrainingTagDailyLimitExceeded
 		}
 
