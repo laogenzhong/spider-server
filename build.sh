@@ -241,7 +241,7 @@ echo "spider-server stopped, pid=${PID}"
 EOF
 chmod +x "${RELEASE_DIR}/run.sh" "${RELEASE_DIR}/stop.sh" "${RELEASE_DIR}/${APP_NAME}"
 
-tar -C "${OUTPUT_DIR}" -czf "${TARBALL}" "${RELEASE_NAME}"
+COPYFILE_DISABLE=1 LC_ALL=C tar -C "${OUTPUT_DIR}" -czf "${TARBALL}" "${RELEASE_NAME}"
 
 echo
 echo "==> Done"
