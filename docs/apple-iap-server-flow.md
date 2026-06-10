@@ -36,7 +36,7 @@
 
 1. 客户端调用 `createApplePurchaseOrder(product_id)`。
 2. 服务端校验商品 ID 是否属于当前配置的 VIP 商品。
-3. 服务端写入 `apple_purchase_orders`，状态为 `created`，默认 30 分钟过期。
+3. 服务端写入 `apple_purchase_orders`，状态为 `created`，默认 30 分钟过期，默认 `source=pre_purchase`。
 4. 客户端拿到 `order_id` 后调用 StoreKit 发起支付。
 5. 支付成功后，客户端把 `order_id`、`product_id`、`transaction_id`、`original_transaction_id`、`signed_transaction_jws` 写入本地 pending 队列。
 6. 客户端调用 `confirmAppleTransaction`。
@@ -48,6 +48,18 @@
 12. 服务端按交易当前状态更新 `user_entitlements`。
 13. 服务端回放同一 `original_transaction_id` 下此前 `pending_user` 的 App Store 通知。
 14. 服务端返回最新 VIP 状态。
+
+### 登录后绑定历史 Apple 购买
+
+未登录购买时，客户端不会调用服务端，也不会存在购买前创建的服务端预订单。用户之后登录并选择恢复/同步购买时，客户端仍先调用 `createApplePurchaseOrder(product_id)` 创建一条用于对账的订单，再提交历史 Apple 交易 JWS。
+
+这类订单在确认时会被标记为 `source=post_login_bind`:
+
+- 不要求 Apple 交易里的 `appAccountToken` 等于当前订单号。
+- 使用 Apple 验签后的 `transaction_id` / `original_transaction_id` 做幂等和归属校验。
+- 如果同一 `original_transaction_id` 已经绑定其他 uid，则拒绝绑定。
+- 月订阅权益按 Apple 交易里的实际 `expiresDate` 计算剩余有效期，已过期交易不会继续授予 VIP。
+- 绑定成功后，同一 `original_transaction_id` 的 `pending_user` 通知会被回放。
 
 ## App Store Server Notifications V2 流程
 

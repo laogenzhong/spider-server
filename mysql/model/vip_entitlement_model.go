@@ -25,6 +25,9 @@ const (
 	ApplePurchaseOrderStatusPaid    = "paid"
 	ApplePurchaseOrderStatusExpired = "expired"
 
+	ApplePurchaseOrderSourcePrePurchase   = "pre_purchase"
+	ApplePurchaseOrderSourcePostLoginBind = "post_login_bind"
+
 	AppStoreNotificationStatusProcessed   = "processed"
 	AppStoreNotificationStatusPendingUser = "pending_user"
 	AppStoreNotificationStatusIgnored     = "ignored"
@@ -99,6 +102,7 @@ type ApplePurchaseOrder struct {
 	OrderID               string `gorm:"size:64;uniqueIndex;not null"`
 	ProductID             string `gorm:"size:128;index;not null"`
 	Status                string `gorm:"size:32;index;not null"`
+	Source                string `gorm:"size:32;index;not null;default:pre_purchase"`
 	TransactionID         string `gorm:"size:128;index"`
 	OriginalTransactionID string `gorm:"size:128;index"`
 	ExpiresAt             time.Time
@@ -209,15 +213,17 @@ func SaveAppleTransactionAndGrantVIP(
 			strings.TrimSpace(order.TransactionID) != strings.TrimSpace(tx.TransactionID) {
 			return ErrApplePurchaseOrderProductMismatch
 		}
-		if err := validateApplePurchaseOrderTransactionWindow(order, record); err != nil {
+		confirmationSource, err := applePurchaseOrderConfirmationSource(order, record, now)
+		if err != nil {
 			return err
 		}
+		record.OrderID = order.OrderID
 
 		if err := upsertAppleTransaction(db, record, true); err != nil {
 			return err
 		}
 
-		if err := markApplePurchaseOrderPaid(db, order, record.TransactionID, record.OriginalTransactionID, now); err != nil {
+		if err := markApplePurchaseOrderPaid(db, order, record.TransactionID, record.OriginalTransactionID, confirmationSource, now); err != nil {
 			return err
 		}
 
@@ -260,6 +266,7 @@ func CreateApplePurchaseOrder(uid uint64, productID string, monthlyProductID str
 		OrderID:   orderID,
 		ProductID: productID,
 		Status:    ApplePurchaseOrderStatusCreated,
+		Source:    ApplePurchaseOrderSourcePrePurchase,
 		ExpiresAt: now.Add(30 * time.Minute),
 	}
 	return order, config.Create(order)
@@ -1278,18 +1285,42 @@ func markApplePurchaseOrderExpired(db *gorm.DB, order *ApplePurchaseOrder) error
 	return db.Save(order).Error
 }
 
-func markApplePurchaseOrderPaid(db *gorm.DB, order *ApplePurchaseOrder, transactionID string, originalTransactionID string, now time.Time) error {
+func markApplePurchaseOrderPaid(db *gorm.DB, order *ApplePurchaseOrder, transactionID string, originalTransactionID string, source string, now time.Time) error {
 	order.Status = ApplePurchaseOrderStatusPaid
+	order.Source = normalizeApplePurchaseOrderSource(source)
 	order.TransactionID = transactionID
 	order.OriginalTransactionID = originalTransactionID
 	order.ConfirmedAt = &now
 	return db.Save(order).Error
 }
 
+func applePurchaseOrderConfirmationSource(order *ApplePurchaseOrder, record *AppleTransaction, now time.Time) (string, error) {
+	if now.IsZero() {
+		now = time.Now()
+	}
+	if order == nil || record == nil || record.PurchaseAt == nil {
+		return "", ErrApplePurchaseOrderTransactionMismatch
+	}
+	if order.Status != ApplePurchaseOrderStatusPaid && order.ExpiresAt.Before(now) {
+		return "", ErrApplePurchaseOrderExpired
+	}
+
+	if validateApplePurchaseOrderTransactionWindow(order, record) == nil {
+		return ApplePurchaseOrderSourcePrePurchase, nil
+	}
+
+	if isPostLoginBindApplePurchaseOrder(order, record) {
+		return ApplePurchaseOrderSourcePostLoginBind, nil
+	}
+
+	return "", ErrApplePurchaseOrderTransactionMismatch
+}
+
 func validateApplePurchaseOrderTransactionWindow(order *ApplePurchaseOrder, record *AppleTransaction) error {
 	if order == nil || record == nil || record.PurchaseAt == nil {
 		return ErrApplePurchaseOrderTransactionMismatch
 	}
+
 	if strings.TrimSpace(record.AppAccountToken) == "" ||
 		strings.TrimSpace(record.AppAccountToken) != strings.TrimSpace(order.OrderID) {
 		return ErrApplePurchaseOrderTransactionMismatch
@@ -1301,6 +1332,37 @@ func validateApplePurchaseOrderTransactionWindow(order *ApplePurchaseOrder, reco
 		return ErrApplePurchaseOrderTransactionMismatch
 	}
 	return nil
+}
+
+func isPostLoginBindApplePurchaseOrder(order *ApplePurchaseOrder, record *AppleTransaction) bool {
+	if order == nil || record == nil || record.PurchaseAt == nil {
+		return false
+	}
+	if strings.TrimSpace(record.TransactionID) == "" || strings.TrimSpace(record.OriginalTransactionID) == "" {
+		return false
+	}
+	if strings.TrimSpace(order.ProductID) != strings.TrimSpace(record.ProductID) {
+		return false
+	}
+
+	token := strings.TrimSpace(record.AppAccountToken)
+	if token == "" || token != strings.TrimSpace(order.OrderID) {
+		return true
+	}
+
+	earliest := order.CreatedAt.Add(-applePurchaseOrderTransactionClockSkew)
+	latest := order.ExpiresAt.Add(applePurchaseOrderTransactionClockSkew)
+	return record.PurchaseAt.Before(earliest) || record.PurchaseAt.After(latest)
+}
+
+func normalizeApplePurchaseOrderSource(source string) string {
+	source = strings.TrimSpace(source)
+	switch source {
+	case ApplePurchaseOrderSourcePostLoginBind:
+		return ApplePurchaseOrderSourcePostLoginBind
+	default:
+		return ApplePurchaseOrderSourcePrePurchase
+	}
 }
 
 func generateApplePurchaseOrderID() (string, error) {
