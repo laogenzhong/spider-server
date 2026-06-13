@@ -34,11 +34,7 @@ func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.Sign
 
 	user, err := mysqlmodel.GetUserByAccount(account)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		_, err = mysqlmodel.CreateUser(account, password)
-		user, err = mysqlmodel.GetUserByAccount(account)
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return session.Error(ctx, gamecode.SignAccountNotFound, &api.SignInResponse{})
-		}
+		return session.Error(ctx, gamecode.SignAccountNotFound, &api.SignInResponse{})
 	}
 	if err != nil {
 		return session.Error(ctx, gamecode.SignQueryAccountFailed, &api.SignInResponse{})
@@ -120,31 +116,7 @@ func (s *SignApi) SignInWithApple(ctx context.Context, req *api.AppleSignInReque
 }
 
 func (s *SignApi) SignUpMixed(ctx context.Context, req *api.SignInRequest) (*api.SignUpMixedResponse, error) {
-	account := req.GetAccount()
-	password := req.GetPwd()
-
-	if account == "" {
-		return session.Error(ctx, gamecode.SignAccountEmpty, &api.SignUpMixedResponse{})
-	}
-
-	if password == "" {
-		return session.Error(ctx, gamecode.SignPasswordEmpty, &api.SignUpMixedResponse{})
-	}
-
-	_, err := mysqlmodel.GetUserByAccount(account)
-	if err == nil {
-		return session.Error(ctx, gamecode.SignAccountExists, &api.SignUpMixedResponse{})
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return session.Error(ctx, gamecode.SignQueryAccountFailed, &api.SignUpMixedResponse{})
-	}
-
-	_, err = mysqlmodel.CreateUser(account, password)
-	if err != nil {
-		return session.Error(ctx, gamecode.SignCreateUserFailed, &api.SignUpMixedResponse{})
-	}
-
-	return &api.SignUpMixedResponse{}, nil
+	return session.Error(ctx, gamecode.SignRegistrationDisabled, &api.SignUpMixedResponse{})
 }
 
 func (s *SignApi) Token(ctx context.Context, req *api.TokenRequest) (*api.SignInResponse, error) {

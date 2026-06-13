@@ -30,7 +30,7 @@ type FriendProfileRecord struct {
 	Bio                 string         `gorm:"type:varchar(512);not null;default:''"`
 	PlanTitle           string         `gorm:"type:varchar(128);not null;default:''"`
 	PlanDescription     string         `gorm:"type:varchar(512);not null;default:''"`
-	TrainingDataVisible bool           `gorm:"not null;default:false"`
+	TrainingDataVisible bool           `gorm:"not null;default:true"`
 	SparkDays           int32          `gorm:"not null;default:0"`
 	RecentTrainingJSON  string         `gorm:"type:json"`
 	SnapshotUpdatedAt   int64          `gorm:"not null;default:0"`
@@ -104,7 +104,21 @@ func EnsureFriendProfile(uid uint64) (*FriendProfileRecord, error) {
 		return nil, err
 	}
 
-	return GetFriendProfileByUID(uid)
+	profile, err = GetFriendProfileByUID(uid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !profile.TrainingDataVisible && profile.SnapshotUpdatedAt == 0 {
+		if err := db.Model(&FriendProfileRecord{}).
+			Where("uid = ? AND training_data_visible = ? AND snapshot_updated_at = 0", uid, false).
+			Update("training_data_visible", true).Error; err != nil {
+			return nil, err
+		}
+		return GetFriendProfileByUID(uid)
+	}
+
+	return profile, nil
 }
 
 func GetFriendProfileByUID(uid uint64) (*FriendProfileRecord, error) {
@@ -429,11 +443,12 @@ func ParseFriendTrainingDays(raw string) []FriendTrainingDaySummaryRecord {
 
 func defaultFriendProfile(uid uint64) *FriendProfileRecord {
 	return &FriendProfileRecord{
-		UID:                uid,
-		UserID:             fmt.Sprintf("SP%06d", uid),
-		Nickname:           fmt.Sprintf("用户%d", uid),
-		AvatarSymbol:       "person.fill",
-		RecentTrainingJSON: "[]",
+		UID:                 uid,
+		UserID:              fmt.Sprintf("SP%06d", uid),
+		Nickname:            fmt.Sprintf("用户%d", uid),
+		AvatarSymbol:        "person.fill",
+		TrainingDataVisible: true,
+		RecentTrainingJSON:  "[]",
 	}
 }
 

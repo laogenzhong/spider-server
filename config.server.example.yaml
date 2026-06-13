@@ -43,8 +43,8 @@ apple_sign_in:
 
 app_store:
   bundle_id: "hh.spider"
-  # 沙盒/TestFlight 联调用 SANDBOX；正式上架后改为 PRODUCTION，并保留 app_apple_id。
-  environment: "SANDBOX"
+  # 正式上架使用 PRODUCTION；沙盒/TestFlight 联调时可临时改为 SANDBOX。
+  environment: "PRODUCTION"
   app_apple_id: 6776698752
   enable_online_checks: true
   node_path: "node"

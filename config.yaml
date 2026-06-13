@@ -42,10 +42,7 @@ apple_sign_in:
   client_secret_ttl: "24h"
 
 app_store:
-  # Sandbox 测试使用当前配置。
-  # 上线生产环境前改为：
-  # environment: "PRODUCTION"
-  # app_apple_id: 6776698752
+  # 本地启动默认走 SANDBOX；线上发布配置见 config.server.example.yaml。
   bundle_id: "hh.spider"
   environment: "SANDBOX"
   app_apple_id: 0

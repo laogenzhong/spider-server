@@ -71,6 +71,9 @@ const (
 	// SignAppleTokenRevokeFailed Apple 登录授权撤销失败。
 	SignAppleTokenRevokeFailed int = 10020
 
+	// SignRegistrationDisabled 自定义账号注册已关闭。
+	SignRegistrationDisabled int = 10021
+
 	// WeightRecordDateEmpty 体重记录日期为空。
 	WeightRecordDateEmpty int = 20001
 

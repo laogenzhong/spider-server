@@ -44,7 +44,7 @@ message FriendProfile {
   string plan_title = 6;
   // 用户自定义训练计划说明。
   string plan_description = 7;
-  // 公开训练数据中的近 7 天训练摘要。
+  // 公开训练数据中的近 30 次训练摘要。
   repeated FriendTrainingDaySummary recent_training_days = 8;
   // 好友关系创建时间，Unix 毫秒。
   int64 created_at = 9;
@@ -93,7 +93,7 @@ message FriendTrainingTagStat {
   string calories = 2;
 }
 
-// FriendTrainingDaySummary 表示好友近七天中的某一天训练摘要。
+// FriendTrainingDaySummary 表示好友近 30 次训练中的某一天训练摘要。
 message FriendTrainingDaySummary {
   // 日期，格式 yyyy-MM-dd，按用户本地日历聚合。
   string record_date = 1;
@@ -109,7 +109,7 @@ message MyTrainingPublicSnapshot {
   bool visible = 1;
   // 连续训练天数。
   int32 spark_days = 2;
-  // 近 7 天训练摘要。
+  // 近 30 次训练摘要。
   repeated FriendTrainingDaySummary recent_training_days = 3;
   // 快照生成/更新时间，Unix 毫秒。
   int64 updated_at = 4;
