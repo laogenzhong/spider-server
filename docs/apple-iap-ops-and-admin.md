@@ -277,6 +277,18 @@ order by occurred_at desc;
 
 ## 后台系统接入建议
 
+### 后台 API 命名规范
+
+后台专用功能统一使用 `admin_<domain>_api` 命名，避免和客户端业务接口混在一起。
+
+- Proto 文件：`proto/primary/admin_<domain>_api.proto`，例如 `admin_vip_api.proto`。
+- 生成文件：`gen/spider/api/admin_<domain>_api.pb.go` 和 `admin_<domain>_api_grpc.pb.go`。
+- Router 文件：`game/router/admin_<domain>_api.go`。
+- gRPC service / router 类型：`Admin<Domain>Api`，例如 `AdminVIPApi`。
+- gRPC 方法前缀：`/api.Admin<Domain>Api/`，例如 `/api.AdminVIPApi/`。
+- 错误码命名：`Admin<Domain>...`，例如 `AdminVIPSecretInvalid`。
+- 不要使用业务域名在 `admin` 前面的顺序，也不要把后台 RPC 加进客户端业务 proto。
+
 ### 支付失败列表
 
 建议后台先做一个失败列表页，数据源为 `apple_payment_failures`。

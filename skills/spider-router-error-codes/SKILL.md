@@ -16,6 +16,7 @@ Keep `spider-server` router APIs consistent with `game/router/sign_api.go`: busi
    - `game/session/session.go`
    - `game/code/error_code.go`
    - The target `game/router/*.go` file.
+   - For admin-only routers, use `game/router/admin_<domain>_api.go` and `Admin<Domain>Api`; keep `admin` first in filenames and type names.
 
 2. For every new or changed router failure path:
    - Do not return `status.Error`, `status.Errorf`, `codes.InvalidArgument`, `codes.Internal`, or generic `fmt.Errorf` for business/API failures.

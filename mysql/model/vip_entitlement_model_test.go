@@ -80,6 +80,70 @@ func TestApplePurchaseOrderConfirmationSourceExpiredOrder(t *testing.T) {
 	}
 }
 
+func TestCurrentVIPStatusFromExpiredAppleEntitlementKeepsOldFields(t *testing.T) {
+	now := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+	expiresAt := now.Add(-time.Hour)
+	entitlement := &UserEntitlement{
+		UID:                   7,
+		Entitlement:           UserEntitlementVIP,
+		Kind:                  VIPKindMonthly,
+		Active:                true,
+		ExpiresAt:             &expiresAt,
+		ProductID:             "hh.spider.vip.monthly",
+		OriginalTransactionID: "original-1",
+		Source:                UserEntitlementSourceApple,
+	}
+
+	status := currentVIPStatusFromEntitlement(entitlement, now)
+	if status.IsVIP {
+		t.Fatalf("IsVIP = true, want false")
+	}
+	if status.Kind != VIPKindNone {
+		t.Fatalf("Kind = %q, want %q", status.Kind, VIPKindNone)
+	}
+	if status.ProductID != entitlement.ProductID {
+		t.Fatalf("ProductID = %q, want %q", status.ProductID, entitlement.ProductID)
+	}
+	if status.Source != entitlement.Source {
+		t.Fatalf("Source = %q, want %q", status.Source, entitlement.Source)
+	}
+	if status.ExpiresAt != entitlement.ExpiresAt {
+		t.Fatalf("ExpiresAt = %v, want %v", status.ExpiresAt, entitlement.ExpiresAt)
+	}
+}
+
+func TestCurrentVIPStatusFromEntitlementPrefersActiveAdminGrant(t *testing.T) {
+	now := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+	appleExpiresAt := now.Add(-time.Hour)
+	adminExpiresAt := now.Add(30 * 24 * time.Hour)
+	entitlement := &UserEntitlement{
+		UID:                 7,
+		Entitlement:         UserEntitlementVIP,
+		Kind:                VIPKindMonthly,
+		Active:              true,
+		ExpiresAt:           &appleExpiresAt,
+		ProductID:           "hh.spider.vip.monthly",
+		Source:              UserEntitlementSourceApple,
+		AdminGranted:        true,
+		AdminGrantKind:      VIPKindMonthly,
+		AdminGrantExpiresAt: &adminExpiresAt,
+	}
+
+	status := currentVIPStatusFromEntitlement(entitlement, now)
+	if !status.IsVIP {
+		t.Fatalf("IsVIP = false, want true")
+	}
+	if status.Kind != VIPKindMonthly {
+		t.Fatalf("Kind = %q, want %q", status.Kind, VIPKindMonthly)
+	}
+	if status.Source != UserEntitlementSourceAdminGrant {
+		t.Fatalf("Source = %q, want %q", status.Source, UserEntitlementSourceAdminGrant)
+	}
+	if status.ExpiresAt != entitlement.AdminGrantExpiresAt {
+		t.Fatalf("ExpiresAt = %v, want %v", status.ExpiresAt, entitlement.AdminGrantExpiresAt)
+	}
+}
+
 func timePtr(t time.Time) *time.Time {
 	return &t
 }

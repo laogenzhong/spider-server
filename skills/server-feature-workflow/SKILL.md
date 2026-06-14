@@ -64,6 +64,8 @@ For a new data domain, implement these layers in order:
 
 2. **Proto**
    - Add or update `proto/primary/<domain>.proto`.
+   - For admin-only features, use `proto/primary/admin_<domain>_api.proto`; keep `admin` first and do not mix admin RPCs into client-facing business proto files.
+   - Name admin-only services `Admin<Domain>Api`, for example `AdminVIPApi`, and keep their auth/public prefix in the same order, for example `/api.AdminVIPApi/`.
    - Keep `package api;` and `option go_package = "spider/api;api";` unless the surrounding proto says otherwise.
    - Define record messages, save/delete request and response messages, and a focused service for direct CRUD.
    - For index-only features such as iOS photos, store references and metadata, not binary blobs, unless the user explicitly asks for upload/storage.
@@ -76,6 +78,7 @@ For a new data domain, implement these layers in order:
 
 4. **Router**
    - Add `game/router/<domain>_api.go`.
+   - For admin-only features, add `game/router/admin_<domain>_api.go` and name the router type `Admin<Domain>Api`; keep `admin` first in filenames and type names.
    - Get `uid` from `session.GetUser(ctx).UID()`.
    - Validate required fields before model calls.
    - Convert model structs to pb structs with local converter helpers.

@@ -27,6 +27,7 @@ session:
 auth:
   public_grpc_method_prefixes:
     - "/uc."
+    - "/api.AdminVIPApi/"
 
 sign:
   enabled: true
@@ -65,6 +66,10 @@ app_store:
   reconcile_lookback: "720h"
   reconcile_batch_size: 50
   reconcile_max_pages: 10
+
+admin:
+  # 后台开通 VIP 的共享密钥。留空时 AdminVIPApi.grantVIP 不可用。
+  vip_grant_secret: ""
 
 logger:
   level: "info"

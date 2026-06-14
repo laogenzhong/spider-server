@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+import "primary/purchase.proto";
+
+service AdminVIPApi {
+  // 后台直接为指定账号开通 VIP，不创建订单或支付记录。
+  rpc grantVIP(AdminGrantVIPRequest) returns (AdminGrantVIPResponse);
+}
+
+message AdminGrantVIPRequest {
+  // 用户账号，例如 sp000001。
+  string account = 1;
+  // true 表示永久 VIP；永久 VIP 会忽略 duration_days 和 expires_at。
+  bool lifetime = 2;
+  // 非永久 VIP 的开通天数，从服务端当前时间开始计算。
+  int64 duration_days = 3;
+  // 非永久 VIP 的指定过期时间，秒级 Unix time；优先于 duration_days。
+  int64 expires_at = 4;
+  // 后台操作人标识，便于审计。
+  string operator = 5;
+  // 开通原因或备注。
+  string reason = 6;
+}
+
+message AdminGrantVIPResponse {
+  uint64 uid = 1;
+  string account = 2;
+  VIPStatus status = 3;
+}

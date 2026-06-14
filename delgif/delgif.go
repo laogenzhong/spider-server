@@ -18,6 +18,7 @@ type CheckResult struct {
 	Err  error
 }
 
+// 删除没有的 git 图
 func main() {
 	rootDir := flag.String("dir", defaultRootDir, "要扫描的根目录")
 	deleteInvalid := flag.Bool("delete", true, "是否删除无法展示的 gif 文件，默认只打印不删除")

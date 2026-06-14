@@ -23,6 +23,7 @@ type Config struct {
 	Sign        SignConfig        `yaml:"sign"`
 	AppleSignIn AppleSignInConfig `yaml:"apple_sign_in"`
 	AppStore    AppStoreConfig    `yaml:"app_store"`
+	Admin       AdminConfig       `yaml:"admin"`
 	Logger      LoggerConfig      `yaml:"logger"`
 	Client      ClientConfig      `yaml:"client"`
 }
@@ -99,6 +100,10 @@ type AppStoreConfig struct {
 	ReconcileMaxPages    int      `yaml:"reconcile_max_pages"`
 }
 
+type AdminConfig struct {
+	VIPGrantSecret string `yaml:"vip_grant_secret"`
+}
+
 type LoggerConfig struct {
 	Level        string `yaml:"level"`
 	Path         string `yaml:"path"`
@@ -145,7 +150,7 @@ func Default() Config {
 			DefaultTTL: "8760h",
 		},
 		Auth: AuthConfig{
-			PublicGRPCMethodPrefixes: []string{"/uc."},
+			PublicGRPCMethodPrefixes: []string{"/uc.", "/api.AdminVIPApi/"},
 		},
 		Sign: SignConfig{
 			Enabled:               true,
@@ -174,6 +179,9 @@ func Default() Config {
 			ReconcileLookback:  "720h",
 			ReconcileBatchSize: 50,
 			ReconcileMaxPages:  10,
+		},
+		Admin: AdminConfig{
+			VIPGrantSecret: "",
 		},
 		Logger: LoggerConfig{
 			Level:        "info",

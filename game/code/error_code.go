@@ -355,4 +355,19 @@ const (
 
 	// VIPPurchaseOrderTransactionMismatch VIP 支付预订单与 Apple 交易不一致。
 	VIPPurchaseOrderTransactionMismatch int = 70013
+
+	// AdminVIPSecretInvalid 后台 VIP 开通密钥无效或未配置。
+	AdminVIPSecretInvalid int = 70014
+
+	// AdminVIPAccountEmpty 后台 VIP 开通账号为空。
+	AdminVIPAccountEmpty int = 70015
+
+	// AdminVIPAccountNotFound 后台 VIP 开通账号不存在。
+	AdminVIPAccountNotFound int = 70016
+
+	// AdminVIPDurationInvalid 后台 VIP 开通时长无效。
+	AdminVIPDurationInvalid int = 70017
+
+	// AdminVIPGrantFailed 后台 VIP 开通失败。
+	AdminVIPGrantFailed int = 70018
 )

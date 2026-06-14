@@ -21,6 +21,9 @@ const (
 	VIPKindLifetime = "lifetime"
 	VIPKindMonthly  = "monthly"
 
+	UserEntitlementSourceApple      = "apple"
+	UserEntitlementSourceAdminGrant = "admin_grant"
+
 	ApplePurchaseOrderStatusCreated = "created"
 	ApplePurchaseOrderStatusPaid    = "paid"
 	ApplePurchaseOrderStatusExpired = "expired"
@@ -47,6 +50,8 @@ var (
 	ErrApplePurchaseOrderProductMismatch     = errors.New("apple purchase order product mismatch")
 	ErrApplePurchaseOrderTransactionMismatch = errors.New("apple purchase order transaction mismatch")
 	ErrAppleTransactionOwnedByOtherUser      = errors.New("apple transaction owned by other user")
+	ErrAdminVIPAccountNotFound               = errors.New("admin vip account not found")
+	ErrAdminVIPDurationInvalid               = errors.New("admin vip duration invalid")
 )
 
 type UserEntitlement struct {
@@ -59,6 +64,12 @@ type UserEntitlement struct {
 	ProductID             string `gorm:"size:128"`
 	OriginalTransactionID string `gorm:"size:128;index"`
 	Source                string `gorm:"size:32"`
+	AdminGranted          bool   `gorm:"index;not null;default:false"`
+	AdminGrantKind        string `gorm:"size:32"`
+	AdminGrantExpiresAt   *time.Time
+	AdminGrantOperator    string `gorm:"size:64"`
+	AdminGrantReason      string `gorm:"size:255"`
+	AdminGrantedAt        *time.Time
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             gorm.DeletedAt `gorm:"index"`
@@ -289,18 +300,101 @@ func GetCurrentVIPStatus(uid uint64, now time.Time) (CurrentVIPStatus, error) {
 		return CurrentVIPStatus{}, err
 	}
 
-	status := CurrentVIPStatus{
-		Kind:      normalizeVIPKind(entitlement.Kind),
-		ProductID: entitlement.ProductID,
-		Source:    entitlement.Source,
-		ExpiresAt: entitlement.ExpiresAt,
+	return currentVIPStatusFromEntitlement(entitlement, now), nil
+}
+
+func GrantAdminVIPByAccount(
+	account string,
+	lifetime bool,
+	durationDays int64,
+	expiresAtUnix int64,
+	operator string,
+	reason string,
+	now time.Time,
+) (*User, CurrentVIPStatus, error) {
+	account = strings.TrimSpace(account)
+	if account == "" {
+		return nil, CurrentVIPStatus{}, fmt.Errorf("account is empty")
 	}
-	status.IsVIP = entitlement.Active && isVIPEntitlementCurrentlyActive(status.Kind, status.ExpiresAt, now)
-	if !status.IsVIP {
-		status.Kind = VIPKindNone
+	if now.IsZero() {
+		now = time.Now()
 	}
 
-	return status, nil
+	kind := VIPKindMonthly
+	var expiresAt *time.Time
+	if lifetime {
+		kind = VIPKindLifetime
+	} else {
+		switch {
+		case expiresAtUnix > 0:
+			t := time.Unix(expiresAtUnix, 0)
+			expiresAt = &t
+		case durationDays > 0:
+			t := now.Add(time.Duration(durationDays) * 24 * time.Hour)
+			expiresAt = &t
+		default:
+			return nil, CurrentVIPStatus{}, ErrAdminVIPDurationInvalid
+		}
+		if expiresAt == nil || !expiresAt.After(now) {
+			return nil, CurrentVIPStatus{}, ErrAdminVIPDurationInvalid
+		}
+	}
+
+	operator = truncateString(strings.TrimSpace(operator), 64)
+	reason = truncateString(strings.TrimSpace(reason), 255)
+
+	var user *User
+	var status CurrentVIPStatus
+	err := config.WithTx(func(db *gorm.DB) error {
+		foundUser := &User{}
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("account = ?", account).
+			First(foundUser).Error; err != nil {
+			if isRecordNotFound(err) {
+				return ErrAdminVIPAccountNotFound
+			}
+			return err
+		}
+		user = foundUser
+
+		entitlement := &UserEntitlement{}
+		err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("uid = ? AND entitlement = ?", uint64(foundUser.ID), UserEntitlementVIP).
+			First(entitlement).Error
+		if err != nil {
+			if !isRecordNotFound(err) {
+				return err
+			}
+			entitlement = &UserEntitlement{
+				UID:         uint64(foundUser.ID),
+				Entitlement: UserEntitlementVIP,
+				Kind:        VIPKindNone,
+				Active:      false,
+			}
+		}
+
+		entitlement.AdminGranted = true
+		entitlement.AdminGrantKind = kind
+		entitlement.AdminGrantExpiresAt = expiresAt
+		entitlement.AdminGrantOperator = operator
+		entitlement.AdminGrantReason = reason
+		entitlement.AdminGrantedAt = &now
+		if entitlement.ID == 0 {
+			if err := db.Create(entitlement).Error; err != nil {
+				return err
+			}
+		} else if err := db.Save(entitlement).Error; err != nil {
+			return err
+		}
+
+		status = currentVIPStatusFromEntitlement(entitlement, now)
+		return nil
+	})
+	if err != nil {
+		return nil, CurrentVIPStatus{}, err
+	}
+
+	return user, status, nil
 }
 
 func ListAppleTransactionsForAppStoreReconcile(limit int) ([]AppleTransactionReconcileRef, error) {
@@ -1007,7 +1101,7 @@ func upsertVIPEntitlement(db *gorm.DB, uid uint64, kind string, productID string
 		existing.ExpiresAt = expiresAt
 		existing.ProductID = productID
 		existing.OriginalTransactionID = originalTransactionID
-		existing.Source = "apple"
+		existing.Source = UserEntitlementSourceApple
 		return db.Save(existing).Error
 	}
 	if err != nil && !isRecordNotFound(err) {
@@ -1022,7 +1116,7 @@ func upsertVIPEntitlement(db *gorm.DB, uid uint64, kind string, productID string
 		ExpiresAt:             expiresAt,
 		ProductID:             productID,
 		OriginalTransactionID: originalTransactionID,
-		Source:                "apple",
+		Source:                UserEntitlementSourceApple,
 	}
 	return db.Create(entitlement).Error
 }
@@ -1415,6 +1509,57 @@ func isVIPEntitlementCurrentlyActive(kind string, expiresAt *time.Time, now time
 	}
 }
 
+func currentVIPStatusFromEntitlement(entitlement *UserEntitlement, now time.Time) CurrentVIPStatus {
+	if entitlement == nil {
+		return CurrentVIPStatus{Kind: VIPKindNone}
+	}
+
+	apple := CurrentVIPStatus{
+		Kind:      normalizeVIPKind(entitlement.Kind),
+		ProductID: entitlement.ProductID,
+		Source:    entitlement.Source,
+		ExpiresAt: entitlement.ExpiresAt,
+	}
+	apple.IsVIP = entitlement.Active && isVIPEntitlementCurrentlyActive(apple.Kind, apple.ExpiresAt, now)
+	if !apple.IsVIP {
+		apple.Kind = VIPKindNone
+	}
+
+	admin := CurrentVIPStatus{
+		Kind:      normalizeVIPKind(entitlement.AdminGrantKind),
+		Source:    UserEntitlementSourceAdminGrant,
+		ExpiresAt: entitlement.AdminGrantExpiresAt,
+	}
+	admin.IsVIP = entitlement.AdminGranted && isVIPEntitlementCurrentlyActive(admin.Kind, admin.ExpiresAt, now)
+	if !admin.IsVIP {
+		admin.Kind = VIPKindNone
+	}
+
+	return preferredVIPStatus(apple, admin)
+}
+
+func preferredVIPStatus(a CurrentVIPStatus, b CurrentVIPStatus) CurrentVIPStatus {
+	if !a.IsVIP {
+		if b.IsVIP {
+			return b
+		}
+		return a
+	}
+	if !b.IsVIP {
+		return a
+	}
+	if a.Kind == VIPKindLifetime {
+		return a
+	}
+	if b.Kind == VIPKindLifetime {
+		return b
+	}
+	if laterTimePtr(a.ExpiresAt, b.ExpiresAt) == b.ExpiresAt {
+		return b
+	}
+	return a
+}
+
 func normalizeVIPKind(kind string) string {
 	switch strings.ToLower(strings.TrimSpace(kind)) {
 	case VIPKindLifetime:
@@ -1424,4 +1569,15 @@ func normalizeVIPKind(kind string) string {
 	default:
 		return VIPKindNone
 	}
+}
+
+func truncateString(value string, maxRunes int) string {
+	if maxRunes <= 0 {
+		return value
+	}
+	runes := []rune(value)
+	if len(runes) <= maxRunes {
+		return value
+	}
+	return string(runes[:maxRunes])
 }

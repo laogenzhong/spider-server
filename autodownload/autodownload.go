@@ -61,6 +61,7 @@ type BodyPartExerciseFile struct {
 	Data     []Exercise `json:"data"`
 }
 
+// 下载 git 的详情信息
 func main() {
 	client := &http.Client{
 		Timeout: 30 * time.Second,
