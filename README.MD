@@ -44,31 +44,41 @@ SPIDER_SERVER_CONFIG=config.server.yaml ./spider-server
 
 ## 公开页面
 
-Cloudflare 提供无需登录的首页，方便审核人员直接访问：
+公开页面现在保留两套可独立部署的静态目录：
 
 ```text
-https://lifttags-legal.laogenzhong.workers.dev/
+public_jjai/      -> https://jjai.top
+public_workers/   -> https://lifttags-legal.laogenzhong.workers.dev
 ```
 
-Cloudflare 提供无需登录的技术支持页，供 App Store Connect 填写：
+`public` 目录仍作为服务器网关备用入口使用。
+`public` 和 `public_jjai` 页脚包含 ICP 备案号：京ICP备2026034739号-2A。
+
+`jjai.top` 提供无需登录的首页，方便审核人员直接访问：
 
 ```text
-https://lifttags-legal.laogenzhong.workers.dev/support.html
+https://jjai.top/
 ```
 
-Cloudflare 也提供无需登录的隐私政策页，供 App Store Connect 填写：
+`jjai.top` 提供无需登录的技术支持页，供 App Store Connect 填写：
 
 ```text
-https://lifttags-legal.laogenzhong.workers.dev/privacy.html
+https://jjai.top/support.html
 ```
 
-Cloudflare 也提供无需登录的使用条款页，供 App Store Connect 的 EULA 链接填写：
+`jjai.top` 也提供无需登录的隐私政策页，供 App Store Connect 填写：
 
 ```text
-https://lifttags-legal.laogenzhong.workers.dev/terms/
+https://jjai.top/privacy.html
 ```
 
-服务器网关也保留同样的公开页面路由作为备用入口。Cloudflare 页面和服务器页面都来自 `public` 目录下的 HTML 文件，不依赖数据库、Node 或 RPC 服务。
+`jjai.top` 也提供无需登录的使用条款页，供 App Store Connect 的 EULA 链接填写：
+
+```text
+https://jjai.top/terms/
+```
+
+服务器网关也保留同样的公开页面路由作为备用入口。公开页面都是纯 HTML 文件，不依赖数据库、Node 或 RPC 服务。
 
 以后只需要替换服务器运行目录中的 HTML 文件即可更新页面，无需重新编译 Go：
 
