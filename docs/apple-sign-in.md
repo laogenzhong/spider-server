@@ -219,6 +219,8 @@ Apple 删除账号日志表模型是 `AppleSignInAccountDeletionLog`。当用户
 apple:{sha256(apple_sub)}
 ```
 
+如果首次授权透传的 `fullName` 非空，Apple 登录成功后会用它初始化好友资料中的 `nickname`，前端通过 `FriendProfile.nickname` / `FriendListItem.nickname` / `FriendRequest.nickname` 展示；为空时继续使用默认昵称 `用户{uid}`。
+
 ## 错误码规范
 
 登录 router 不能直接返回 `status.Error` / `status.Errorf`。业务失败必须使用：

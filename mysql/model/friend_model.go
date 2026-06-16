@@ -91,12 +91,27 @@ func EnsureFriendProfile(uid uint64) (*FriendProfileRecord, error) {
 		return nil, fmt.Errorf("uid is empty")
 	}
 
+	return ensureFriendProfile(uid, "")
+}
+
+func EnsureFriendProfileWithDefaultNickname(uid uint64, nickname string) (*FriendProfileRecord, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+
+	return ensureFriendProfile(uid, nickname)
+}
+
+func ensureFriendProfile(uid uint64, nickname string) (*FriendProfileRecord, error) {
 	db, err := config.DB()
 	if err != nil {
 		return nil, err
 	}
 
 	profile := defaultFriendProfile(uid)
+	if nickname = normalizeFriendNickname(nickname); nickname != "" {
+		profile.Nickname = nickname
+	}
 	if err := db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "uid"}},
 		DoNothing: true,
@@ -107,6 +122,14 @@ func EnsureFriendProfile(uid uint64) (*FriendProfileRecord, error) {
 	profile, err = GetFriendProfileByUID(uid)
 	if err != nil {
 		return nil, err
+	}
+	if nickname = normalizeFriendNickname(nickname); nickname != "" && profile.Nickname == defaultFriendNickname(uid) {
+		if err := db.Model(&FriendProfileRecord{}).
+			Where("uid = ? AND nickname = ?", uid, defaultFriendNickname(uid)).
+			Update("nickname", nickname).Error; err != nil {
+			return nil, err
+		}
+		return GetFriendProfileByUID(uid)
 	}
 
 	if !profile.TrainingDataVisible && profile.SnapshotUpdatedAt == 0 {
@@ -445,11 +468,24 @@ func defaultFriendProfile(uid uint64) *FriendProfileRecord {
 	return &FriendProfileRecord{
 		UID:                 uid,
 		UserID:              fmt.Sprintf("SP%06d", uid),
-		Nickname:            fmt.Sprintf("用户%d", uid),
+		Nickname:            defaultFriendNickname(uid),
 		AvatarSymbol:        "person.fill",
 		TrainingDataVisible: true,
 		RecentTrainingJSON:  "[]",
 	}
+}
+
+func defaultFriendNickname(uid uint64) string {
+	return fmt.Sprintf("用户%d", uid)
+}
+
+func normalizeFriendNickname(nickname string) string {
+	nickname = strings.TrimSpace(nickname)
+	runes := []rune(nickname)
+	if len(runes) <= 64 {
+		return nickname
+	}
+	return string(runes[:64])
 }
 
 func parseDefaultFriendUserID(userID string) (uint64, bool) {

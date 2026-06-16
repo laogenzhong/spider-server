@@ -101,6 +101,9 @@ func (s *SignApi) SignInWithApple(ctx context.Context, req *api.AppleSignInReque
 	if err != nil {
 		return session.Error(ctx, gamecode.SignAppleAccountBindFailed, &api.SignInResponse{})
 	}
+	if _, err := mysqlmodel.EnsureFriendProfileWithDefaultNickname(uint64(user.ID), profile.FullName); err != nil {
+		return session.Error(ctx, gamecode.SignAppleAccountBindFailed, &api.SignInResponse{})
+	}
 
 	token, _, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
 		sessionAttachAccountKey: user.Account,
