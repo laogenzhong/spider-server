@@ -91,8 +91,10 @@ type RestorePlanRequest struct {
 	StartSnapshotId int64 `protobuf:"varint,1,opt,name=start_snapshot_id,json=startSnapshotId,proto3" json:"start_snapshot_id,omitempty"`
 	// 客户端期望每批最多拉取多少条；服务端可以按数据类型修正为自己的批大小。
 	PreferredBatchSize uint32 `protobuf:"varint,2,opt,name=preferred_batch_size,json=preferredBatchSize,proto3" json:"preferred_batch_size,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// 客户端系统语言，例如 zh-Hans-CN、en-US；旧版本客户端可不传。
+	SystemLanguage string `protobuf:"bytes,3,opt,name=system_language,json=systemLanguage,proto3" json:"system_language,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RestorePlanRequest) Reset() {
@@ -137,6 +139,13 @@ func (x *RestorePlanRequest) GetPreferredBatchSize() uint32 {
 		return x.PreferredBatchSize
 	}
 	return 0
+}
+
+func (x *RestorePlanRequest) GetSystemLanguage() string {
+	if x != nil {
+		return x.SystemLanguage
+	}
+	return ""
 }
 
 // RestoreTask 表示一个需要客户端分批拉取的数据任务。
@@ -1090,10 +1099,11 @@ var File_primary_restore_proto protoreflect.FileDescriptor
 
 const file_primary_restore_proto_rawDesc = "" +
 	"\n" +
-	"\x15primary/restore.proto\x12\x03api\x1a\x1aprimary/training_tag.proto\x1a\x14primary/weight.proto\x1a\x18primary/body_photo.proto\"r\n" +
+	"\x15primary/restore.proto\x12\x03api\x1a\x1aprimary/training_tag.proto\x1a\x14primary/weight.proto\x1a\x18primary/body_photo.proto\"\x9b\x01\n" +
 	"\x12RestorePlanRequest\x12*\n" +
 	"\x11start_snapshot_id\x18\x01 \x01(\x03R\x0fstartSnapshotId\x120\n" +
-	"\x14preferred_batch_size\x18\x02 \x01(\rR\x12preferredBatchSize\"\xa4\x02\n" +
+	"\x14preferred_batch_size\x18\x02 \x01(\rR\x12preferredBatchSize\x12'\n" +
+	"\x0fsystem_language\x18\x03 \x01(\tR\x0esystemLanguage\"\xa4\x02\n" +
 	"\vRestoreTask\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x121\n" +
 	"\tdata_type\x18\x02 \x01(\x0e2\x14.api.RestoreDataTypeR\bdataType\x12\x1d\n" +

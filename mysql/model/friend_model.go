@@ -18,6 +18,9 @@ const (
 	FriendRequestStatusPending  int32 = 1
 	FriendRequestStatusAccepted int32 = 2
 	FriendRequestStatusRejected int32 = 3
+	defaultFriendAvatarSymbol         = "profile_avatar_1"
+	friendAvatarPrefix                = "profile_avatar_"
+	maxFriendAvatarIndex              = 20
 )
 
 // FriendProfileRecord 表示用户朋友资料。
@@ -26,7 +29,7 @@ type FriendProfileRecord struct {
 	UID                 uint64         `gorm:"not null;uniqueIndex"`
 	UserID              string         `gorm:"type:varchar(32);not null;uniqueIndex"`
 	Nickname            string         `gorm:"type:varchar(64);not null;default:''"`
-	AvatarSymbol        string         `gorm:"type:varchar(64);not null;default:'person.fill'"`
+	AvatarSymbol        string         `gorm:"type:varchar(64);not null;default:'profile_avatar_1'"`
 	Bio                 string         `gorm:"type:varchar(512);not null;default:''"`
 	PlanTitle           string         `gorm:"type:varchar(128);not null;default:''"`
 	PlanDescription     string         `gorm:"type:varchar(512);not null;default:''"`
@@ -195,9 +198,7 @@ func UpdateFriendProfile(uid uint64, nickname string, avatarSymbol string, bio s
 	if _, err := EnsureFriendProfile(uid); err != nil {
 		return nil, err
 	}
-	if avatarSymbol == "" {
-		avatarSymbol = "person.fill"
-	}
+	avatarSymbol = normalizeFriendAvatarSymbol(avatarSymbol)
 
 	db, err := config.DB()
 	if err != nil {
@@ -469,7 +470,7 @@ func defaultFriendProfile(uid uint64) *FriendProfileRecord {
 		UID:                 uid,
 		UserID:              fmt.Sprintf("SP%06d", uid),
 		Nickname:            defaultFriendNickname(uid),
-		AvatarSymbol:        "person.fill",
+		AvatarSymbol:        defaultFriendAvatarSymbol,
 		TrainingDataVisible: true,
 		RecentTrainingJSON:  "[]",
 	}
@@ -486,6 +487,22 @@ func normalizeFriendNickname(nickname string) string {
 		return nickname
 	}
 	return string(runes[:64])
+}
+
+func normalizeFriendAvatarSymbol(avatarSymbol string) string {
+	avatarSymbol = strings.TrimSpace(avatarSymbol)
+	if avatarSymbol == "" {
+		return defaultFriendAvatarSymbol
+	}
+	indexText := avatarSymbol
+	if strings.HasPrefix(avatarSymbol, friendAvatarPrefix) {
+		indexText = strings.TrimPrefix(avatarSymbol, friendAvatarPrefix)
+	}
+	index, err := strconv.Atoi(indexText)
+	if err != nil || index < 1 || index > maxFriendAvatarIndex {
+		return defaultFriendAvatarSymbol
+	}
+	return fmt.Sprintf("%s%d", friendAvatarPrefix, index)
 }
 
 func parseDefaultFriendUserID(userID string) (uint64, bool) {

@@ -47,7 +47,6 @@ type BinaryRPCRequest struct {
 func (s *GatewayServer) Router() *gin.Engine {
 	router := gin.New()
 	router.Use(
-		gin.LoggerWithWriter(applogger.Writer()),
 		gin.RecoveryWithWriter(applogger.Writer()),
 	)
 
@@ -116,7 +115,6 @@ func (s *GatewayServer) handleBinaryRPC(requestBody []byte) ([]byte, int) {
 	// 这里直接透传业务服务器不用解析的..
 	path := strings.TrimPrefix(rpcRequest.Path, "/")
 	url := fmt.Sprintf("http://%s/%s", s.host, path)
-	applogger.Printf("grpc invoke url: %s", url)
 
 	header := s.binaryRPCHeadersToHTTPHeader(rpcRequest.Headers)
 	resp, err := refgrpc.GrpcInvoke(url, rpcRequest.Body, header)

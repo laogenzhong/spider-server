@@ -35,6 +35,9 @@ message RestorePlanRequest {
 
   // 客户端期望每批最多拉取多少条；服务端可以按数据类型修正为自己的批大小。
   uint32 preferred_batch_size = 2;
+
+  // 客户端系统语言，例如 zh-Hans-CN、en-US；旧版本客户端可不传。
+  string system_language = 3;
 }
 
 // RestoreTask 表示一个需要客户端分批拉取的数据任务。

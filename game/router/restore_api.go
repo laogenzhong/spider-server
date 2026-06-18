@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	gamecode "spider-server/game/code"
@@ -28,6 +29,8 @@ type ClientRestoreApi struct {
 // GetRestorePlan 获取客户端数据同步计划。
 func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePlanRequest) (*pb.RestorePlanResponse, error) {
 	uid := session.GetUser(ctx).UID()
+	updateUserAppEnterFromRestorePlan(uid, req.GetSystemLanguage())
+
 	startSnapshotID := req.GetStartSnapshotId()
 	if startSnapshotID < 0 {
 		return session.Error(ctx, gamecode.RestoreStartSnapshotInvalid, &pb.RestorePlanResponse{})
@@ -113,6 +116,21 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 		Tasks:           tasks,
 		TotalCount:      totalCount,
 	}, nil
+}
+
+func updateUserAppEnterFromRestorePlan(uid uint64, systemLanguage string) {
+	if uid == 0 {
+		return
+	}
+	_ = mysqlmodel.UpdateUserLastAppEnter(uint(uid), time.Now(), normalizeRestoreSystemLanguage(systemLanguage))
+}
+
+func normalizeRestoreSystemLanguage(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) > 64 {
+		value = value[:64]
+	}
+	return value
 }
 
 // FetchRestoreBatch 按同步计划分批拉取数据。

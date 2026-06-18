@@ -68,9 +68,10 @@ func InitDb(cfg Config) error {
 
 	gormDB, err := gorm.Open(mysql.Open(buildDSN(cfg)), &gorm.Config{
 		Logger: gormlogger.New(gormLogWriter{}, gormlogger.Config{
-			SlowThreshold: 200 * time.Millisecond,
-			LogLevel:      cfg.LogLevel,
-			Colorful:      false,
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  cfg.LogLevel,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  false,
 		}),
 	})
 	if err != nil {

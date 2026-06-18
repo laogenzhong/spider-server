@@ -9,12 +9,14 @@ import (
 )
 
 type User struct {
-	ID        uint   `gorm:"primaryKey;autoIncrement"`
-	Account   string `gorm:"size:64;uniqueIndex;not null"`
-	Password  string `gorm:"size:255;not null"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID                 uint   `gorm:"primaryKey;autoIncrement"`
+	Account            string `gorm:"size:64;uniqueIndex;not null"`
+	Password           string `gorm:"size:255;not null"`
+	LastAppEnterAt     *time.Time
+	LastSystemLanguage string `gorm:"size:64"`
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	DeletedAt          gorm.DeletedAt `gorm:"index"`
 }
 
 func InitUserTable() error {
@@ -68,6 +70,36 @@ func UpdateUserPasswordByID(id uint, password string) error {
 	}
 
 	return db.Model(&User{}).Where("id = ?", id).Update("password", password).Error
+}
+
+func UpdateUserLastAppEnter(id uint, enteredAt time.Time, systemLanguage string) error {
+	if id == 0 {
+		return fmt.Errorf("id is empty")
+	}
+	if enteredAt.IsZero() {
+		enteredAt = time.Now()
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return err
+	}
+
+	updates := map[string]any{
+		"last_app_enter_at": enteredAt,
+	}
+	if systemLanguage != "" {
+		updates["last_system_language"] = systemLanguage
+	}
+
+	result := db.Model(&User{}).Where("id = ?", id).Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func MarkUserAccountDeletedByID(id uint) error {
