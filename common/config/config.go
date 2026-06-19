@@ -23,6 +23,7 @@ type Config struct {
 	Sign        SignConfig        `yaml:"sign"`
 	AppleSignIn AppleSignInConfig `yaml:"apple_sign_in"`
 	AppStore    AppStoreConfig    `yaml:"app_store"`
+	AppUpdate   AppUpdateConfig   `yaml:"app_update"`
 	Admin       AdminConfig       `yaml:"admin"`
 	Logger      LoggerConfig      `yaml:"logger"`
 	Client      ClientConfig      `yaml:"client"`
@@ -100,6 +101,19 @@ type AppStoreConfig struct {
 	ReconcileMaxPages    int      `yaml:"reconcile_max_pages"`
 }
 
+type AppUpdateConfig struct {
+	IOSLatestVersion       string `yaml:"ios_latest_version"`
+	IOSMinSupportedVersion string `yaml:"ios_min_supported_version"`
+	ForceUpdateEnabled     bool   `yaml:"force_update_enabled"`
+	UpdateAvailableEnabled bool   `yaml:"update_available_enabled"`
+	IOSAppStoreURL         string `yaml:"ios_app_store_url"`
+	MessageZhHans          string `yaml:"message_zh_hans"`
+	MessageZhHant          string `yaml:"message_zh_hant"`
+	MessageEn              string `yaml:"message_en"`
+	MessageJa              string `yaml:"message_ja"`
+	MessageKo              string `yaml:"message_ko"`
+}
+
 type AdminConfig struct {
 	VIPGrantSecret string `yaml:"vip_grant_secret"`
 }
@@ -150,7 +164,7 @@ func Default() Config {
 			DefaultTTL: "8760h",
 		},
 		Auth: AuthConfig{
-			PublicGRPCMethodPrefixes: []string{"/uc.", "/api.AdminVIPApi/"},
+			PublicGRPCMethodPrefixes: []string{"/uc.", "/api.AdminVIPApi/", "/api.AppUpdateService/"},
 		},
 		Sign: SignConfig{
 			Enabled:               true,
@@ -179,6 +193,16 @@ func Default() Config {
 			ReconcileLookback:  "720h",
 			ReconcileBatchSize: 50,
 			ReconcileMaxPages:  10,
+		},
+		AppUpdate: AppUpdateConfig{
+			ForceUpdateEnabled:     false,
+			UpdateAvailableEnabled: true,
+			IOSAppStoreURL:         "https://apps.apple.com/app/id6776698752",
+			MessageZhHans:          "请更新到最新版本后继续使用",
+			MessageZhHant:          "請更新到最新版本後繼續使用",
+			MessageEn:              "Please update to the latest version to continue.",
+			MessageJa:              "続行するには最新バージョンにアップデートしてください。",
+			MessageKo:              "계속 사용하려면 최신 버전으로 업데이트해 주세요.",
 		},
 		Admin: AdminConfig{
 			VIPGrantSecret: "",

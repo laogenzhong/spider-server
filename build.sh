@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="spider-server"
+ADMIN_CLI_NAME="admin-vip-cli"
 PACKAGE_ENV="online"
 TARGET_OS="linux"
 TARGET_ARCH="amd64"
@@ -48,6 +49,24 @@ cd "${ROOT_DIR}"
 
 CGO_ENABLED=0 GOOS="${TARGET_OS}" GOARCH="${TARGET_ARCH}" \
   go build -trimpath -ldflags "-s -w" -o "${RELEASE_DIR}/${APP_NAME}" ./cmd
+
+CGO_ENABLED=0 GOOS="${TARGET_OS}" GOARCH="${TARGET_ARCH}" \
+  go build -trimpath -ldflags "-s -w" -o "${RELEASE_DIR}/${ADMIN_CLI_NAME}.bin" ./cmd/admin_vip_cli
+
+cat > "${RELEASE_DIR}/${ADMIN_CLI_NAME}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+if [[ ! -f config.server.yaml ]]; then
+  echo "config.server.yaml not found. Release package is incomplete." >&2
+  exit 1
+fi
+
+exec ./admin-vip-cli.bin -config config.server.yaml "$@"
+EOF
+echo "==> Included admin-vip-cli with default config.server.yaml"
 
 cp config.server.example.yaml "${RELEASE_DIR}/config.server.example.yaml"
 cp config.server.example.yaml "${RELEASE_DIR}/config.server.yaml"
@@ -239,7 +258,7 @@ fi
 rm -f "${PID_FILE}"
 echo "spider-server stopped, pid=${PID}"
 EOF
-chmod +x "${RELEASE_DIR}/run.sh" "${RELEASE_DIR}/stop.sh" "${RELEASE_DIR}/${APP_NAME}"
+chmod +x "${RELEASE_DIR}/run.sh" "${RELEASE_DIR}/stop.sh" "${RELEASE_DIR}/${APP_NAME}" "${RELEASE_DIR}/${ADMIN_CLI_NAME}" "${RELEASE_DIR}/${ADMIN_CLI_NAME}.bin"
 
 COPYFILE_DISABLE=1 LC_ALL=C tar -C "${OUTPUT_DIR}" -czf "${TARBALL}" "${RELEASE_NAME}"
 
@@ -252,3 +271,4 @@ echo "Server run:"
 echo "  tar -xzf ${RELEASE_NAME}.tar.gz"
 echo "  cd ${RELEASE_NAME}"
 echo "  ./run.sh"
+echo "  ./admin-vip-cli"

@@ -80,7 +80,7 @@ func main() {
 	}
 
 	fmt.Printf("Admin VIP CLI connected to %s\n", opts.grpcTarget)
-	fmt.Println("Input account or friend user ID like SP000008, or 0/q to exit.")
+	fmt.Println("Input account or friend user ID like SP000008, u/update for app update config, or 0/q to exit.")
 	for {
 		if err := cli.runOnce(); err != nil {
 			fmt.Printf("Error: %v\n", err)
@@ -105,6 +105,9 @@ func (c *adminVIPCLI) runOnce() error {
 	if isExit(account) {
 		fmt.Println("Bye.")
 		os.Exit(0)
+	}
+	if isAppUpdateCommand(account) {
+		return c.runAppUpdateConfig()
 	}
 	if account == "" {
 		return nil
@@ -151,6 +154,142 @@ func (c *adminVIPCLI) runOnce() error {
 			return c.revoke(account, "admin_cli_revoke")
 		case "0", "q", "Q", "exit":
 			return nil
+		default:
+			fmt.Println("Invalid choice.")
+		}
+	}
+}
+
+func (c *adminVIPCLI) runAppUpdateConfig() error {
+	for {
+		record, err := mysqlmodel.GetAppUpdateConfig(mysqlmodel.AppUpdatePlatformIOS)
+		if err != nil {
+			return fmt.Errorf("query app update config failed: %w; start the latest server once to initialize app_update_configs", err)
+		}
+
+		fmt.Println()
+		fmt.Println("App Update Config")
+		fmt.Println("  source:       database")
+		fmt.Printf("  latest:       %s\n", emptyDash(record.LatestVersion))
+		fmt.Printf("  min support:  %s\n", emptyDash(record.MinSupportedVersion))
+		fmt.Printf("  force:        %t\n", record.ForceUpdateEnabled)
+		fmt.Printf("  available:    %t\n", record.UpdateAvailableEnabled)
+		fmt.Printf("  appstore:     %s\n", emptyDash(record.AppStoreURL))
+		fmt.Println("  messages:")
+		fmt.Printf("    zh-Hans: %s\n", emptyDash(record.MessageZhHans))
+		fmt.Printf("    zh-Hant: %s\n", emptyDash(record.MessageZhHant))
+		fmt.Printf("    en:      %s\n", emptyDash(record.MessageEn))
+		fmt.Printf("    ja:      %s\n", emptyDash(record.MessageJa))
+		fmt.Printf("    ko:      %s\n", emptyDash(record.MessageKo))
+		fmt.Println()
+		fmt.Println("1. 输入最新版本")
+		fmt.Println("2. 输入最小支持版本")
+		fmt.Println("3. 切换强制更新")
+		fmt.Println("4. 切换更新是否可用")
+		fmt.Println("5. 输入 App Store URL")
+		fmt.Println("6. 配置多语言更新文案")
+		fmt.Println("0. 返回账号查询")
+
+		choice, err := c.prompt("Select> ")
+		if err != nil {
+			return err
+		}
+
+		input := appUpdateInputFromRecord(record)
+		switch strings.TrimSpace(choice) {
+		case "1":
+			value, err := c.promptKeepOrClear("Latest version", input.LatestVersion)
+			if err != nil {
+				return err
+			}
+			input.LatestVersion = value
+		case "2":
+			value, err := c.promptKeepOrClear("Min supported version", input.MinSupportedVersion)
+			if err != nil {
+				return err
+			}
+			input.MinSupportedVersion = value
+		case "3":
+			input.ForceUpdateEnabled = !input.ForceUpdateEnabled
+			fmt.Printf("force update => %t\n", input.ForceUpdateEnabled)
+		case "4":
+			input.UpdateAvailableEnabled = !input.UpdateAvailableEnabled
+			fmt.Printf("update available => %t\n", input.UpdateAvailableEnabled)
+		case "5":
+			value, err := c.promptKeepOrClear("App Store URL", input.AppStoreURL)
+			if err != nil {
+				return err
+			}
+			input.AppStoreURL = value
+		case "6":
+			next, err := c.editAppUpdateMessages(input)
+			if err != nil {
+				return err
+			}
+			input = next
+		case "0", "q", "Q", "exit":
+			return nil
+		default:
+			fmt.Println("Invalid choice.")
+			continue
+		}
+
+		if _, err := mysqlmodel.UpsertAppUpdateConfig(input); err != nil {
+			return fmt.Errorf("save app update config failed: %w", err)
+		}
+		fmt.Println("Saved.")
+	}
+}
+
+func (c *adminVIPCLI) editAppUpdateMessages(input mysqlmodel.AppUpdateConfigInput) (mysqlmodel.AppUpdateConfigInput, error) {
+	for {
+		fmt.Println()
+		fmt.Println("Update Messages")
+		fmt.Println("1. 简体中文 zh-Hans")
+		fmt.Println("2. 繁体中文 zh-Hant")
+		fmt.Println("3. English en")
+		fmt.Println("4. 日本語 ja")
+		fmt.Println("5. 한국어 ko")
+		fmt.Println("0. 返回")
+
+		choice, err := c.prompt("Message> ")
+		if err != nil {
+			return input, err
+		}
+
+		switch strings.TrimSpace(choice) {
+		case "1":
+			value, err := c.promptKeepOrClear("zh-Hans", input.MessageZhHans)
+			if err != nil {
+				return input, err
+			}
+			input.MessageZhHans = value
+		case "2":
+			value, err := c.promptKeepOrClear("zh-Hant", input.MessageZhHant)
+			if err != nil {
+				return input, err
+			}
+			input.MessageZhHant = value
+		case "3":
+			value, err := c.promptKeepOrClear("en", input.MessageEn)
+			if err != nil {
+				return input, err
+			}
+			input.MessageEn = value
+		case "4":
+			value, err := c.promptKeepOrClear("ja", input.MessageJa)
+			if err != nil {
+				return input, err
+			}
+			input.MessageJa = value
+		case "5":
+			value, err := c.promptKeepOrClear("ko", input.MessageKo)
+			if err != nil {
+				return input, err
+			}
+			input.MessageKo = value
+		case "0", "q", "Q", "exit":
+			return input, nil
 		default:
 			fmt.Println("Invalid choice.")
 		}
@@ -362,6 +501,22 @@ func (c *adminVIPCLI) prompt(label string) (string, error) {
 	return c.reader.ReadLine(label)
 }
 
+func (c *adminVIPCLI) promptKeepOrClear(label string, current string) (string, error) {
+	fmt.Printf("%s current: %s\n", label, emptyDash(current))
+	value, err := c.prompt(label + " (empty keep, '-' clear)> ")
+	if err != nil {
+		return current, err
+	}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return current, nil
+	}
+	if value == "-" {
+		return "", nil
+	}
+	return value, nil
+}
+
 type promptReader struct {
 	fallback *bufio.Reader
 }
@@ -556,6 +711,36 @@ func isExit(value string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func isAppUpdateCommand(value string) bool {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "u", "update", "app_update", "app-update", "version":
+		return true
+	default:
+		return false
+	}
+}
+
+func appUpdateInputFromRecord(record *mysqlmodel.AppUpdateConfig) mysqlmodel.AppUpdateConfigInput {
+	if record == nil {
+		return mysqlmodel.AppUpdateConfigInput{
+			Platform: mysqlmodel.AppUpdatePlatformIOS,
+		}
+	}
+	return mysqlmodel.AppUpdateConfigInput{
+		Platform:               record.Platform,
+		LatestVersion:          record.LatestVersion,
+		MinSupportedVersion:    record.MinSupportedVersion,
+		ForceUpdateEnabled:     record.ForceUpdateEnabled,
+		UpdateAvailableEnabled: record.UpdateAvailableEnabled,
+		AppStoreURL:            record.AppStoreURL,
+		MessageZhHans:          record.MessageZhHans,
+		MessageZhHant:          record.MessageZhHant,
+		MessageEn:              record.MessageEn,
+		MessageJa:              record.MessageJa,
+		MessageKo:              record.MessageKo,
 	}
 }
 

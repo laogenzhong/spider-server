@@ -17,6 +17,7 @@ func (s *GRPCServer) Init() {
 		pb.RegisterBodyPhotoServiceServer(server, &router.BodyPhotoApi{})
 		pb.RegisterFriendServiceServer(server, &router.FriendApi{})
 		pb.RegisterVIPServiceServer(server, &router.VIPApi{})
+		pb.RegisterAppUpdateServiceServer(server, &router.AppUpdateApi{})
 		pb.RegisterAdminVIPApiServer(server, &router.AdminVIPApi{})
 	}); err != nil {
 		applogger.Fatalf("register room sync grpc router failed: %v", err)

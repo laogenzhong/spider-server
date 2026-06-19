@@ -28,6 +28,7 @@ auth:
   public_grpc_method_prefixes:
     - "/uc."
     - "/api.AdminVIPApi/"
+    - "/api.AppUpdateService/"
 
 sign:
   enabled: true
@@ -66,6 +67,19 @@ app_store:
   reconcile_lookback: "720h"
   reconcile_batch_size: 50
   reconcile_max_pages: 10
+
+app_update:
+  # 留空表示不提示更新；低于 ios_min_supported_version 的客户端会强制更新。
+  ios_latest_version: ""
+  ios_min_supported_version: ""
+  force_update_enabled: false
+  update_available_enabled: true
+  ios_app_store_url: "https://apps.apple.com/app/id6776698752"
+  message_zh_hans: "请更新到最新版本后继续使用"
+  message_zh_hant: "請更新到最新版本後繼續使用"
+  message_en: "Please update to the latest version to continue."
+  message_ja: "続行するには最新バージョンにアップデートしてください。"
+  message_ko: "계속 사용하려면 최신 버전으로 업데이트해 주세요."
 
 admin:
   # 后台开通 VIP 的共享密钥。admin_vip_cli 默认读取这里，留空时 AdminVIPApi.grantVIP 不可用。

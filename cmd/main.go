@@ -14,6 +14,7 @@ import (
 	"spider-server/game/session"
 	"spider-server/gateway"
 	mysqlconfig "spider-server/mysql"
+	mysqlmodel "spider-server/mysql/model"
 	"sync"
 	"syscall"
 )
@@ -49,6 +50,9 @@ func main() {
 	)
 
 	mysqlconfig.InitWithConfig(cfg.MySQL)
+	if err := mysqlmodel.SeedAppUpdateConfigFromAppConfig(cfg.AppUpdate); err != nil {
+		applogger.Fatalf("seed app update config failed: %v", err)
+	}
 	reconcile.StartAppStoreReconciler(ctx, cfg.AppStore)
 
 	var wg sync.WaitGroup

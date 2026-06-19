@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+service AppUpdateService {
+  // 检查当前客户端版本是否需要更新。
+  rpc checkAppUpdate(AppUpdateCheckRequest) returns (AppUpdateCheckResponse);
+}
+
+message AppUpdateCheckRequest {
+  // 客户端当前版本，例如 1.0.7。
+  string current_version = 1;
+  // 客户端构建号。
+  string build_number = 2;
+  // 平台，例如 ios。
+  string platform = 3;
+  // Bundle ID，例如 hh.spider。
+  string bundle_id = 4;
+  // 客户端系统语言，例如 zh-Hans-CN。
+  string system_language = 5;
+}
+
+message AppUpdateCheckResponse {
+  // 服务端配置的最新版本。
+  string latest_version = 1;
+  // 服务端配置的最低支持版本；低于该版本必须强制更新。
+  string min_supported_version = 2;
+  // 当前客户端是否有新版本。
+  bool update_available = 3;
+  // 当前客户端是否必须更新。
+  bool force_update = 4;
+  // App Store 跳转地址。
+  string app_store_url = 5;
+  // 服务端可选提示文案。
+  string message = 6;
+}
