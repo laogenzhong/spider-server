@@ -60,6 +60,8 @@ type AppleSignInProfile struct {
 	EmailVerified  bool
 	IsPrivateEmail bool
 	FullName       string
+	DeviceModel    string
+	IOSVersion     string
 	RefreshToken   string
 	AccessToken    string
 	IDToken        string
@@ -189,8 +191,10 @@ func FindOrCreateUserForAppleSignIn(profile AppleSignInProfile, generatedAccount
 		}
 
 		newUser := &User{
-			Account:  generatedAccount,
-			Password: randomApplePassword(profile.AppleSub),
+			Account:             generatedAccount,
+			Password:            randomApplePassword(profile.AppleSub),
+			RegisterDeviceModel: trimDeviceField(profile.DeviceModel, 64),
+			RegisterIOSVersion:  trimDeviceField(profile.IOSVersion, 32),
 		}
 		if err := tx.Create(newUser).Error; err != nil {
 			return err

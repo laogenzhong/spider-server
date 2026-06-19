@@ -305,8 +305,12 @@ func (x *SignUpMixedResponse) GetCode() uint32 {
 }
 
 type SignInParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,8,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Uuid  string                 `protobuf:"bytes,8,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	// 注册时设备机型，例如 iPhone16,2。
+	DeviceModel string `protobuf:"bytes,9,opt,name=device_model,json=deviceModel,proto3" json:"device_model,omitempty"`
+	// 注册时 iOS 系统版本，例如 18.5。
+	IosVersion    string `protobuf:"bytes,10,opt,name=ios_version,json=iosVersion,proto3" json:"ios_version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -348,6 +352,20 @@ func (x *SignInParams) GetUuid() string {
 	return ""
 }
 
+func (x *SignInParams) GetDeviceModel() string {
+	if x != nil {
+		return x.DeviceModel
+	}
+	return ""
+}
+
+func (x *SignInParams) GetIosVersion() string {
+	if x != nil {
+		return x.IosVersion
+	}
+	return ""
+}
+
 type AppleSignInRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Apple 返回的 identityToken/JWT。
@@ -359,7 +377,11 @@ type AppleSignInRequest struct {
 	// 首次授权时客户端可透传的 email，服务器会优先使用 token 内 email。
 	Email string `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
 	// 首次授权时客户端可透传的用户名称。
-	FullName      string `protobuf:"bytes,5,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	FullName string `protobuf:"bytes,5,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	// 注册时设备机型，例如 iPhone16,2。
+	DeviceModel string `protobuf:"bytes,6,opt,name=device_model,json=deviceModel,proto3" json:"device_model,omitempty"`
+	// 注册时 iOS 系统版本，例如 18.5。
+	IosVersion    string `protobuf:"bytes,7,opt,name=ios_version,json=iosVersion,proto3" json:"ios_version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -425,6 +447,20 @@ func (x *AppleSignInRequest) GetEmail() string {
 func (x *AppleSignInRequest) GetFullName() string {
 	if x != nil {
 		return x.FullName
+	}
+	return ""
+}
+
+func (x *AppleSignInRequest) GetDeviceModel() string {
+	if x != nil {
+		return x.DeviceModel
+	}
+	return ""
+}
+
+func (x *AppleSignInRequest) GetIosVersion() string {
+	if x != nil {
+		return x.IosVersion
 	}
 	return ""
 }
@@ -530,15 +566,22 @@ const file_primary_sign_proto_rawDesc = "" +
 	"\x12deletion_scheduled\x18\x03 \x01(\bR\x11deletionScheduled\x120\n" +
 	"\x14expected_complete_at\x18\x04 \x01(\x03R\x12expectedCompleteAt\")\n" +
 	"\x13SignUpMixedResponse\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\rR\x04code\"\"\n" +
+	"\x04code\x18\x01 \x01(\rR\x04code\"f\n" +
 	"\fSignInParams\x12\x12\n" +
-	"\x04uuid\x18\b \x01(\tR\x04uuid\"\xb3\x01\n" +
+	"\x04uuid\x18\b \x01(\tR\x04uuid\x12!\n" +
+	"\fdevice_model\x18\t \x01(\tR\vdeviceModel\x12\x1f\n" +
+	"\vios_version\x18\n" +
+	" \x01(\tR\n" +
+	"iosVersion\"\xf7\x01\n" +
 	"\x12AppleSignInRequest\x12%\n" +
 	"\x0eidentity_token\x18\x01 \x01(\tR\ridentityToken\x12-\n" +
 	"\x12authorization_code\x18\x02 \x01(\tR\x11authorizationCode\x12\x14\n" +
 	"\x05nonce\x18\x03 \x01(\tR\x05nonce\x12\x14\n" +
 	"\x05email\x18\x04 \x01(\tR\x05email\x12\x1b\n" +
-	"\tfull_name\x18\x05 \x01(\tR\bfullName\"\x8a\x01\n" +
+	"\tfull_name\x18\x05 \x01(\tR\bfullName\x12!\n" +
+	"\fdevice_model\x18\x06 \x01(\tR\vdeviceModel\x12\x1f\n" +
+	"\vios_version\x18\a \x01(\tR\n" +
+	"iosVersion\"\x8a\x01\n" +
 	"\x0eSignInResponse\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x04R\x03uid\x12\x19\n" +
 	"\buc_token\x18\x02 \x01(\tR\aucToken\x12\x17\n" +

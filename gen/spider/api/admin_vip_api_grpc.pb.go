@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminVIPApi_GrantVIP_FullMethodName = "/api.AdminVIPApi/grantVIP"
+	AdminVIPApi_GrantVIP_FullMethodName       = "/api.AdminVIPApi/grantVIP"
+	AdminVIPApi_RevokeAdminVIP_FullMethodName = "/api.AdminVIPApi/revokeAdminVIP"
 )
 
 // AdminVIPApiClient is the client API for AdminVIPApi service.
@@ -28,6 +29,8 @@ const (
 type AdminVIPApiClient interface {
 	// 后台直接为指定账号开通 VIP，不创建订单或支付记录。
 	GrantVIP(ctx context.Context, in *AdminGrantVIPRequest, opts ...grpc.CallOption) (*AdminGrantVIPResponse, error)
+	// 取消后台赠送的 VIP，不影响用户自行购买的 Apple VIP。
+	RevokeAdminVIP(ctx context.Context, in *AdminRevokeVIPRequest, opts ...grpc.CallOption) (*AdminRevokeVIPResponse, error)
 }
 
 type adminVIPApiClient struct {
@@ -48,12 +51,24 @@ func (c *adminVIPApiClient) GrantVIP(ctx context.Context, in *AdminGrantVIPReque
 	return out, nil
 }
 
+func (c *adminVIPApiClient) RevokeAdminVIP(ctx context.Context, in *AdminRevokeVIPRequest, opts ...grpc.CallOption) (*AdminRevokeVIPResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminRevokeVIPResponse)
+	err := c.cc.Invoke(ctx, AdminVIPApi_RevokeAdminVIP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminVIPApiServer is the server API for AdminVIPApi service.
 // All implementations must embed UnimplementedAdminVIPApiServer
 // for forward compatibility.
 type AdminVIPApiServer interface {
 	// 后台直接为指定账号开通 VIP，不创建订单或支付记录。
 	GrantVIP(context.Context, *AdminGrantVIPRequest) (*AdminGrantVIPResponse, error)
+	// 取消后台赠送的 VIP，不影响用户自行购买的 Apple VIP。
+	RevokeAdminVIP(context.Context, *AdminRevokeVIPRequest) (*AdminRevokeVIPResponse, error)
 	mustEmbedUnimplementedAdminVIPApiServer()
 }
 
@@ -66,6 +81,9 @@ type UnimplementedAdminVIPApiServer struct{}
 
 func (UnimplementedAdminVIPApiServer) GrantVIP(context.Context, *AdminGrantVIPRequest) (*AdminGrantVIPResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GrantVIP not implemented")
+}
+func (UnimplementedAdminVIPApiServer) RevokeAdminVIP(context.Context, *AdminRevokeVIPRequest) (*AdminRevokeVIPResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeAdminVIP not implemented")
 }
 func (UnimplementedAdminVIPApiServer) mustEmbedUnimplementedAdminVIPApiServer() {}
 func (UnimplementedAdminVIPApiServer) testEmbeddedByValue()                     {}
@@ -106,6 +124,24 @@ func _AdminVIPApi_GrantVIP_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminVIPApi_RevokeAdminVIP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminRevokeVIPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminVIPApiServer).RevokeAdminVIP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminVIPApi_RevokeAdminVIP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminVIPApiServer).RevokeAdminVIP(ctx, req.(*AdminRevokeVIPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminVIPApi_ServiceDesc is the grpc.ServiceDesc for AdminVIPApi service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +152,10 @@ var AdminVIPApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "grantVIP",
 			Handler:    _AdminVIPApi_GrantVIP_Handler,
+		},
+		{
+			MethodName: "revokeAdminVIP",
+			Handler:    _AdminVIPApi_RevokeAdminVIP_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

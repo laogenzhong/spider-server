@@ -65,6 +65,10 @@ message SignUpMixedResponse {
 
 message SignInParams {
   string uuid = 8;
+  // 注册时设备机型，例如 iPhone16,2。
+  string device_model = 9;
+  // 注册时 iOS 系统版本，例如 18.5。
+  string ios_version = 10;
 }
 
 message AppleSignInRequest {
@@ -78,6 +82,10 @@ message AppleSignInRequest {
   string email = 4;
   // 首次授权时客户端可透传的用户名称。
   string full_name = 5;
+  // 注册时设备机型，例如 iPhone16,2。
+  string device_model = 6;
+  // 注册时 iOS 系统版本，例如 18.5。
+  string ios_version = 7;
 }
 
 message SignInResponse {

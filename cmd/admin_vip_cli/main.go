@@ -8,16 +8,19 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	appconfig "spider-server/common/config"
 	"spider-server/gen/spider/api"
 	rawmysqlconfig "spider-server/mysql/config"
 	mysqlmodel "spider-server/mysql/model"
 
+	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -25,7 +28,10 @@ import (
 	gormlogger "gorm.io/gorm/logger"
 )
 
-const adminGrantVIPMethod = "/api.AdminVIPApi/grantVIP"
+const (
+	adminGrantVIPMethod  = "/api.AdminVIPApi/grantVIP"
+	adminRevokeVIPMethod = "/api.AdminVIPApi/revokeAdminVIP"
+)
 
 type options struct {
 	configPath  string
@@ -70,11 +76,11 @@ func main() {
 		adminSecret: strings.TrimSpace(opts.adminSecret),
 		operator:    strings.TrimSpace(opts.operator),
 		timeout:     opts.timeout,
-		reader:      bufio.NewReader(os.Stdin),
+		reader:      newPromptReader(),
 	}
 
 	fmt.Printf("Admin VIP CLI connected to %s\n", opts.grpcTarget)
-	fmt.Println("Input account like sp000001, or 0/q to exit.")
+	fmt.Println("Input account or friend user ID like SP000008, or 0/q to exit.")
 	for {
 		if err := cli.runOnce(); err != nil {
 			fmt.Printf("Error: %v\n", err)
@@ -87,11 +93,11 @@ type adminVIPCLI struct {
 	adminSecret string
 	operator    string
 	timeout     time.Duration
-	reader      *bufio.Reader
+	reader      *promptReader
 }
 
 func (c *adminVIPCLI) runOnce() error {
-	account, err := c.prompt("Account> ")
+	account, err := c.prompt("Account/UserID> ")
 	if err != nil {
 		return err
 	}
@@ -104,9 +110,9 @@ func (c *adminVIPCLI) runOnce() error {
 		return nil
 	}
 
-	user, err := mysqlmodel.GetUserByAccount(account)
+	user, err := mysqlmodel.GetUserByAdminVIPIdentifier(account)
 	if err != nil {
-		return fmt.Errorf("account %q not found or query failed: %w", account, err)
+		return fmt.Errorf("account/user ID %q not found or query failed: %w", account, err)
 	}
 
 	if err := c.printUserVIP(user); err != nil {
@@ -115,10 +121,14 @@ func (c *adminVIPCLI) runOnce() error {
 
 	for {
 		fmt.Println()
-		fmt.Println("1. 开通一个月 VIP")
-		fmt.Println("2. 开通一年 VIP")
-		fmt.Println("3. 开通永久 VIP")
-		fmt.Println("0. 退出")
+		fmt.Println("1. 开通 1 分钟 VIP")
+		fmt.Println("2. 开通 7 天 VIP")
+		fmt.Println("3. 开通一个月 VIP")
+		fmt.Println("4. 开通三个月 VIP")
+		fmt.Println("5. 开通一年 VIP")
+		fmt.Println("6. 开通永久 VIP")
+		fmt.Println("7. 取消后台开通 VIP")
+		fmt.Println("0. 返回账号查询")
 
 		choice, err := c.prompt("Select> ")
 		if err != nil {
@@ -126,14 +136,21 @@ func (c *adminVIPCLI) runOnce() error {
 		}
 		switch strings.TrimSpace(choice) {
 		case "1":
-			return c.grant(account, false, 30, "admin_cli_monthly")
+			return c.grant(account, false, 0, time.Now().Add(time.Minute).Unix(), "admin_cli_1_minute")
 		case "2":
-			return c.grant(account, false, 365, "admin_cli_yearly")
+			return c.grant(account, false, 7, 0, "admin_cli_7_days")
 		case "3":
-			return c.grant(account, true, 0, "admin_cli_lifetime")
+			return c.grant(account, false, 30, 0, "admin_cli_monthly")
+		case "4":
+			return c.grant(account, false, 90, 0, "admin_cli_3_months")
+		case "5":
+			return c.grant(account, false, 365, 0, "admin_cli_yearly")
+		case "6":
+			return c.grant(account, true, 0, 0, "admin_cli_lifetime")
+		case "7":
+			return c.revoke(account, "admin_cli_revoke")
 		case "0", "q", "Q", "exit":
-			fmt.Println("Bye.")
-			os.Exit(0)
+			return nil
 		default:
 			fmt.Println("Invalid choice.")
 		}
@@ -152,6 +169,9 @@ func (c *adminVIPCLI) printUserVIP(user *mysqlmodel.User) error {
 	fmt.Printf("  uid:      %d\n", user.ID)
 	fmt.Printf("  account:  %s\n", user.Account)
 	fmt.Printf("  name:     %s\n", emptyDash(userNickname(uint64(user.ID))))
+	fmt.Printf("  apple:    %s\n", emptyDash(appleSignInContact(user.ID)))
+	fmt.Printf("  entered:  %s\n", formatTimePtr(user.LastAppEnterAt))
+	fmt.Printf("  language: %s\n", emptyDash(user.LastSystemLanguage))
 	fmt.Printf("  created:  %s\n", formatTime(user.CreatedAt))
 	fmt.Printf("  updated:  %s\n", formatTime(user.UpdatedAt))
 	fmt.Println("VIP")
@@ -163,11 +183,12 @@ func (c *adminVIPCLI) printUserVIP(user *mysqlmodel.User) error {
 	return nil
 }
 
-func (c *adminVIPCLI) grant(account string, lifetime bool, durationDays int64, reason string) error {
+func (c *adminVIPCLI) grant(account string, lifetime bool, durationDays int64, expiresAt int64, reason string) error {
 	req := &api.AdminGrantVIPRequest{
 		Account:      account,
 		Lifetime:     lifetime,
 		DurationDays: durationDays,
+		ExpiresAt:    expiresAt,
 		Operator:     c.operator,
 		Reason:       reason,
 	}
@@ -191,6 +212,44 @@ func (c *adminVIPCLI) grant(account string, lifetime bool, durationDays int64, r
 
 	fmt.Println()
 	fmt.Println("Grant success")
+	fmt.Printf("  uid:      %d\n", resp.GetUid())
+	fmt.Printf("  account:  %s\n", resp.GetAccount())
+	status := resp.GetStatus()
+	if status != nil {
+		fmt.Printf("  is_vip:   %t\n", status.GetIsVip())
+		fmt.Printf("  kind:     %s\n", status.GetKind().String())
+		fmt.Printf("  source:   %s\n", emptyDash(status.GetSource()))
+		fmt.Printf("  expires:  %s\n", formatUnix(status.GetExpiresAt()))
+	}
+	return nil
+}
+
+func (c *adminVIPCLI) revoke(account string, reason string) error {
+	req := &api.AdminRevokeVIPRequest{
+		Account:  account,
+		Operator: c.operator,
+		Reason:   reason,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	ctx, err := signedAdminContext(ctx, adminRevokeVIPMethod, req, c.adminSecret)
+	if err != nil {
+		return err
+	}
+
+	var trailer metadata.MD
+	resp, err := c.client.RevokeAdminVIP(ctx, req, grpc.Trailer(&trailer))
+	if err != nil {
+		return fmt.Errorf("revoke admin vip rpc failed: %w", err)
+	}
+	if code := trailerStatusCode(trailer); code != "" && code != "0" {
+		return fmt.Errorf("revoke admin vip failed with status_code=%s", code)
+	}
+
+	fmt.Println()
+	fmt.Println("Revoke success")
 	fmt.Printf("  uid:      %d\n", resp.GetUid())
 	fmt.Printf("  account:  %s\n", resp.GetAccount())
 	status := resp.GetStatus()
@@ -300,12 +359,174 @@ func trailerStatusCode(md metadata.MD) string {
 }
 
 func (c *adminVIPCLI) prompt(label string) (string, error) {
-	fmt.Print(label)
-	line, err := c.reader.ReadString('\n')
+	return c.reader.ReadLine(label)
+}
+
+type promptReader struct {
+	fallback *bufio.Reader
+}
+
+func newPromptReader() *promptReader {
+	return &promptReader{
+		fallback: bufio.NewReader(os.Stdin),
+	}
+}
+
+func (r *promptReader) ReadLine(label string) (string, error) {
+	fd := int(os.Stdin.Fd())
+	if !term.IsTerminal(fd) {
+		fmt.Print(label)
+		line, err := r.fallback.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(line), nil
+	}
+
+	oldState, err := term.MakeRaw(fd)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(line), nil
+	defer term.Restore(fd, oldState)
+
+	buffer := make([]rune, 0, 32)
+	cursor := 0
+	if _, err := fmt.Fprint(os.Stdout, label); err != nil {
+		return "", err
+	}
+
+	for {
+		b, err := readTerminalByte()
+		if err != nil {
+			return "", err
+		}
+
+		switch b {
+		case 3:
+			buffer = buffer[:0]
+			cursor = 0
+			if _, err := fmt.Fprintf(os.Stdout, "^C\r\n%s", label); err != nil {
+				return "", err
+			}
+		case '\r', '\n':
+			if _, err := fmt.Fprint(os.Stdout, "\r\n"); err != nil {
+				return "", err
+			}
+			return strings.TrimSpace(string(buffer)), nil
+		case 4:
+			if len(buffer) == 0 {
+				return "", io.EOF
+			}
+		case 1:
+			cursor = 0
+			if err := redrawPromptLine(label, buffer, cursor); err != nil {
+				return "", err
+			}
+		case 5:
+			cursor = len(buffer)
+			if err := redrawPromptLine(label, buffer, cursor); err != nil {
+				return "", err
+			}
+		case 8, 127:
+			if cursor > 0 {
+				buffer = append(buffer[:cursor-1], buffer[cursor:]...)
+				cursor--
+				if err := redrawPromptLine(label, buffer, cursor); err != nil {
+					return "", err
+				}
+			}
+		case 27:
+			if err := r.handleEscape(label, &buffer, &cursor); err != nil {
+				return "", err
+			}
+		default:
+			nextRune, err := readRuneFromFirstByte(b)
+			if err != nil {
+				return "", err
+			}
+			if nextRune < 32 {
+				continue
+			}
+			buffer = append(buffer, 0)
+			copy(buffer[cursor+1:], buffer[cursor:])
+			buffer[cursor] = nextRune
+			cursor++
+			if err := redrawPromptLine(label, buffer, cursor); err != nil {
+				return "", err
+			}
+		}
+	}
+}
+
+func (r *promptReader) handleEscape(label string, buffer *[]rune, cursor *int) error {
+	b, err := readTerminalByte()
+	if err != nil {
+		return err
+	}
+	if b != '[' {
+		return nil
+	}
+
+	b, err = readTerminalByte()
+	if err != nil {
+		return err
+	}
+	switch b {
+	case 'C':
+		if *cursor < len(*buffer) {
+			*cursor = *cursor + 1
+		}
+	case 'D':
+		if *cursor > 0 {
+			*cursor = *cursor - 1
+		}
+	case 'H':
+		*cursor = 0
+	case 'F':
+		*cursor = len(*buffer)
+	case '3':
+		tilde, err := readTerminalByte()
+		if err != nil {
+			return err
+		}
+		if tilde == '~' && *cursor < len(*buffer) {
+			*buffer = append((*buffer)[:*cursor], (*buffer)[*cursor+1:]...)
+		}
+	default:
+		return nil
+	}
+	return redrawPromptLine(label, *buffer, *cursor)
+}
+
+func readTerminalByte() (byte, error) {
+	var one [1]byte
+	_, err := os.Stdin.Read(one[:])
+	return one[0], err
+}
+
+func readRuneFromFirstByte(first byte) (rune, error) {
+	if first < utf8.RuneSelf {
+		return rune(first), nil
+	}
+
+	buffer := []byte{first}
+	for !utf8.FullRune(buffer) {
+		next, err := readTerminalByte()
+		if err != nil {
+			return 0, err
+		}
+		buffer = append(buffer, next)
+	}
+
+	value, _ := utf8.DecodeRune(buffer)
+	return value, nil
+}
+
+func redrawPromptLine(label string, buffer []rune, cursor int) error {
+	line := string(buffer)
+	prefix := string(buffer[:cursor])
+	_, err := fmt.Fprintf(os.Stdout, "\r%s%s\033[K\r%s%s", label, line, label, prefix)
+	return err
 }
 
 func newNonce() (string, error) {
@@ -354,6 +575,14 @@ func userNickname(uid uint64) string {
 		return ""
 	}
 	return profile.Nickname
+}
+
+func appleSignInContact(uid uint) string {
+	account, err := mysqlmodel.GetAppleSignInAccountByUserID(uid)
+	if err != nil || account == nil {
+		return ""
+	}
+	return strings.TrimSpace(account.Email)
 }
 
 func emptyDash(value string) string {

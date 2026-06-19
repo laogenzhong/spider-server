@@ -43,6 +43,7 @@ func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.Sign
 	if user.Password != password {
 		return session.Error(ctx, gamecode.SignPasswordWrong, &api.SignInResponse{})
 	}
+	_ = mysqlmodel.UpdateUserLastLoginDevice(user.ID, req.GetParams().GetDeviceModel(), req.GetParams().GetIosVersion(), time.Now())
 
 	token, _, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
 		sessionAttachAccountKey: user.Account,
@@ -86,6 +87,8 @@ func (s *SignApi) SignInWithApple(ctx context.Context, req *api.AppleSignInReque
 		EmailVerified:  claims.EmailVerified,
 		IsPrivateEmail: claims.IsPrivateEmail,
 		FullName:       req.GetFullName(),
+		DeviceModel:    req.GetDeviceModel(),
+		IOSVersion:     req.GetIosVersion(),
 	}
 	if tokenResp != nil {
 		profile.RefreshToken = tokenResp.RefreshToken
@@ -104,6 +107,7 @@ func (s *SignApi) SignInWithApple(ctx context.Context, req *api.AppleSignInReque
 	if _, err := mysqlmodel.EnsureFriendProfileWithDefaultNickname(uint64(user.ID), profile.FullName); err != nil {
 		return session.Error(ctx, gamecode.SignAppleAccountBindFailed, &api.SignInResponse{})
 	}
+	_ = mysqlmodel.UpdateUserLastLoginDevice(user.ID, profile.DeviceModel, profile.IOSVersion, time.Now())
 
 	token, _, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
 		sessionAttachAccountKey: user.Account,

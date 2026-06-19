@@ -506,6 +506,7 @@ func normalizeFriendAvatarSymbol(avatarSymbol string) string {
 }
 
 func parseDefaultFriendUserID(userID string) (uint64, bool) {
+	userID = strings.ToUpper(strings.TrimSpace(userID))
 	if !strings.HasPrefix(userID, "SP") {
 		return 0, false
 	}

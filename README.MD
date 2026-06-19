@@ -37,6 +37,7 @@ SPIDER_SERVER_CONFIG=config.server.yaml ./spider-server
 
 - `mysql.password`：服务器 MySQL 的 `spider` 用户密码。
 - `session.sign_secret`：换成一串足够长的随机字符串。
+- `admin.vip_grant_secret`：后台开通 VIP 的共享密钥；服务端和 `admin_vip_cli` 使用同一份配置时不需要额外传 `-secret`。
 - `apple_sign_in.private_key_path`：服务器上的 `AuthKey_5LFYA472TZ.p8` 路径。
 - `app_store.environment`：沙盒/TestFlight 联调用 `SANDBOX`，正式上架后改为 `PRODUCTION`。
 - `app_store.root_certificate_paths`：服务器上的 Apple 根证书路径。

@@ -29,6 +29,16 @@ func TestDefaultFriendProfileUsesFirstCustomAvatar(t *testing.T) {
 	}
 }
 
+func TestParseDefaultFriendUserIDIgnoresCase(t *testing.T) {
+	uid, ok := parseDefaultFriendUserID(" sp000008 ")
+	if !ok {
+		t.Fatalf("ok = false, want true")
+	}
+	if uid != 8 {
+		t.Fatalf("uid = %d, want 8", uid)
+	}
+}
+
 func TestNormalizeFriendAvatarSymbol(t *testing.T) {
 	tests := map[string]string{
 		"":                  "profile_avatar_1",

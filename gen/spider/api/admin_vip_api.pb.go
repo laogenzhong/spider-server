@@ -23,7 +23,7 @@ const (
 
 type AdminGrantVIPRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 用户账号，例如 sp000001。
+	// 用户账号或朋友展示 ID，例如 root 或 SP000008。
 	Account string `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
 	// true 表示永久 VIP；永久 VIP 会忽略 duration_days 和 expires_at。
 	Lifetime bool `protobuf:"varint,2,opt,name=lifetime,proto3" json:"lifetime,omitempty"`
@@ -171,6 +171,129 @@ func (x *AdminGrantVIPResponse) GetStatus() *VIPStatus {
 	return nil
 }
 
+type AdminRevokeVIPRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 用户账号或朋友展示 ID，例如 root 或 SP000008。
+	Account string `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	// 后台操作人标识，便于审计。
+	Operator string `protobuf:"bytes,2,opt,name=operator,proto3" json:"operator,omitempty"`
+	// 取消原因或备注。
+	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminRevokeVIPRequest) Reset() {
+	*x = AdminRevokeVIPRequest{}
+	mi := &file_primary_admin_vip_api_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminRevokeVIPRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminRevokeVIPRequest) ProtoMessage() {}
+
+func (x *AdminRevokeVIPRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_admin_vip_api_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminRevokeVIPRequest.ProtoReflect.Descriptor instead.
+func (*AdminRevokeVIPRequest) Descriptor() ([]byte, []int) {
+	return file_primary_admin_vip_api_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AdminRevokeVIPRequest) GetAccount() string {
+	if x != nil {
+		return x.Account
+	}
+	return ""
+}
+
+func (x *AdminRevokeVIPRequest) GetOperator() string {
+	if x != nil {
+		return x.Operator
+	}
+	return ""
+}
+
+func (x *AdminRevokeVIPRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type AdminRevokeVIPResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Uid           uint64                 `protobuf:"varint,1,opt,name=uid,proto3" json:"uid,omitempty"`
+	Account       string                 `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
+	Status        *VIPStatus             `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminRevokeVIPResponse) Reset() {
+	*x = AdminRevokeVIPResponse{}
+	mi := &file_primary_admin_vip_api_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminRevokeVIPResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminRevokeVIPResponse) ProtoMessage() {}
+
+func (x *AdminRevokeVIPResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_admin_vip_api_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminRevokeVIPResponse.ProtoReflect.Descriptor instead.
+func (*AdminRevokeVIPResponse) Descriptor() ([]byte, []int) {
+	return file_primary_admin_vip_api_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *AdminRevokeVIPResponse) GetUid() uint64 {
+	if x != nil {
+		return x.Uid
+	}
+	return 0
+}
+
+func (x *AdminRevokeVIPResponse) GetAccount() string {
+	if x != nil {
+		return x.Account
+	}
+	return ""
+}
+
+func (x *AdminRevokeVIPResponse) GetStatus() *VIPStatus {
+	if x != nil {
+		return x.Status
+	}
+	return nil
+}
+
 var File_primary_admin_vip_api_proto protoreflect.FileDescriptor
 
 const file_primary_admin_vip_api_proto_rawDesc = "" +
@@ -187,9 +310,18 @@ const file_primary_admin_vip_api_proto_rawDesc = "" +
 	"\x15AdminGrantVIPResponse\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x04R\x03uid\x12\x18\n" +
 	"\aaccount\x18\x02 \x01(\tR\aaccount\x12&\n" +
-	"\x06status\x18\x03 \x01(\v2\x0e.api.VIPStatusR\x06status2P\n" +
+	"\x06status\x18\x03 \x01(\v2\x0e.api.VIPStatusR\x06status\"e\n" +
+	"\x15AdminRevokeVIPRequest\x12\x18\n" +
+	"\aaccount\x18\x01 \x01(\tR\aaccount\x12\x1a\n" +
+	"\boperator\x18\x02 \x01(\tR\boperator\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"l\n" +
+	"\x16AdminRevokeVIPResponse\x12\x10\n" +
+	"\x03uid\x18\x01 \x01(\x04R\x03uid\x12\x18\n" +
+	"\aaccount\x18\x02 \x01(\tR\aaccount\x12&\n" +
+	"\x06status\x18\x03 \x01(\v2\x0e.api.VIPStatusR\x06status2\x9b\x01\n" +
 	"\vAdminVIPApi\x12A\n" +
-	"\bgrantVIP\x12\x19.api.AdminGrantVIPRequest\x1a\x1a.api.AdminGrantVIPResponseB\x10Z\x0espider/api;apib\x06proto3"
+	"\bgrantVIP\x12\x19.api.AdminGrantVIPRequest\x1a\x1a.api.AdminGrantVIPResponse\x12I\n" +
+	"\x0erevokeAdminVIP\x12\x1a.api.AdminRevokeVIPRequest\x1a\x1b.api.AdminRevokeVIPResponseB\x10Z\x0espider/api;apib\x06proto3"
 
 var (
 	file_primary_admin_vip_api_proto_rawDescOnce sync.Once
@@ -203,21 +335,26 @@ func file_primary_admin_vip_api_proto_rawDescGZIP() []byte {
 	return file_primary_admin_vip_api_proto_rawDescData
 }
 
-var file_primary_admin_vip_api_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_primary_admin_vip_api_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_primary_admin_vip_api_proto_goTypes = []any{
-	(*AdminGrantVIPRequest)(nil),  // 0: api.AdminGrantVIPRequest
-	(*AdminGrantVIPResponse)(nil), // 1: api.AdminGrantVIPResponse
-	(*VIPStatus)(nil),             // 2: api.VIPStatus
+	(*AdminGrantVIPRequest)(nil),   // 0: api.AdminGrantVIPRequest
+	(*AdminGrantVIPResponse)(nil),  // 1: api.AdminGrantVIPResponse
+	(*AdminRevokeVIPRequest)(nil),  // 2: api.AdminRevokeVIPRequest
+	(*AdminRevokeVIPResponse)(nil), // 3: api.AdminRevokeVIPResponse
+	(*VIPStatus)(nil),              // 4: api.VIPStatus
 }
 var file_primary_admin_vip_api_proto_depIdxs = []int32{
-	2, // 0: api.AdminGrantVIPResponse.status:type_name -> api.VIPStatus
-	0, // 1: api.AdminVIPApi.grantVIP:input_type -> api.AdminGrantVIPRequest
-	1, // 2: api.AdminVIPApi.grantVIP:output_type -> api.AdminGrantVIPResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	4, // 0: api.AdminGrantVIPResponse.status:type_name -> api.VIPStatus
+	4, // 1: api.AdminRevokeVIPResponse.status:type_name -> api.VIPStatus
+	0, // 2: api.AdminVIPApi.grantVIP:input_type -> api.AdminGrantVIPRequest
+	2, // 3: api.AdminVIPApi.revokeAdminVIP:input_type -> api.AdminRevokeVIPRequest
+	1, // 4: api.AdminVIPApi.grantVIP:output_type -> api.AdminGrantVIPResponse
+	3, // 5: api.AdminVIPApi.revokeAdminVIP:output_type -> api.AdminRevokeVIPResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_primary_admin_vip_api_proto_init() }
@@ -232,7 +369,7 @@ func file_primary_admin_vip_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_primary_admin_vip_api_proto_rawDesc), len(file_primary_admin_vip_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

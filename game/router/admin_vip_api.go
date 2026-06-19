@@ -57,6 +57,39 @@ func (s *AdminVIPApi) GrantVIP(ctx context.Context, req *pb.AdminGrantVIPRequest
 	}, nil
 }
 
+func (s *AdminVIPApi) RevokeAdminVIP(ctx context.Context, req *pb.AdminRevokeVIPRequest) (*pb.AdminRevokeVIPResponse, error) {
+	if !validAdminSecret(ctx) {
+		return session.Error(ctx, gamecode.AdminVIPSecretInvalid, &pb.AdminRevokeVIPResponse{})
+	}
+
+	account := strings.TrimSpace(req.GetAccount())
+	if account == "" {
+		return session.Error(ctx, gamecode.AdminVIPAccountEmpty, &pb.AdminRevokeVIPResponse{})
+	}
+
+	now := time.Now()
+	user, status, err := mysqlmodel.RevokeAdminVIPByAccount(
+		account,
+		req.GetOperator(),
+		req.GetReason(),
+		now,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, mysqlmodel.ErrAdminVIPAccountNotFound):
+			return session.Error(ctx, gamecode.AdminVIPAccountNotFound, &pb.AdminRevokeVIPResponse{})
+		default:
+			return session.Error(ctx, gamecode.AdminVIPRevokeFailed, &pb.AdminRevokeVIPResponse{})
+		}
+	}
+
+	return &pb.AdminRevokeVIPResponse{
+		Uid:     uint64(user.ID),
+		Account: user.Account,
+		Status:  toPBVIPStatus(status, now),
+	}, nil
+}
+
 func validAdminSecret(ctx context.Context) bool {
 	cfg, err := appconfig.LoadDefault()
 	if err != nil {

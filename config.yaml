@@ -68,8 +68,8 @@ app_store:
   reconcile_max_pages: 10
 
 admin:
-  # 后台开通 VIP 的共享密钥。留空时 AdminVIPApi.grantVIP 不可用。
-  vip_grant_secret: ""
+  # 后台开通 VIP 的共享密钥。admin_vip_cli 默认读取这里，留空时 AdminVIPApi.grantVIP 不可用。
+  vip_grant_secret: "33cd455954929525a026ad9b53721021dc2f6b61c01de86f6158f189dd0d66db"
 
 logger:
   level: "info"

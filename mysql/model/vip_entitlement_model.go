@@ -303,6 +303,19 @@ func GetCurrentVIPStatus(uid uint64, now time.Time) (CurrentVIPStatus, error) {
 	return currentVIPStatusFromEntitlement(entitlement, now), nil
 }
 
+func GetUserByAdminVIPIdentifier(identifier string) (*User, error) {
+	identifier = strings.TrimSpace(identifier)
+	if identifier == "" {
+		return nil, fmt.Errorf("identifier is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+	return findUserByAdminVIPIdentifier(db, identifier, false)
+}
+
 func GrantAdminVIPByAccount(
 	account string,
 	lifetime bool,
@@ -346,19 +359,14 @@ func GrantAdminVIPByAccount(
 	var user *User
 	var status CurrentVIPStatus
 	err := config.WithTx(func(db *gorm.DB) error {
-		foundUser := &User{}
-		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("account = ?", account).
-			First(foundUser).Error; err != nil {
-			if isRecordNotFound(err) {
-				return ErrAdminVIPAccountNotFound
-			}
+		foundUser, err := findUserByAdminVIPIdentifier(db, account, true)
+		if err != nil {
 			return err
 		}
 		user = foundUser
 
 		entitlement := &UserEntitlement{}
-		err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+		err = db.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("uid = ? AND entitlement = ?", uint64(foundUser.ID), UserEntitlementVIP).
 			First(entitlement).Error
 		if err != nil {
@@ -395,6 +403,115 @@ func GrantAdminVIPByAccount(
 	}
 
 	return user, status, nil
+}
+
+func RevokeAdminVIPByAccount(account string, operator string, reason string, now time.Time) (*User, CurrentVIPStatus, error) {
+	account = strings.TrimSpace(account)
+	if account == "" {
+		return nil, CurrentVIPStatus{}, fmt.Errorf("account is empty")
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	operator = truncateString(strings.TrimSpace(operator), 64)
+	reason = truncateString(strings.TrimSpace(reason), 255)
+
+	var user *User
+	var status CurrentVIPStatus
+	err := config.WithTx(func(db *gorm.DB) error {
+		foundUser, err := findUserByAdminVIPIdentifier(db, account, true)
+		if err != nil {
+			return err
+		}
+		user = foundUser
+
+		entitlement := &UserEntitlement{}
+		err = db.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("uid = ? AND entitlement = ?", uint64(foundUser.ID), UserEntitlementVIP).
+			First(entitlement).Error
+		if err != nil {
+			if isRecordNotFound(err) {
+				status = CurrentVIPStatus{Kind: VIPKindNone}
+				return nil
+			}
+			return err
+		}
+
+		entitlement.AdminGranted = false
+		entitlement.AdminGrantKind = VIPKindNone
+		entitlement.AdminGrantExpiresAt = nil
+		entitlement.AdminGrantOperator = operator
+		entitlement.AdminGrantReason = reason
+		entitlement.AdminGrantedAt = nil
+		if err := db.Save(entitlement).Error; err != nil {
+			return err
+		}
+
+		status = currentVIPStatusFromEntitlement(entitlement, now)
+		return nil
+	})
+	if err != nil {
+		return nil, CurrentVIPStatus{}, err
+	}
+
+	return user, status, nil
+}
+
+func findUserByAdminVIPIdentifier(db *gorm.DB, identifier string, forUpdate bool) (*User, error) {
+	identifier = strings.TrimSpace(identifier)
+	if identifier == "" {
+		return nil, ErrAdminVIPAccountNotFound
+	}
+
+	userQuery := db
+	if forUpdate {
+		userQuery = userQuery.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+
+	user := &User{}
+	err := userQuery.Where("account = ?", identifier).First(user).Error
+	if err == nil {
+		return user, nil
+	}
+	if !isRecordNotFound(err) {
+		return nil, err
+	}
+
+	friendUserID := strings.ToUpper(identifier)
+	profile := &FriendProfileRecord{}
+	err = db.Where("user_id = ?", friendUserID).First(profile).Error
+	if err == nil {
+		return findUserByID(db, profile.UID, forUpdate)
+	}
+	if !isRecordNotFound(err) {
+		return nil, err
+	}
+
+	if uid, ok := parseDefaultFriendUserID(friendUserID); ok {
+		return findUserByID(db, uid, forUpdate)
+	}
+	return nil, ErrAdminVIPAccountNotFound
+}
+
+func findUserByID(db *gorm.DB, uid uint64, forUpdate bool) (*User, error) {
+	if uid == 0 {
+		return nil, ErrAdminVIPAccountNotFound
+	}
+
+	query := db
+	if forUpdate {
+		query = query.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+
+	user := &User{}
+	if err := query.Where("id = ?", uid).First(user).Error; err != nil {
+		if isRecordNotFound(err) {
+			return nil, ErrAdminVIPAccountNotFound
+		}
+		return nil, err
+	}
+	return user, nil
 }
 
 func ListAppleTransactionsForAppStoreReconcile(limit int) ([]AppleTransactionReconcileRef, error) {

@@ -3,20 +3,26 @@ package mysqlmodel
 import (
 	"fmt"
 	"spider-server/mysql/config"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
 )
 
 type User struct {
-	ID                 uint   `gorm:"primaryKey;autoIncrement"`
-	Account            string `gorm:"size:64;uniqueIndex;not null"`
-	Password           string `gorm:"size:255;not null"`
-	LastAppEnterAt     *time.Time
-	LastSystemLanguage string `gorm:"size:64"`
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	DeletedAt          gorm.DeletedAt `gorm:"index"`
+	ID                   uint   `gorm:"primaryKey;autoIncrement"`
+	Account              string `gorm:"size:64;uniqueIndex;not null"`
+	Password             string `gorm:"size:255;not null"`
+	LastAppEnterAt       *time.Time
+	LastSystemLanguage   string `gorm:"size:64"`
+	RegisterDeviceModel  string `gorm:"size:64"`
+	RegisterIOSVersion   string `gorm:"size:32"`
+	LastLoginDeviceModel string `gorm:"size:64"`
+	LastLoginIOSVersion  string `gorm:"size:32"`
+	LastLoginAt          *time.Time
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	DeletedAt            gorm.DeletedAt `gorm:"index"`
 }
 
 func InitUserTable() error {
@@ -34,6 +40,28 @@ func CreateUser(account string, password string) (*User, error) {
 	user := &User{
 		Account:  account,
 		Password: password,
+	}
+
+	if err := config.Create(user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func CreateUserWithRegistrationDevice(account string, password string, deviceModel string, iosVersion string) (*User, error) {
+	if account == "" {
+		return nil, fmt.Errorf("account is empty")
+	}
+	if password == "" {
+		return nil, fmt.Errorf("password is empty")
+	}
+
+	user := &User{
+		Account:             account,
+		Password:            password,
+		RegisterDeviceModel: trimDeviceField(deviceModel, 64),
+		RegisterIOSVersion:  trimDeviceField(iosVersion, 32),
 	}
 
 	if err := config.Create(user); err != nil {
@@ -72,6 +100,39 @@ func UpdateUserPasswordByID(id uint, password string) error {
 	return db.Model(&User{}).Where("id = ?", id).Update("password", password).Error
 }
 
+func UpdateUserLastLoginDevice(id uint, deviceModel string, iosVersion string, loggedInAt time.Time) error {
+	if id == 0 {
+		return fmt.Errorf("id is empty")
+	}
+	if loggedInAt.IsZero() {
+		loggedInAt = time.Now()
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return err
+	}
+
+	updates := map[string]any{
+		"last_login_at": loggedInAt,
+	}
+	if deviceModel != "" {
+		updates["last_login_device_model"] = trimDeviceField(deviceModel, 64)
+	}
+	if iosVersion != "" {
+		updates["last_login_ios_version"] = trimDeviceField(iosVersion, 32)
+	}
+
+	result := db.Model(&User{}).Where("id = ?", id).Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
 func UpdateUserLastAppEnter(id uint, enteredAt time.Time, systemLanguage string) error {
 	if id == 0 {
 		return fmt.Errorf("id is empty")
@@ -100,6 +161,18 @@ func UpdateUserLastAppEnter(id uint, enteredAt time.Time, systemLanguage string)
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+func trimDeviceField(value string, maxLen int) string {
+	value = strings.TrimSpace(value)
+	if maxLen <= 0 {
+		return value
+	}
+	runes := []rune(value)
+	if len(runes) <= maxLen {
+		return value
+	}
+	return string(runes[:maxLen])
 }
 
 func MarkUserAccountDeletedByID(id uint) error {

@@ -9,10 +9,12 @@ import "primary/purchase.proto";
 service AdminVIPApi {
   // 后台直接为指定账号开通 VIP，不创建订单或支付记录。
   rpc grantVIP(AdminGrantVIPRequest) returns (AdminGrantVIPResponse);
+  // 取消后台赠送的 VIP，不影响用户自行购买的 Apple VIP。
+  rpc revokeAdminVIP(AdminRevokeVIPRequest) returns (AdminRevokeVIPResponse);
 }
 
 message AdminGrantVIPRequest {
-  // 用户账号，例如 sp000001。
+  // 用户账号或朋友展示 ID，例如 root 或 SP000008。
   string account = 1;
   // true 表示永久 VIP；永久 VIP 会忽略 duration_days 和 expires_at。
   bool lifetime = 2;
@@ -27,6 +29,21 @@ message AdminGrantVIPRequest {
 }
 
 message AdminGrantVIPResponse {
+  uint64 uid = 1;
+  string account = 2;
+  VIPStatus status = 3;
+}
+
+message AdminRevokeVIPRequest {
+  // 用户账号或朋友展示 ID，例如 root 或 SP000008。
+  string account = 1;
+  // 后台操作人标识，便于审计。
+  string operator = 2;
+  // 取消原因或备注。
+  string reason = 3;
+}
+
+message AdminRevokeVIPResponse {
   uint64 uid = 1;
   string account = 2;
   VIPStatus status = 3;

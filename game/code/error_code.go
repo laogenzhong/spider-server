@@ -370,4 +370,7 @@ const (
 
 	// AdminVIPGrantFailed 后台 VIP 开通失败。
 	AdminVIPGrantFailed int = 70018
+
+	// AdminVIPRevokeFailed 后台 VIP 取消失败。
+	AdminVIPRevokeFailed int = 70019
 )

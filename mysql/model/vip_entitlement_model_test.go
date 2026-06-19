@@ -144,6 +144,34 @@ func TestCurrentVIPStatusFromEntitlementPrefersActiveAdminGrant(t *testing.T) {
 	}
 }
 
+func TestCurrentVIPStatusFromEntitlementKeepsAppleAfterAdminGrantRevoked(t *testing.T) {
+	now := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+	appleExpiresAt := now.Add(30 * 24 * time.Hour)
+	entitlement := &UserEntitlement{
+		UID:                 7,
+		Entitlement:         UserEntitlementVIP,
+		Kind:                VIPKindMonthly,
+		Active:              true,
+		ExpiresAt:           &appleExpiresAt,
+		ProductID:           "hh.spider.vip.monthly",
+		Source:              UserEntitlementSourceApple,
+		AdminGranted:        false,
+		AdminGrantKind:      VIPKindNone,
+		AdminGrantExpiresAt: nil,
+	}
+
+	status := currentVIPStatusFromEntitlement(entitlement, now)
+	if !status.IsVIP {
+		t.Fatalf("IsVIP = false, want true")
+	}
+	if status.Source != UserEntitlementSourceApple {
+		t.Fatalf("Source = %q, want %q", status.Source, UserEntitlementSourceApple)
+	}
+	if status.ExpiresAt != entitlement.ExpiresAt {
+		t.Fatalf("ExpiresAt = %v, want %v", status.ExpiresAt, entitlement.ExpiresAt)
+	}
+}
+
 func timePtr(t time.Time) *time.Time {
 	return &t
 }
