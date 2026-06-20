@@ -74,6 +74,59 @@ func (TrainingTagType) EnumDescriptor() ([]byte, []int) {
 	return file_primary_training_tag_proto_rawDescGZIP(), []int{0}
 }
 
+// WorkoutTagBindingSource 表示训练标签绑定来源设备。
+type WorkoutTagBindingSource int32
+
+const (
+	// 未知来源，用于兼容旧客户端或历史数据。
+	WorkoutTagBindingSource_WORKOUT_TAG_BINDING_SOURCE_UNKNOWN WorkoutTagBindingSource = 0
+	// iPhone 客户端绑定。
+	WorkoutTagBindingSource_WORKOUT_TAG_BINDING_SOURCE_IPHONE WorkoutTagBindingSource = 1
+	// Apple Watch 客户端绑定。
+	WorkoutTagBindingSource_WORKOUT_TAG_BINDING_SOURCE_WATCH WorkoutTagBindingSource = 2
+)
+
+// Enum value maps for WorkoutTagBindingSource.
+var (
+	WorkoutTagBindingSource_name = map[int32]string{
+		0: "WORKOUT_TAG_BINDING_SOURCE_UNKNOWN",
+		1: "WORKOUT_TAG_BINDING_SOURCE_IPHONE",
+		2: "WORKOUT_TAG_BINDING_SOURCE_WATCH",
+	}
+	WorkoutTagBindingSource_value = map[string]int32{
+		"WORKOUT_TAG_BINDING_SOURCE_UNKNOWN": 0,
+		"WORKOUT_TAG_BINDING_SOURCE_IPHONE":  1,
+		"WORKOUT_TAG_BINDING_SOURCE_WATCH":   2,
+	}
+)
+
+func (x WorkoutTagBindingSource) Enum() *WorkoutTagBindingSource {
+	p := new(WorkoutTagBindingSource)
+	*p = x
+	return p
+}
+
+func (x WorkoutTagBindingSource) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WorkoutTagBindingSource) Descriptor() protoreflect.EnumDescriptor {
+	return file_primary_training_tag_proto_enumTypes[1].Descriptor()
+}
+
+func (WorkoutTagBindingSource) Type() protoreflect.EnumType {
+	return &file_primary_training_tag_proto_enumTypes[1]
+}
+
+func (x WorkoutTagBindingSource) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WorkoutTagBindingSource.Descriptor instead.
+func (WorkoutTagBindingSource) EnumDescriptor() ([]byte, []int) {
+	return file_primary_training_tag_proto_rawDescGZIP(), []int{1}
+}
+
 // TrainingTag 表示一个可被用户选择的训练标签定义。
 type TrainingTag struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -208,6 +261,8 @@ type WorkoutTagBinding struct {
 	UpdatedAt int64 `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	// 该标签在本次训练热量中的占比，范围 0-100；为空或 0 时客户端可按标签数均分。
 	EnergyPercent float64 `protobuf:"fixed64,11,opt,name=energy_percent,json=energyPercent,proto3" json:"energy_percent,omitempty"`
+	// 绑定来源设备，用于区分手机绑定和手表绑定。
+	BindingSource WorkoutTagBindingSource `protobuf:"varint,12,opt,name=binding_source,json=bindingSource,proto3,enum=api.WorkoutTagBindingSource" json:"binding_source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -317,6 +372,13 @@ func (x *WorkoutTagBinding) GetEnergyPercent() float64 {
 		return x.EnergyPercent
 	}
 	return 0
+}
+
+func (x *WorkoutTagBinding) GetBindingSource() WorkoutTagBindingSource {
+	if x != nil {
+		return x.BindingSource
+	}
+	return WorkoutTagBindingSource_WORKOUT_TAG_BINDING_SOURCE_UNKNOWN
 }
 
 // WorkoutLocation 表示某次训练的单点位置。
@@ -1139,8 +1201,10 @@ type SaveWorkoutTagsRequest struct {
 	TagIds []uint64 `protobuf:"varint,5,rep,packed,name=tag_ids,json=tagIds,proto3" json:"tag_ids,omitempty"`
 	// 与 tag_ids 一一对应的热量占比，整体约等于 100；未传时服务端可按标签数量均分。
 	EnergyPercentages []float64 `protobuf:"fixed64,6,rep,packed,name=energy_percentages,json=energyPercentages,proto3" json:"energy_percentages,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// 本次绑定来源设备；旧客户端不传时服务端按手机来源兼容。
+	BindingSource WorkoutTagBindingSource `protobuf:"varint,7,opt,name=binding_source,json=bindingSource,proto3,enum=api.WorkoutTagBindingSource" json:"binding_source,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SaveWorkoutTagsRequest) Reset() {
@@ -1213,6 +1277,13 @@ func (x *SaveWorkoutTagsRequest) GetEnergyPercentages() []float64 {
 		return x.EnergyPercentages
 	}
 	return nil
+}
+
+func (x *SaveWorkoutTagsRequest) GetBindingSource() WorkoutTagBindingSource {
+	if x != nil {
+		return x.BindingSource
+	}
+	return WorkoutTagBindingSource_WORKOUT_TAG_BINDING_SOURCE_UNKNOWN
 }
 
 // SaveWorkoutTagsResponse 表示保存某次训练标签后的返回结果。
@@ -2330,7 +2401,7 @@ const file_primary_training_tag_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\a \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\x03R\tupdatedAt\"\xe2\x02\n" +
+	"updated_at\x18\b \x01(\x03R\tupdatedAt\"\xa7\x03\n" +
 	"\x11WorkoutTagBinding\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\x04R\x03uid\x12!\n" +
@@ -2345,7 +2416,8 @@ const file_primary_training_tag_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\n" +
 	" \x01(\x03R\tupdatedAt\x12%\n" +
-	"\x0eenergy_percent\x18\v \x01(\x01R\renergyPercent\"\xe2\x02\n" +
+	"\x0eenergy_percent\x18\v \x01(\x01R\renergyPercent\x12C\n" +
+	"\x0ebinding_source\x18\f \x01(\x0e2\x1c.api.WorkoutTagBindingSourceR\rbindingSource\"\xe2\x02\n" +
 	"\x0fWorkoutLocation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\x04R\x03uid\x12!\n" +
@@ -2403,14 +2475,15 @@ const file_primary_training_tag_proto_rawDesc = "" +
 	"\n" +
 	"sort_order\x18\x02 \x01(\x05R\tsortOrder\"C\n" +
 	"\x1bReorderTrainingTagsResponse\x12$\n" +
-	"\x04tags\x18\x01 \x03(\v2\x10.api.TrainingTagR\x04tags\"\xf6\x01\n" +
+	"\x04tags\x18\x01 \x03(\v2\x10.api.TrainingTagR\x04tags\"\xbb\x02\n" +
 	"\x16SaveWorkoutTagsRequest\x12!\n" +
 	"\fworkout_uuid\x18\x01 \x01(\tR\vworkoutUuid\x12(\n" +
 	"\x10workout_start_at\x18\x02 \x01(\x03R\x0eworkoutStartAt\x12$\n" +
 	"\x0eworkout_end_at\x18\x03 \x01(\x03R\fworkoutEndAt\x12!\n" +
 	"\fworkout_type\x18\x04 \x01(\tR\vworkoutType\x12\x17\n" +
 	"\atag_ids\x18\x05 \x03(\x04R\x06tagIds\x12-\n" +
-	"\x12energy_percentages\x18\x06 \x03(\x01R\x11energyPercentages\"M\n" +
+	"\x12energy_percentages\x18\x06 \x03(\x01R\x11energyPercentages\x12C\n" +
+	"\x0ebinding_source\x18\a \x01(\x0e2\x1c.api.WorkoutTagBindingSourceR\rbindingSource\"M\n" +
 	"\x17SaveWorkoutTagsResponse\x122\n" +
 	"\bbindings\x18\x01 \x03(\v2\x16.api.WorkoutTagBindingR\bbindings\"\x8a\x01\n" +
 	"\x15GetWorkoutTagsRequest\x12!\n" +
@@ -2481,7 +2554,11 @@ const file_primary_training_tag_proto_rawDesc = "" +
 	"\x0fTrainingTagType\x12\x1d\n" +
 	"\x19TRAINING_TAG_TYPE_UNKNOWN\x10\x00\x12\x1c\n" +
 	"\x18TRAINING_TAG_TYPE_SYSTEM\x10\x01\x12\x1c\n" +
-	"\x18TRAINING_TAG_TYPE_CUSTOM\x10\x022\xac\t\n" +
+	"\x18TRAINING_TAG_TYPE_CUSTOM\x10\x02*\x8e\x01\n" +
+	"\x17WorkoutTagBindingSource\x12&\n" +
+	"\"WORKOUT_TAG_BINDING_SOURCE_UNKNOWN\x10\x00\x12%\n" +
+	"!WORKOUT_TAG_BINDING_SOURCE_IPHONE\x10\x01\x12$\n" +
+	" WORKOUT_TAG_BINDING_SOURCE_WATCH\x10\x022\xac\t\n" +
 	"\x12TrainingTagService\x12R\n" +
 	"\x11CreateTrainingTag\x12\x1d.api.CreateTrainingTagRequest\x1a\x1e.api.CreateTrainingTagResponse\x12R\n" +
 	"\x11UpdateTrainingTag\x12\x1d.api.UpdateTrainingTagRequest\x1a\x1e.api.UpdateTrainingTagResponse\x12R\n" +
@@ -2510,95 +2587,98 @@ func file_primary_training_tag_proto_rawDescGZIP() []byte {
 	return file_primary_training_tag_proto_rawDescData
 }
 
-var file_primary_training_tag_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_primary_training_tag_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_primary_training_tag_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_primary_training_tag_proto_goTypes = []any{
 	(TrainingTagType)(0),                 // 0: api.TrainingTagType
-	(*TrainingTag)(nil),                  // 1: api.TrainingTag
-	(*WorkoutTagBinding)(nil),            // 2: api.WorkoutTagBinding
-	(*WorkoutLocation)(nil),              // 3: api.WorkoutLocation
-	(*WorkoutNote)(nil),                  // 4: api.WorkoutNote
-	(*CreateTrainingTagRequest)(nil),     // 5: api.CreateTrainingTagRequest
-	(*CreateTrainingTagResponse)(nil),    // 6: api.CreateTrainingTagResponse
-	(*UpdateTrainingTagRequest)(nil),     // 7: api.UpdateTrainingTagRequest
-	(*UpdateTrainingTagResponse)(nil),    // 8: api.UpdateTrainingTagResponse
-	(*DeleteTrainingTagRequest)(nil),     // 9: api.DeleteTrainingTagRequest
-	(*DeleteTrainingTagResponse)(nil),    // 10: api.DeleteTrainingTagResponse
-	(*ListTrainingTagsRequest)(nil),      // 11: api.ListTrainingTagsRequest
-	(*ListTrainingTagsResponse)(nil),     // 12: api.ListTrainingTagsResponse
-	(*ReorderTrainingTagsRequest)(nil),   // 13: api.ReorderTrainingTagsRequest
-	(*TrainingTagSortItem)(nil),          // 14: api.TrainingTagSortItem
-	(*ReorderTrainingTagsResponse)(nil),  // 15: api.ReorderTrainingTagsResponse
-	(*SaveWorkoutTagsRequest)(nil),       // 16: api.SaveWorkoutTagsRequest
-	(*SaveWorkoutTagsResponse)(nil),      // 17: api.SaveWorkoutTagsResponse
-	(*GetWorkoutTagsRequest)(nil),        // 18: api.GetWorkoutTagsRequest
-	(*GetWorkoutTagsResponse)(nil),       // 19: api.GetWorkoutTagsResponse
-	(*DeleteWorkoutTagsRequest)(nil),     // 20: api.DeleteWorkoutTagsRequest
-	(*DeleteWorkoutTagsResponse)(nil),    // 21: api.DeleteWorkoutTagsResponse
-	(*SaveWorkoutLocationRequest)(nil),   // 22: api.SaveWorkoutLocationRequest
-	(*SaveWorkoutLocationResponse)(nil),  // 23: api.SaveWorkoutLocationResponse
-	(*GetWorkoutLocationRequest)(nil),    // 24: api.GetWorkoutLocationRequest
-	(*GetWorkoutLocationResponse)(nil),   // 25: api.GetWorkoutLocationResponse
-	(*SaveWorkoutNoteRequest)(nil),       // 26: api.SaveWorkoutNoteRequest
-	(*SaveWorkoutNoteResponse)(nil),      // 27: api.SaveWorkoutNoteResponse
-	(*GetWorkoutNoteRequest)(nil),        // 28: api.GetWorkoutNoteRequest
-	(*GetWorkoutNoteResponse)(nil),       // 29: api.GetWorkoutNoteResponse
-	(*ListDailyWorkoutTagsRequest)(nil),  // 30: api.ListDailyWorkoutTagsRequest
-	(*DailyWorkoutTags)(nil),             // 31: api.DailyWorkoutTags
-	(*ListDailyWorkoutTagsResponse)(nil), // 32: api.ListDailyWorkoutTagsResponse
-	(*ListRangeWorkoutTagsRequest)(nil),  // 33: api.ListRangeWorkoutTagsRequest
-	(*DailyTrainingTagSummary)(nil),      // 34: api.DailyTrainingTagSummary
-	(*ListRangeWorkoutTagsResponse)(nil), // 35: api.ListRangeWorkoutTagsResponse
+	(WorkoutTagBindingSource)(0),         // 1: api.WorkoutTagBindingSource
+	(*TrainingTag)(nil),                  // 2: api.TrainingTag
+	(*WorkoutTagBinding)(nil),            // 3: api.WorkoutTagBinding
+	(*WorkoutLocation)(nil),              // 4: api.WorkoutLocation
+	(*WorkoutNote)(nil),                  // 5: api.WorkoutNote
+	(*CreateTrainingTagRequest)(nil),     // 6: api.CreateTrainingTagRequest
+	(*CreateTrainingTagResponse)(nil),    // 7: api.CreateTrainingTagResponse
+	(*UpdateTrainingTagRequest)(nil),     // 8: api.UpdateTrainingTagRequest
+	(*UpdateTrainingTagResponse)(nil),    // 9: api.UpdateTrainingTagResponse
+	(*DeleteTrainingTagRequest)(nil),     // 10: api.DeleteTrainingTagRequest
+	(*DeleteTrainingTagResponse)(nil),    // 11: api.DeleteTrainingTagResponse
+	(*ListTrainingTagsRequest)(nil),      // 12: api.ListTrainingTagsRequest
+	(*ListTrainingTagsResponse)(nil),     // 13: api.ListTrainingTagsResponse
+	(*ReorderTrainingTagsRequest)(nil),   // 14: api.ReorderTrainingTagsRequest
+	(*TrainingTagSortItem)(nil),          // 15: api.TrainingTagSortItem
+	(*ReorderTrainingTagsResponse)(nil),  // 16: api.ReorderTrainingTagsResponse
+	(*SaveWorkoutTagsRequest)(nil),       // 17: api.SaveWorkoutTagsRequest
+	(*SaveWorkoutTagsResponse)(nil),      // 18: api.SaveWorkoutTagsResponse
+	(*GetWorkoutTagsRequest)(nil),        // 19: api.GetWorkoutTagsRequest
+	(*GetWorkoutTagsResponse)(nil),       // 20: api.GetWorkoutTagsResponse
+	(*DeleteWorkoutTagsRequest)(nil),     // 21: api.DeleteWorkoutTagsRequest
+	(*DeleteWorkoutTagsResponse)(nil),    // 22: api.DeleteWorkoutTagsResponse
+	(*SaveWorkoutLocationRequest)(nil),   // 23: api.SaveWorkoutLocationRequest
+	(*SaveWorkoutLocationResponse)(nil),  // 24: api.SaveWorkoutLocationResponse
+	(*GetWorkoutLocationRequest)(nil),    // 25: api.GetWorkoutLocationRequest
+	(*GetWorkoutLocationResponse)(nil),   // 26: api.GetWorkoutLocationResponse
+	(*SaveWorkoutNoteRequest)(nil),       // 27: api.SaveWorkoutNoteRequest
+	(*SaveWorkoutNoteResponse)(nil),      // 28: api.SaveWorkoutNoteResponse
+	(*GetWorkoutNoteRequest)(nil),        // 29: api.GetWorkoutNoteRequest
+	(*GetWorkoutNoteResponse)(nil),       // 30: api.GetWorkoutNoteResponse
+	(*ListDailyWorkoutTagsRequest)(nil),  // 31: api.ListDailyWorkoutTagsRequest
+	(*DailyWorkoutTags)(nil),             // 32: api.DailyWorkoutTags
+	(*ListDailyWorkoutTagsResponse)(nil), // 33: api.ListDailyWorkoutTagsResponse
+	(*ListRangeWorkoutTagsRequest)(nil),  // 34: api.ListRangeWorkoutTagsRequest
+	(*DailyTrainingTagSummary)(nil),      // 35: api.DailyTrainingTagSummary
+	(*ListRangeWorkoutTagsResponse)(nil), // 36: api.ListRangeWorkoutTagsResponse
 }
 var file_primary_training_tag_proto_depIdxs = []int32{
 	0,  // 0: api.TrainingTag.type:type_name -> api.TrainingTagType
-	1,  // 1: api.CreateTrainingTagResponse.tag:type_name -> api.TrainingTag
-	1,  // 2: api.UpdateTrainingTagResponse.tag:type_name -> api.TrainingTag
-	1,  // 3: api.ListTrainingTagsResponse.tags:type_name -> api.TrainingTag
-	14, // 4: api.ReorderTrainingTagsRequest.items:type_name -> api.TrainingTagSortItem
-	1,  // 5: api.ReorderTrainingTagsResponse.tags:type_name -> api.TrainingTag
-	2,  // 6: api.SaveWorkoutTagsResponse.bindings:type_name -> api.WorkoutTagBinding
-	2,  // 7: api.GetWorkoutTagsResponse.bindings:type_name -> api.WorkoutTagBinding
-	3,  // 8: api.SaveWorkoutLocationResponse.location:type_name -> api.WorkoutLocation
-	3,  // 9: api.GetWorkoutLocationResponse.location:type_name -> api.WorkoutLocation
-	4,  // 10: api.SaveWorkoutNoteResponse.note:type_name -> api.WorkoutNote
-	4,  // 11: api.GetWorkoutNoteResponse.note:type_name -> api.WorkoutNote
-	2,  // 12: api.DailyWorkoutTags.bindings:type_name -> api.WorkoutTagBinding
-	31, // 13: api.ListDailyWorkoutTagsResponse.workouts:type_name -> api.DailyWorkoutTags
-	34, // 14: api.ListRangeWorkoutTagsResponse.days:type_name -> api.DailyTrainingTagSummary
-	5,  // 15: api.TrainingTagService.CreateTrainingTag:input_type -> api.CreateTrainingTagRequest
-	7,  // 16: api.TrainingTagService.UpdateTrainingTag:input_type -> api.UpdateTrainingTagRequest
-	9,  // 17: api.TrainingTagService.DeleteTrainingTag:input_type -> api.DeleteTrainingTagRequest
-	11, // 18: api.TrainingTagService.ListTrainingTags:input_type -> api.ListTrainingTagsRequest
-	13, // 19: api.TrainingTagService.ReorderTrainingTags:input_type -> api.ReorderTrainingTagsRequest
-	16, // 20: api.TrainingTagService.SaveWorkoutTags:input_type -> api.SaveWorkoutTagsRequest
-	18, // 21: api.TrainingTagService.GetWorkoutTags:input_type -> api.GetWorkoutTagsRequest
-	20, // 22: api.TrainingTagService.DeleteWorkoutTags:input_type -> api.DeleteWorkoutTagsRequest
-	22, // 23: api.TrainingTagService.SaveWorkoutLocation:input_type -> api.SaveWorkoutLocationRequest
-	24, // 24: api.TrainingTagService.GetWorkoutLocation:input_type -> api.GetWorkoutLocationRequest
-	26, // 25: api.TrainingTagService.SaveWorkoutNote:input_type -> api.SaveWorkoutNoteRequest
-	28, // 26: api.TrainingTagService.GetWorkoutNote:input_type -> api.GetWorkoutNoteRequest
-	30, // 27: api.TrainingTagService.ListDailyWorkoutTags:input_type -> api.ListDailyWorkoutTagsRequest
-	33, // 28: api.TrainingTagService.ListRangeWorkoutTags:input_type -> api.ListRangeWorkoutTagsRequest
-	6,  // 29: api.TrainingTagService.CreateTrainingTag:output_type -> api.CreateTrainingTagResponse
-	8,  // 30: api.TrainingTagService.UpdateTrainingTag:output_type -> api.UpdateTrainingTagResponse
-	10, // 31: api.TrainingTagService.DeleteTrainingTag:output_type -> api.DeleteTrainingTagResponse
-	12, // 32: api.TrainingTagService.ListTrainingTags:output_type -> api.ListTrainingTagsResponse
-	15, // 33: api.TrainingTagService.ReorderTrainingTags:output_type -> api.ReorderTrainingTagsResponse
-	17, // 34: api.TrainingTagService.SaveWorkoutTags:output_type -> api.SaveWorkoutTagsResponse
-	19, // 35: api.TrainingTagService.GetWorkoutTags:output_type -> api.GetWorkoutTagsResponse
-	21, // 36: api.TrainingTagService.DeleteWorkoutTags:output_type -> api.DeleteWorkoutTagsResponse
-	23, // 37: api.TrainingTagService.SaveWorkoutLocation:output_type -> api.SaveWorkoutLocationResponse
-	25, // 38: api.TrainingTagService.GetWorkoutLocation:output_type -> api.GetWorkoutLocationResponse
-	27, // 39: api.TrainingTagService.SaveWorkoutNote:output_type -> api.SaveWorkoutNoteResponse
-	29, // 40: api.TrainingTagService.GetWorkoutNote:output_type -> api.GetWorkoutNoteResponse
-	32, // 41: api.TrainingTagService.ListDailyWorkoutTags:output_type -> api.ListDailyWorkoutTagsResponse
-	35, // 42: api.TrainingTagService.ListRangeWorkoutTags:output_type -> api.ListRangeWorkoutTagsResponse
-	29, // [29:43] is the sub-list for method output_type
-	15, // [15:29] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	1,  // 1: api.WorkoutTagBinding.binding_source:type_name -> api.WorkoutTagBindingSource
+	2,  // 2: api.CreateTrainingTagResponse.tag:type_name -> api.TrainingTag
+	2,  // 3: api.UpdateTrainingTagResponse.tag:type_name -> api.TrainingTag
+	2,  // 4: api.ListTrainingTagsResponse.tags:type_name -> api.TrainingTag
+	15, // 5: api.ReorderTrainingTagsRequest.items:type_name -> api.TrainingTagSortItem
+	2,  // 6: api.ReorderTrainingTagsResponse.tags:type_name -> api.TrainingTag
+	1,  // 7: api.SaveWorkoutTagsRequest.binding_source:type_name -> api.WorkoutTagBindingSource
+	3,  // 8: api.SaveWorkoutTagsResponse.bindings:type_name -> api.WorkoutTagBinding
+	3,  // 9: api.GetWorkoutTagsResponse.bindings:type_name -> api.WorkoutTagBinding
+	4,  // 10: api.SaveWorkoutLocationResponse.location:type_name -> api.WorkoutLocation
+	4,  // 11: api.GetWorkoutLocationResponse.location:type_name -> api.WorkoutLocation
+	5,  // 12: api.SaveWorkoutNoteResponse.note:type_name -> api.WorkoutNote
+	5,  // 13: api.GetWorkoutNoteResponse.note:type_name -> api.WorkoutNote
+	3,  // 14: api.DailyWorkoutTags.bindings:type_name -> api.WorkoutTagBinding
+	32, // 15: api.ListDailyWorkoutTagsResponse.workouts:type_name -> api.DailyWorkoutTags
+	35, // 16: api.ListRangeWorkoutTagsResponse.days:type_name -> api.DailyTrainingTagSummary
+	6,  // 17: api.TrainingTagService.CreateTrainingTag:input_type -> api.CreateTrainingTagRequest
+	8,  // 18: api.TrainingTagService.UpdateTrainingTag:input_type -> api.UpdateTrainingTagRequest
+	10, // 19: api.TrainingTagService.DeleteTrainingTag:input_type -> api.DeleteTrainingTagRequest
+	12, // 20: api.TrainingTagService.ListTrainingTags:input_type -> api.ListTrainingTagsRequest
+	14, // 21: api.TrainingTagService.ReorderTrainingTags:input_type -> api.ReorderTrainingTagsRequest
+	17, // 22: api.TrainingTagService.SaveWorkoutTags:input_type -> api.SaveWorkoutTagsRequest
+	19, // 23: api.TrainingTagService.GetWorkoutTags:input_type -> api.GetWorkoutTagsRequest
+	21, // 24: api.TrainingTagService.DeleteWorkoutTags:input_type -> api.DeleteWorkoutTagsRequest
+	23, // 25: api.TrainingTagService.SaveWorkoutLocation:input_type -> api.SaveWorkoutLocationRequest
+	25, // 26: api.TrainingTagService.GetWorkoutLocation:input_type -> api.GetWorkoutLocationRequest
+	27, // 27: api.TrainingTagService.SaveWorkoutNote:input_type -> api.SaveWorkoutNoteRequest
+	29, // 28: api.TrainingTagService.GetWorkoutNote:input_type -> api.GetWorkoutNoteRequest
+	31, // 29: api.TrainingTagService.ListDailyWorkoutTags:input_type -> api.ListDailyWorkoutTagsRequest
+	34, // 30: api.TrainingTagService.ListRangeWorkoutTags:input_type -> api.ListRangeWorkoutTagsRequest
+	7,  // 31: api.TrainingTagService.CreateTrainingTag:output_type -> api.CreateTrainingTagResponse
+	9,  // 32: api.TrainingTagService.UpdateTrainingTag:output_type -> api.UpdateTrainingTagResponse
+	11, // 33: api.TrainingTagService.DeleteTrainingTag:output_type -> api.DeleteTrainingTagResponse
+	13, // 34: api.TrainingTagService.ListTrainingTags:output_type -> api.ListTrainingTagsResponse
+	16, // 35: api.TrainingTagService.ReorderTrainingTags:output_type -> api.ReorderTrainingTagsResponse
+	18, // 36: api.TrainingTagService.SaveWorkoutTags:output_type -> api.SaveWorkoutTagsResponse
+	20, // 37: api.TrainingTagService.GetWorkoutTags:output_type -> api.GetWorkoutTagsResponse
+	22, // 38: api.TrainingTagService.DeleteWorkoutTags:output_type -> api.DeleteWorkoutTagsResponse
+	24, // 39: api.TrainingTagService.SaveWorkoutLocation:output_type -> api.SaveWorkoutLocationResponse
+	26, // 40: api.TrainingTagService.GetWorkoutLocation:output_type -> api.GetWorkoutLocationResponse
+	28, // 41: api.TrainingTagService.SaveWorkoutNote:output_type -> api.SaveWorkoutNoteResponse
+	30, // 42: api.TrainingTagService.GetWorkoutNote:output_type -> api.GetWorkoutNoteResponse
+	33, // 43: api.TrainingTagService.ListDailyWorkoutTags:output_type -> api.ListDailyWorkoutTagsResponse
+	36, // 44: api.TrainingTagService.ListRangeWorkoutTags:output_type -> api.ListRangeWorkoutTagsResponse
+	31, // [31:45] is the sub-list for method output_type
+	17, // [17:31] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_primary_training_tag_proto_init() }
@@ -2611,7 +2691,7 @@ func file_primary_training_tag_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_primary_training_tag_proto_rawDesc), len(file_primary_training_tag_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,

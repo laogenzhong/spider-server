@@ -52,6 +52,7 @@ type WorkoutTagBinding struct {
 	TagID          uint64         `gorm:"not null;index;uniqueIndex:idx_uid_workout_key_tag"`
 	TagName        string         `gorm:"type:varchar(64);not null"`
 	EnergyPercent  float64        `gorm:"not null;default:0"`
+	BindingSource  int32          `gorm:"not null;default:1;index"`
 	RecordDate     string         `gorm:"type:varchar(20);not null;index"`
 	CreatedAt      time.Time      `gorm:"not null"`
 	UpdatedAt      time.Time      `gorm:"not null"`
@@ -113,6 +114,10 @@ type DailyTrainingTagSummary struct {
 const (
 	TrainingTagTypeSystem int32 = 1
 	TrainingTagTypeCustom int32 = 2
+
+	WorkoutTagBindingSourceUnknown int32 = 0
+	WorkoutTagBindingSourceIPhone  int32 = 1
+	WorkoutTagBindingSourceWatch   int32 = 2
 
 	MaxTrainingTagsPerUser      = 100
 	MaxTrainingTagCreatesPerDay = 500
@@ -451,7 +456,7 @@ func ReorderTrainingTags(uid uint64, items []TrainingTagSortItem) ([]*TrainingTa
 // 1. 同一个 uid + workout_key + tag_id 已存在时更新绑定信息。
 // 2. 如果旧绑定被软删除，本次保存会恢复 deleted_at。
 // 3. 本次没有传入的旧 tag 绑定会被删除。
-func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string, tagIDs []uint64, energyPercentages []float64) ([]*WorkoutTagBinding, error) {
+func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, workoutEndAt int64, workoutType string, tagIDs []uint64, energyPercentages []float64, bindingSource int32) ([]*WorkoutTagBinding, error) {
 	if uid == 0 {
 		return nil, fmt.Errorf("uid is empty")
 	}
@@ -468,6 +473,7 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 	workoutKey := buildWorkoutKey(workoutUUID, workoutStartAt, workoutEndAt)
 	uniqueTagIDs := uniqueUint64s(tagIDs)
 	energyPercentByTagID := energyPercentagesByTagID(tagIDs, energyPercentages)
+	bindingSource = normalizeWorkoutTagBindingSource(bindingSource)
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		deleteQuery := tx.Where("uid = ? AND workout_key = ?", uid, workoutKey)
@@ -508,6 +514,7 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 				TagID:          tag.ID,
 				TagName:        tag.Name,
 				EnergyPercent:  energyPercentByTagID[tag.ID],
+				BindingSource:  bindingSource,
 				RecordDate:     recordDate,
 			})
 		}
@@ -525,6 +532,7 @@ func SaveWorkoutTags(uid uint64, workoutUUID string, workoutStartAt int64, worko
 				"workout_type":     workoutType,
 				"tag_name":         gorm.Expr("VALUES(tag_name)"),
 				"energy_percent":   gorm.Expr("VALUES(energy_percent)"),
+				"binding_source":   gorm.Expr("VALUES(binding_source)"),
 				"record_date":      recordDate,
 				"deleted_at":       nil,
 				"updated_at":       time.Now(),
@@ -1005,6 +1013,17 @@ func trainingTagChangedAtSQL() string {
 
 func workoutTagBindingChangedAtSQL() string {
 	return "GREATEST(updated_at, COALESCE(deleted_at, updated_at))"
+}
+
+func normalizeWorkoutTagBindingSource(source int32) int32 {
+	switch source {
+	case WorkoutTagBindingSourceWatch:
+		return WorkoutTagBindingSourceWatch
+	case WorkoutTagBindingSourceIPhone:
+		return WorkoutTagBindingSourceIPhone
+	default:
+		return WorkoutTagBindingSourceIPhone
+	}
 }
 
 func listTrainingTagsByIDs(tx *gorm.DB, uid uint64, tagIDs []uint64) ([]*TrainingTag, error) {

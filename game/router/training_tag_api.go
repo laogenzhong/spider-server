@@ -170,6 +170,7 @@ func (a *TrainingTagApi) SaveWorkoutTags(ctx context.Context, req *pb.SaveWorkou
 		req.GetWorkoutType(),
 		req.GetTagIds(),
 		req.GetEnergyPercentages(),
+		int32(req.GetBindingSource()),
 	)
 	if err != nil {
 		return session.Error(ctx, gamecode.WorkoutTagsSaveFailed, &pb.SaveWorkoutTagsResponse{})
@@ -421,6 +422,7 @@ func convertWorkoutTagBinding(binding *mysqlmodel.WorkoutTagBinding) *pb.Workout
 		CreatedAt:      millis(binding.CreatedAt),
 		UpdatedAt:      millis(binding.UpdatedAt),
 		EnergyPercent:  binding.EnergyPercent,
+		BindingSource:  pb.WorkoutTagBindingSource(binding.BindingSource),
 	}
 }
 

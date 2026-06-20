@@ -16,6 +16,18 @@ enum TrainingTagType {
   TRAINING_TAG_TYPE_CUSTOM = 2;
 }
 
+// WorkoutTagBindingSource 表示训练标签绑定来源设备。
+enum WorkoutTagBindingSource {
+  // 未知来源，用于兼容旧客户端或历史数据。
+  WORKOUT_TAG_BINDING_SOURCE_UNKNOWN = 0;
+
+  // iPhone 客户端绑定。
+  WORKOUT_TAG_BINDING_SOURCE_IPHONE = 1;
+
+  // Apple Watch 客户端绑定。
+  WORKOUT_TAG_BINDING_SOURCE_WATCH = 2;
+}
+
 // TrainingTag 表示一个可被用户选择的训练标签定义。
 message TrainingTag {
   // 标签 ID，由服务端生成。
@@ -77,6 +89,9 @@ message WorkoutTagBinding {
 
   // 该标签在本次训练热量中的占比，范围 0-100；为空或 0 时客户端可按标签数均分。
   double energy_percent = 11;
+
+  // 绑定来源设备，用于区分手机绑定和手表绑定。
+  WorkoutTagBindingSource binding_source = 12;
 }
 
 // WorkoutLocation 表示某次训练的单点位置。
@@ -245,6 +260,9 @@ message SaveWorkoutTagsRequest {
 
   // 与 tag_ids 一一对应的热量占比，整体约等于 100；未传时服务端可按标签数量均分。
   repeated double energy_percentages = 6;
+
+  // 本次绑定来源设备；旧客户端不传时服务端按手机来源兼容。
+  WorkoutTagBindingSource binding_source = 7;
 }
 
 // SaveWorkoutTagsResponse 表示保存某次训练标签后的返回结果。
