@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	appconfig "spider-server/common/config"
+	"spider-server/common/devicecatalog"
 	"spider-server/gen/spider/api"
 	rawmysqlconfig "spider-server/mysql/config"
 	mysqlmodel "spider-server/mysql/model"
@@ -311,6 +312,11 @@ func (c *adminVIPCLI) printUserVIP(user *mysqlmodel.User) error {
 	fmt.Printf("  apple:    %s\n", emptyDash(appleSignInContact(user.ID)))
 	fmt.Printf("  entered:  %s\n", formatTimePtr(user.LastAppEnterAt))
 	fmt.Printf("  language: %s\n", emptyDash(user.LastSystemLanguage))
+	fmt.Printf("  reg dev:  %s\n", emptyDash(devicecatalog.DisplayLabel(user.RegisterDeviceModel)))
+	fmt.Printf("  reg ios:  %s\n", emptyDash(user.RegisterIOSVersion))
+	fmt.Printf("  login:    %s\n", formatTimePtr(user.LastLoginAt))
+	fmt.Printf("  log dev:  %s\n", emptyDash(devicecatalog.DisplayLabel(user.LastLoginDeviceModel)))
+	fmt.Printf("  log ios:  %s\n", emptyDash(user.LastLoginIOSVersion))
 	fmt.Printf("  created:  %s\n", formatTime(user.CreatedAt))
 	fmt.Printf("  updated:  %s\n", formatTime(user.UpdatedAt))
 	fmt.Println("VIP")
