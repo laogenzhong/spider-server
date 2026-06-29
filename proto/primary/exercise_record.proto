@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+// 动作重量单位。
+// weight_x10 始终表示对应单位 * 10 后的整数。
+enum ExerciseWeightUnit {
+  EXERCISE_WEIGHT_UNIT_JIN = 0;
+  EXERCISE_WEIGHT_UNIT_KG = 1;
+  EXERCISE_WEIGHT_UNIT_LB = 2;
+}
+
+// 单组动作记录。
+message ExerciseSetRecord {
+  uint64 id = 1;
+  uint64 uid = 2;
+  string exercise_id = 3;
+  string exercise_name_key = 4;
+  string exercise_name_snapshot = 5;
+  string category_key = 6;
+  string type_key = 7;
+  int32 weight_x10 = 8;
+  ExerciseWeightUnit weight_unit = 9;
+  int32 reps = 10;
+  int64 recorded_at = 11;
+  int64 created_at = 12;
+  int64 updated_at = 13;
+}
+
+message SaveExerciseSetRecordRequest {
+  string exercise_id = 1;
+  string exercise_name_key = 2;
+  string exercise_name_snapshot = 3;
+  string category_key = 4;
+  string type_key = 5;
+  int32 weight_x10 = 6;
+  ExerciseWeightUnit weight_unit = 7;
+  int32 reps = 8;
+  int64 recorded_at = 9;
+}
+
+message SaveExerciseSetRecordResponse {
+  ExerciseSetRecord record = 1;
+}
+
+message ListExerciseSetRecordsRequest {
+  string exercise_id = 1;
+  int32 page_size = 2;
+  string cursor = 3;
+}
+
+message ListExerciseSetRecordsResponse {
+  repeated ExerciseSetRecord records = 1;
+  string next_cursor = 2;
+  bool has_more = 3;
+}
+
+message ListExerciseSetRecordsByTimeRangeRequest {
+  int64 start_at = 1;
+  int64 end_at = 2;
+}
+
+message ListExerciseSetRecordsByTimeRangeResponse {
+  repeated ExerciseSetRecord records = 1;
+}
+
+message UpdateExerciseSetRecordRequest {
+  uint64 id = 1;
+  string exercise_name_key = 2;
+  string exercise_name_snapshot = 3;
+  string category_key = 4;
+  string type_key = 5;
+  int32 weight_x10 = 6;
+  ExerciseWeightUnit weight_unit = 7;
+  int32 reps = 8;
+  int64 recorded_at = 9;
+}
+
+message UpdateExerciseSetRecordResponse {
+  ExerciseSetRecord record = 1;
+}
+
+message DeleteExerciseSetRecordRequest {
+  uint64 id = 1;
+}
+
+message DeleteExerciseSetRecordResponse {
+  bool success = 1;
+}
+
+message ListTodayExerciseHistoryRequest {
+  // 记录日期，格式 yyyy-MM-dd；为空时服务端使用当天。
+  string record_date = 1;
+}
+
+message TodayExerciseHistoryItem {
+  string exercise_id = 1;
+  string exercise_name_key = 2;
+  string exercise_name_snapshot = 3;
+  string category_key = 4;
+  string type_key = 5;
+  int32 set_count = 6;
+  int32 max_weight_x10 = 7;
+  ExerciseWeightUnit weight_unit = 8;
+  int64 latest_recorded_at = 9;
+  repeated ExerciseSetRecord latest_records = 10;
+}
+
+message ListTodayExerciseHistoryResponse {
+  repeated TodayExerciseHistoryItem items = 1;
+}
+
+service ExerciseSetRecordService {
+  rpc SaveExerciseSetRecord(SaveExerciseSetRecordRequest) returns (SaveExerciseSetRecordResponse);
+  rpc ListExerciseSetRecords(ListExerciseSetRecordsRequest) returns (ListExerciseSetRecordsResponse);
+  rpc ListExerciseSetRecordsByTimeRange(ListExerciseSetRecordsByTimeRangeRequest) returns (ListExerciseSetRecordsByTimeRangeResponse);
+  rpc UpdateExerciseSetRecord(UpdateExerciseSetRecordRequest) returns (UpdateExerciseSetRecordResponse);
+  rpc DeleteExerciseSetRecord(DeleteExerciseSetRecordRequest) returns (DeleteExerciseSetRecordResponse);
+  rpc ListTodayExerciseHistory(ListTodayExerciseHistoryRequest) returns (ListTodayExerciseHistoryResponse);
+}

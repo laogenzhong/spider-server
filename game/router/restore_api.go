@@ -19,6 +19,7 @@ const (
 	restoreTaskTrainingTags       = "training_tags"
 	restoreTaskWorkoutTagBindings = "workout_tag_bindings"
 	restoreTaskBodyPhotos         = "body_photos"
+	restoreTaskExerciseSetRecords = "exercise_set_records"
 )
 
 // ClientRestoreApi 实现客户端本地数据全量恢复和增量同步相关 gRPC 接口。
@@ -42,7 +43,7 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 	}
 
 	batchSize := normalizeRestoreBatchSize(req.GetPreferredBatchSize())
-	tasks := make([]*pb.RestoreTask, 0, 4)
+	tasks := make([]*pb.RestoreTask, 0, 5)
 	var totalCount uint64
 
 	weightCount, weightStartDate, weightEndDate, err := mysqlmodel.CountWeightRecordChanges(uid, startSnapshotID, endSnapshotID)
@@ -107,6 +108,22 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 			batchSize,
 		))
 		totalCount += photoCount
+	}
+
+	exerciseCount, exerciseStartDate, exerciseEndDate, err := mysqlmodel.CountExerciseSetRecordChanges(uid, startSnapshotID, endSnapshotID)
+	if err != nil {
+		return session.Error(ctx, gamecode.RestoreCountExerciseSetRecordsFailed, &pb.RestorePlanResponse{})
+	}
+	if exerciseCount > 0 {
+		tasks = append(tasks, buildRestoreTask(
+			restoreTaskExerciseSetRecords,
+			pb.RestoreDataType_RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS,
+			exerciseStartDate,
+			exerciseEndDate,
+			exerciseCount,
+			batchSize,
+		))
+		totalCount += exerciseCount
 	}
 
 	return &pb.RestorePlanResponse{
@@ -285,6 +302,39 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		)
 		resp.Payload = &pb.RestoreBatchResponse_BodyPhotos{
 			BodyPhotos: &pb.BodyPhotoRestoreBatch{Items: items},
+		}
+		return resp, nil
+
+	case restoreTaskExerciseSetRecords:
+		count, _, _, err := mysqlmodel.CountExerciseSetRecordChanges(uid, startSnapshotID, endSnapshotID)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreCountExerciseSetRecordsFailed, &pb.RestoreBatchResponse{})
+		}
+		records, err := mysqlmodel.ListExerciseSetRecordChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreFetchExerciseSetRecordsFailed, &pb.RestoreBatchResponse{})
+		}
+		items := make([]*pb.ExerciseSetRecordSyncItem, 0, len(records))
+		for _, record := range records {
+			items = append(items, &pb.ExerciseSetRecordSyncItem{
+				Record:    mysqlmodel.ExerciseRecordToPB(record),
+				Deleted:   isDeletedInSnapshot(record.DeletedAt, endSnapshotID),
+				DeletedAt: deletedAtMillis(record.DeletedAt, endSnapshotID),
+				ChangedAt: changedAtMillis(record.UpdatedAt, record.DeletedAt, endSnapshotID),
+			})
+		}
+
+		resp := buildRestoreBatchResponse(
+			pb.RestoreDataType_RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS,
+			req.GetBatchIndex(),
+			uint32(len(items)),
+			count,
+			batchSize,
+			startSnapshotID,
+			endSnapshotID,
+		)
+		resp.Payload = &pb.RestoreBatchResponse_ExerciseSetRecords{
+			ExerciseSetRecords: &pb.ExerciseSetRecordRestoreBatch{Items: items},
 		}
 		return resp, nil
 	}

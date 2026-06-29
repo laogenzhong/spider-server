@@ -227,6 +227,12 @@ const (
 	// RestoreTaskUnknown 未知同步任务。
 	RestoreTaskUnknown int = 40014
 
+	// RestoreCountExerciseSetRecordsFailed 统计动作记录同步数据失败。
+	RestoreCountExerciseSetRecordsFailed int = 40015
+
+	// RestoreFetchExerciseSetRecordsFailed 拉取动作记录同步数据失败。
+	RestoreFetchExerciseSetRecordsFailed int = 40016
+
 	// FriendProfileQueryFailed 获取朋友资料失败。
 	FriendProfileQueryFailed int = 50001
 
@@ -373,4 +379,43 @@ const (
 
 	// AdminVIPRevokeFailed 后台 VIP 取消失败。
 	AdminVIPRevokeFailed int = 70019
+
+	// ExerciseRecordExerciseIDEmpty 动作记录缺少动作 id。
+	ExerciseRecordExerciseIDEmpty int = 80001
+
+	// ExerciseRecordWeightInvalid 动作记录重量无效。
+	ExerciseRecordWeightInvalid int = 80002
+
+	// ExerciseRecordRepsInvalid 动作记录次数无效。
+	ExerciseRecordRepsInvalid int = 80003
+
+	// ExerciseRecordWeightUnitInvalid 动作记录重量单位无效。
+	ExerciseRecordWeightUnitInvalid int = 80004
+
+	// ExerciseRecordSaveFailed 保存动作记录失败。
+	ExerciseRecordSaveFailed int = 80005
+
+	// ExerciseRecordListFailed 查询动作记录列表失败。
+	ExerciseRecordListFailed int = 80006
+
+	// ExerciseRecordIDEmpty 动作记录 id 为空。
+	ExerciseRecordIDEmpty int = 80007
+
+	// ExerciseRecordNotFound 动作记录不存在。
+	ExerciseRecordNotFound int = 80008
+
+	// ExerciseRecordUpdateFailed 修改动作记录失败。
+	ExerciseRecordUpdateFailed int = 80009
+
+	// ExerciseRecordDeleteFailed 删除动作记录失败。
+	ExerciseRecordDeleteFailed int = 80010
+
+	// ExerciseRecordTodayListFailed 查询今日动作历史失败。
+	ExerciseRecordTodayListFailed int = 80011
+
+	// ExerciseRecordTimeRangeInvalid 动作记录时间范围无效。
+	ExerciseRecordTimeRangeInvalid int = 80012
+
+	// ExerciseRecordTimeRangeListFailed 按时间范围查询动作记录失败。
+	ExerciseRecordTimeRangeListFailed int = 80013
 )
