@@ -25,6 +25,8 @@ const (
 	ExerciseSetRecordService_UpdateExerciseSetRecord_FullMethodName           = "/api.ExerciseSetRecordService/UpdateExerciseSetRecord"
 	ExerciseSetRecordService_DeleteExerciseSetRecord_FullMethodName           = "/api.ExerciseSetRecordService/DeleteExerciseSetRecord"
 	ExerciseSetRecordService_ListTodayExerciseHistory_FullMethodName          = "/api.ExerciseSetRecordService/ListTodayExerciseHistory"
+	ExerciseSetRecordService_SaveCustomExercise_FullMethodName                = "/api.ExerciseSetRecordService/SaveCustomExercise"
+	ExerciseSetRecordService_ListCustomExercises_FullMethodName               = "/api.ExerciseSetRecordService/ListCustomExercises"
 )
 
 // ExerciseSetRecordServiceClient is the client API for ExerciseSetRecordService service.
@@ -37,6 +39,8 @@ type ExerciseSetRecordServiceClient interface {
 	UpdateExerciseSetRecord(ctx context.Context, in *UpdateExerciseSetRecordRequest, opts ...grpc.CallOption) (*UpdateExerciseSetRecordResponse, error)
 	DeleteExerciseSetRecord(ctx context.Context, in *DeleteExerciseSetRecordRequest, opts ...grpc.CallOption) (*DeleteExerciseSetRecordResponse, error)
 	ListTodayExerciseHistory(ctx context.Context, in *ListTodayExerciseHistoryRequest, opts ...grpc.CallOption) (*ListTodayExerciseHistoryResponse, error)
+	SaveCustomExercise(ctx context.Context, in *SaveCustomExerciseRequest, opts ...grpc.CallOption) (*SaveCustomExerciseResponse, error)
+	ListCustomExercises(ctx context.Context, in *ListCustomExercisesRequest, opts ...grpc.CallOption) (*ListCustomExercisesResponse, error)
 }
 
 type exerciseSetRecordServiceClient struct {
@@ -107,6 +111,26 @@ func (c *exerciseSetRecordServiceClient) ListTodayExerciseHistory(ctx context.Co
 	return out, nil
 }
 
+func (c *exerciseSetRecordServiceClient) SaveCustomExercise(ctx context.Context, in *SaveCustomExerciseRequest, opts ...grpc.CallOption) (*SaveCustomExerciseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveCustomExerciseResponse)
+	err := c.cc.Invoke(ctx, ExerciseSetRecordService_SaveCustomExercise_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *exerciseSetRecordServiceClient) ListCustomExercises(ctx context.Context, in *ListCustomExercisesRequest, opts ...grpc.CallOption) (*ListCustomExercisesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCustomExercisesResponse)
+	err := c.cc.Invoke(ctx, ExerciseSetRecordService_ListCustomExercises_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ExerciseSetRecordServiceServer is the server API for ExerciseSetRecordService service.
 // All implementations must embed UnimplementedExerciseSetRecordServiceServer
 // for forward compatibility.
@@ -117,6 +141,8 @@ type ExerciseSetRecordServiceServer interface {
 	UpdateExerciseSetRecord(context.Context, *UpdateExerciseSetRecordRequest) (*UpdateExerciseSetRecordResponse, error)
 	DeleteExerciseSetRecord(context.Context, *DeleteExerciseSetRecordRequest) (*DeleteExerciseSetRecordResponse, error)
 	ListTodayExerciseHistory(context.Context, *ListTodayExerciseHistoryRequest) (*ListTodayExerciseHistoryResponse, error)
+	SaveCustomExercise(context.Context, *SaveCustomExerciseRequest) (*SaveCustomExerciseResponse, error)
+	ListCustomExercises(context.Context, *ListCustomExercisesRequest) (*ListCustomExercisesResponse, error)
 	mustEmbedUnimplementedExerciseSetRecordServiceServer()
 }
 
@@ -144,6 +170,12 @@ func (UnimplementedExerciseSetRecordServiceServer) DeleteExerciseSetRecord(conte
 }
 func (UnimplementedExerciseSetRecordServiceServer) ListTodayExerciseHistory(context.Context, *ListTodayExerciseHistoryRequest) (*ListTodayExerciseHistoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTodayExerciseHistory not implemented")
+}
+func (UnimplementedExerciseSetRecordServiceServer) SaveCustomExercise(context.Context, *SaveCustomExerciseRequest) (*SaveCustomExerciseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SaveCustomExercise not implemented")
+}
+func (UnimplementedExerciseSetRecordServiceServer) ListCustomExercises(context.Context, *ListCustomExercisesRequest) (*ListCustomExercisesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCustomExercises not implemented")
 }
 func (UnimplementedExerciseSetRecordServiceServer) mustEmbedUnimplementedExerciseSetRecordServiceServer() {
 }
@@ -275,6 +307,42 @@ func _ExerciseSetRecordService_ListTodayExerciseHistory_Handler(srv interface{},
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ExerciseSetRecordService_SaveCustomExercise_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveCustomExerciseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExerciseSetRecordServiceServer).SaveCustomExercise(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExerciseSetRecordService_SaveCustomExercise_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExerciseSetRecordServiceServer).SaveCustomExercise(ctx, req.(*SaveCustomExerciseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExerciseSetRecordService_ListCustomExercises_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCustomExercisesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExerciseSetRecordServiceServer).ListCustomExercises(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExerciseSetRecordService_ListCustomExercises_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExerciseSetRecordServiceServer).ListCustomExercises(ctx, req.(*ListCustomExercisesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ExerciseSetRecordService_ServiceDesc is the grpc.ServiceDesc for ExerciseSetRecordService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -305,6 +373,14 @@ var ExerciseSetRecordService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTodayExerciseHistory",
 			Handler:    _ExerciseSetRecordService_ListTodayExerciseHistory_Handler,
+		},
+		{
+			MethodName: "SaveCustomExercise",
+			Handler:    _ExerciseSetRecordService_SaveCustomExercise_Handler,
+		},
+		{
+			MethodName: "ListCustomExercises",
+			Handler:    _ExerciseSetRecordService_ListCustomExercises_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

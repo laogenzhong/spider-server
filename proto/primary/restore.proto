@@ -28,6 +28,9 @@ enum RestoreDataType {
 
   // 动作详情页的重量次数记录。
   RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS = 5;
+
+  // 用户自定义动作。
+  RESTORE_DATA_TYPE_CUSTOM_EXERCISES = 6;
 }
 
 // RestorePlanRequest 表示获取客户端数据同步计划的请求。
@@ -182,6 +185,21 @@ message ExerciseSetRecordSyncItem {
   int64 changed_at = 4;
 }
 
+// CustomExerciseSyncItem 表示一条自定义动作同步项。
+message CustomExerciseSyncItem {
+  // 自定义动作。
+  CustomExercise exercise = 1;
+
+  // true 表示该自定义动作已被服务端删除，客户端应删除本地对应动作。
+  bool deleted = 2;
+
+  // 删除时间，毫秒时间戳；deleted = true 时有效。
+  int64 deleted_at = 3;
+
+  // 本记录最近变更时间，毫秒时间戳。
+  int64 changed_at = 4;
+}
+
 // WeightRecordRestoreBatch 表示一批体重记录同步项。
 message WeightRecordRestoreBatch {
   // 体重记录同步项列表。
@@ -210,6 +228,12 @@ message BodyPhotoRestoreBatch {
 message ExerciseSetRecordRestoreBatch {
   // 动作重量次数记录同步项列表。
   repeated ExerciseSetRecordSyncItem items = 1;
+}
+
+// CustomExerciseRestoreBatch 表示一批自定义动作同步项。
+message CustomExerciseRestoreBatch {
+  // 自定义动作同步项列表。
+  repeated CustomExerciseSyncItem items = 1;
 }
 
 // RestoreBatchResponse 表示某个同步任务的一批数据。
@@ -248,6 +272,7 @@ message RestoreBatchResponse {
     WorkoutTagBindingRestoreBatch workout_tag_bindings = 22;
     BodyPhotoRestoreBatch body_photos = 23;
     ExerciseSetRecordRestoreBatch exercise_set_records = 24;
+    CustomExerciseRestoreBatch custom_exercises = 25;
   }
 }
 

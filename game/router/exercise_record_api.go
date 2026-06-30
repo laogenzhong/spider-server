@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
@@ -189,6 +190,73 @@ func (a *ExerciseSetRecordApi) ListTodayExerciseHistory(ctx context.Context, req
 	}
 
 	return &pb.ListTodayExerciseHistoryResponse{Items: respItems}, nil
+}
+
+// SaveCustomExercise 保存一条用户自定义动作。
+func (a *ExerciseSetRecordApi) SaveCustomExercise(ctx context.Context, req *pb.SaveCustomExerciseRequest) (*pb.SaveCustomExerciseResponse, error) {
+	uid := session.GetUser(ctx).UID()
+	exercise := req.GetExercise()
+
+	vipStatus, err := mysqlmodel.GetCurrentVIPStatus(uid, time.Now())
+	if err != nil {
+		return session.Error(ctx, gamecode.VIPStatusQueryFailed, &pb.SaveCustomExerciseResponse{})
+	}
+	if !vipStatus.IsVIP {
+		return session.Error(ctx, gamecode.CustomExerciseVIPRequired, &pb.SaveCustomExerciseResponse{})
+	}
+
+	localID := strings.TrimSpace(exercise.GetLocalId())
+	name := strings.TrimSpace(exercise.GetName())
+	categoryKey := strings.TrimSpace(exercise.GetCategoryKey())
+	subcategoryKey := strings.TrimSpace(exercise.GetSubcategoryKey())
+	typeKey := strings.TrimSpace(exercise.GetTypeKey())
+
+	if localID == "" {
+		return session.Error(ctx, gamecode.CustomExerciseLocalIDEmpty, &pb.SaveCustomExerciseResponse{})
+	}
+	if name == "" {
+		return session.Error(ctx, gamecode.CustomExerciseNameEmpty, &pb.SaveCustomExerciseResponse{})
+	}
+	if categoryKey == "" {
+		return session.Error(ctx, gamecode.CustomExerciseCategoryEmpty, &pb.SaveCustomExerciseResponse{})
+	}
+	if typeKey == "" {
+		return session.Error(ctx, gamecode.CustomExerciseTypeEmpty, &pb.SaveCustomExerciseResponse{})
+	}
+
+	saved, err := mysqlmodel.SaveCustomExercise(&mysqlmodel.CustomExercise{
+		UID:             uid,
+		LocalID:         localID,
+		Name:            name,
+		CategoryKey:     categoryKey,
+		SubcategoryKey:  subcategoryKey,
+		TypeKey:         typeKey,
+		ClientCreatedAt: exercise.GetCreatedAt(),
+	})
+	if err != nil {
+		return session.Error(ctx, gamecode.CustomExerciseSaveFailed, &pb.SaveCustomExerciseResponse{})
+	}
+
+	return &pb.SaveCustomExerciseResponse{
+		Exercise: mysqlmodel.CustomExerciseToPB(saved),
+	}, nil
+}
+
+// ListCustomExercises 查询当前用户的自定义动作。
+func (a *ExerciseSetRecordApi) ListCustomExercises(ctx context.Context, req *pb.ListCustomExercisesRequest) (*pb.ListCustomExercisesResponse, error) {
+	uid := session.GetUser(ctx).UID()
+
+	exercises, err := mysqlmodel.ListCustomExercises(uid)
+	if err != nil {
+		return session.Error(ctx, gamecode.CustomExerciseListFailed, &pb.ListCustomExercisesResponse{})
+	}
+
+	respExercises := make([]*pb.CustomExercise, 0, len(exercises))
+	for _, exercise := range exercises {
+		respExercises = append(respExercises, mysqlmodel.CustomExerciseToPB(exercise))
+	}
+
+	return &pb.ListCustomExercisesResponse{Exercises: respExercises}, nil
 }
 
 func validExerciseWeightUnit(unit pb.ExerciseWeightUnit) bool {

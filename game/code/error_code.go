@@ -233,6 +233,12 @@ const (
 	// RestoreFetchExerciseSetRecordsFailed 拉取动作记录同步数据失败。
 	RestoreFetchExerciseSetRecordsFailed int = 40016
 
+	// RestoreCountCustomExercisesFailed 统计自定义动作同步数据失败。
+	RestoreCountCustomExercisesFailed int = 40017
+
+	// RestoreFetchCustomExercisesFailed 拉取自定义动作同步数据失败。
+	RestoreFetchCustomExercisesFailed int = 40018
+
 	// FriendProfileQueryFailed 获取朋友资料失败。
 	FriendProfileQueryFailed int = 50001
 
@@ -418,4 +424,25 @@ const (
 
 	// ExerciseRecordTimeRangeListFailed 按时间范围查询动作记录失败。
 	ExerciseRecordTimeRangeListFailed int = 80013
+
+	// CustomExerciseLocalIDEmpty 自定义动作缺少本地 id。
+	CustomExerciseLocalIDEmpty int = 80014
+
+	// CustomExerciseNameEmpty 自定义动作名称为空。
+	CustomExerciseNameEmpty int = 80015
+
+	// CustomExerciseCategoryEmpty 自定义动作部位为空。
+	CustomExerciseCategoryEmpty int = 80016
+
+	// CustomExerciseTypeEmpty 自定义动作器械类型为空。
+	CustomExerciseTypeEmpty int = 80017
+
+	// CustomExerciseSaveFailed 保存自定义动作失败。
+	CustomExerciseSaveFailed int = 80018
+
+	// CustomExerciseListFailed 查询自定义动作失败。
+	CustomExerciseListFailed int = 80019
+
+	// CustomExerciseVIPRequired 新增自定义动作需要 VIP 权益。
+	CustomExerciseVIPRequired int = 80020
 )

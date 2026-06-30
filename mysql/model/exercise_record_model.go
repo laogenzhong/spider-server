@@ -11,6 +11,7 @@ import (
 	"spider-server/mysql/config"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // ExerciseSetRecord 表示动作详情页中记录的一组重量和次数。
@@ -29,6 +30,21 @@ type ExerciseSetRecord struct {
 	CreatedAt            time.Time      `gorm:"not null"`
 	UpdatedAt            time.Time      `gorm:"not null"`
 	DeletedAt            gorm.DeletedAt `gorm:"index"`
+}
+
+// CustomExercise 表示用户在动作库新增的自定义动作。
+type CustomExercise struct {
+	ID              uint64         `gorm:"primaryKey;autoIncrement"`
+	UID             uint64         `gorm:"not null;uniqueIndex:idx_uid_custom_exercise_local,priority:1;index:idx_uid_custom_exercise_changed,priority:1"`
+	LocalID         string         `gorm:"type:varchar(64);not null;uniqueIndex:idx_uid_custom_exercise_local,priority:2"`
+	Name            string         `gorm:"type:varchar(128);not null;default:''"`
+	CategoryKey     string         `gorm:"type:varchar(128);not null;default:''"`
+	SubcategoryKey  string         `gorm:"type:varchar(128);not null;default:''"`
+	TypeKey         string         `gorm:"type:varchar(128);not null;default:''"`
+	ClientCreatedAt int64          `gorm:"not null;default:0"`
+	CreatedAt       time.Time      `gorm:"not null"`
+	UpdatedAt       time.Time      `gorm:"not null"`
+	DeletedAt       gorm.DeletedAt `gorm:"index"`
 }
 
 const (
@@ -367,6 +383,159 @@ func ListExerciseSetRecordChangesPage(uid uint64, startSnapshotID int64, endSnap
 	return records, nil
 }
 
+// SaveCustomExercise 保存或更新一条自定义动作。
+func SaveCustomExercise(exercise *CustomExercise) (*CustomExercise, error) {
+	if exercise == nil {
+		return nil, fmt.Errorf("custom exercise is nil")
+	}
+	if exercise.UID == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	exercise.LocalID = strings.TrimSpace(exercise.LocalID)
+	exercise.Name = strings.TrimSpace(exercise.Name)
+	exercise.CategoryKey = strings.TrimSpace(exercise.CategoryKey)
+	exercise.SubcategoryKey = strings.TrimSpace(exercise.SubcategoryKey)
+	exercise.TypeKey = strings.TrimSpace(exercise.TypeKey)
+	if exercise.LocalID == "" {
+		return nil, fmt.Errorf("local_id is empty")
+	}
+	if exercise.Name == "" {
+		return nil, fmt.Errorf("name is empty")
+	}
+	if exercise.CategoryKey == "" {
+		return nil, fmt.Errorf("category_key is empty")
+	}
+	if exercise.TypeKey == "" {
+		return nil, fmt.Errorf("type_key is empty")
+	}
+	if exercise.ClientCreatedAt <= 0 {
+		exercise.ClientCreatedAt = time.Now().UnixMilli()
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	exercise.CreatedAt = now
+	exercise.UpdatedAt = now
+	if err := db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "uid"},
+			{Name: "local_id"},
+		},
+		DoUpdates: clause.Assignments(map[string]any{
+			"name":              exercise.Name,
+			"category_key":      exercise.CategoryKey,
+			"subcategory_key":   exercise.SubcategoryKey,
+			"type_key":          exercise.TypeKey,
+			"client_created_at": exercise.ClientCreatedAt,
+			"updated_at":        now,
+			"deleted_at":        nil,
+		}),
+	}).Create(exercise).Error; err != nil {
+		return nil, err
+	}
+
+	return GetCustomExerciseByLocalID(exercise.UID, exercise.LocalID)
+}
+
+// GetCustomExerciseByLocalID 根据客户端本地 id 查询自定义动作。
+func GetCustomExerciseByLocalID(uid uint64, localID string) (*CustomExercise, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	localID = strings.TrimSpace(localID)
+	if localID == "" {
+		return nil, fmt.Errorf("local_id is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+	exercise := &CustomExercise{}
+	if err := db.Where("uid = ? AND local_id = ?", uid, localID).First(exercise).Error; err != nil {
+		return nil, err
+	}
+	return exercise, nil
+}
+
+// ListCustomExercises 查询用户的自定义动作。
+func ListCustomExercises(uid uint64) ([]*CustomExercise, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var exercises []*CustomExercise
+	if err := db.Where("uid = ?", uid).
+		Order("client_created_at DESC, id DESC").
+		Find(&exercises).Error; err != nil {
+		return nil, err
+	}
+	return exercises, nil
+}
+
+// CountCustomExerciseChanges 统计快照范围内变更过的自定义动作。
+func CountCustomExerciseChanges(uid uint64, startSnapshotID int64, endSnapshotID int64) (uint64, string, string, error) {
+	if uid == 0 {
+		return 0, "", "", fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 || startSnapshotID > endSnapshotID {
+		return 0, "", "", fmt.Errorf("snapshot range is invalid")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return 0, "", "", err
+	}
+
+	var count int64
+	if err := customExerciseChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Model(&CustomExercise{}).
+		Count(&count).Error; err != nil {
+		return 0, "", "", err
+	}
+	return uint64(count), "", "", nil
+}
+
+// ListCustomExerciseChangesPage 分页查询快照范围内变更过的自定义动作。
+func ListCustomExerciseChangesPage(uid uint64, startSnapshotID int64, endSnapshotID int64, limit int, offset int) ([]*CustomExercise, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 || startSnapshotID > endSnapshotID {
+		return nil, fmt.Errorf("snapshot range is invalid")
+	}
+	if limit <= 0 {
+		limit = DefaultExerciseSetPageSize
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var exercises []*CustomExercise
+	if err := customExerciseChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Order(customExerciseChangedAtSQL() + " ASC, id ASC").
+		Limit(limit).
+		Offset(offset).
+		Find(&exercises).Error; err != nil {
+		return nil, err
+	}
+	return exercises, nil
+}
+
 func normalizeExerciseRecordPageSize(pageSize int32) int {
 	if pageSize <= 0 {
 		return DefaultExerciseSetPageSize
@@ -462,6 +631,29 @@ func exerciseSetRecordDateRange(query *gorm.DB) (string, string, error) {
 		nil
 }
 
+func customExerciseChangesQuery(db *gorm.DB, uid uint64, startSnapshotID int64, endSnapshotID int64) *gorm.DB {
+	endTime := time.UnixMilli(endSnapshotID)
+	query := db.Unscoped().Where("uid = ?", uid)
+	if startSnapshotID <= 0 {
+		return query.Where("created_at <= ? AND (deleted_at IS NULL OR deleted_at > ?)", endTime, endTime)
+	}
+
+	startTime := time.UnixMilli(startSnapshotID)
+	return query.Where(
+		"(created_at > ? AND created_at <= ?) OR (updated_at > ? AND updated_at <= ?) OR (deleted_at IS NOT NULL AND deleted_at > ? AND deleted_at <= ?)",
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+	)
+}
+
+func customExerciseChangedAtSQL() string {
+	return "GREATEST(updated_at, COALESCE(deleted_at, updated_at))"
+}
+
 // ExerciseRecordToPB 将 MySQL 动作记录转换为 pb 模型。
 func ExerciseRecordToPB(record *ExerciseSetRecord) *pb.ExerciseSetRecord {
 	if record == nil {
@@ -481,5 +673,29 @@ func ExerciseRecordToPB(record *ExerciseSetRecord) *pb.ExerciseSetRecord {
 		RecordedAt:           record.RecordedAt,
 		CreatedAt:            record.CreatedAt.UnixMilli(),
 		UpdatedAt:            record.UpdatedAt.UnixMilli(),
+	}
+}
+
+// CustomExerciseToPB 将 MySQL 自定义动作转换为 pb 模型。
+func CustomExerciseToPB(exercise *CustomExercise) *pb.CustomExercise {
+	if exercise == nil {
+		return nil
+	}
+
+	createdAt := exercise.ClientCreatedAt
+	if createdAt <= 0 {
+		createdAt = exercise.CreatedAt.UnixMilli()
+	}
+
+	return &pb.CustomExercise{
+		Id:             exercise.ID,
+		Uid:            exercise.UID,
+		LocalId:        exercise.LocalID,
+		Name:           exercise.Name,
+		CategoryKey:    exercise.CategoryKey,
+		SubcategoryKey: exercise.SubcategoryKey,
+		TypeKey:        exercise.TypeKey,
+		CreatedAt:      createdAt,
+		UpdatedAt:      exercise.UpdatedAt.UnixMilli(),
 	}
 }

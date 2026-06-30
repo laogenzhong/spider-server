@@ -29,6 +29,19 @@ message ExerciseSetRecord {
   int64 updated_at = 13;
 }
 
+// 用户自定义动作。
+message CustomExercise {
+  uint64 id = 1;
+  uint64 uid = 2;
+  string local_id = 3;
+  string name = 4;
+  string category_key = 5;
+  string type_key = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+  string subcategory_key = 9;
+}
+
 message SaveExerciseSetRecordRequest {
   string exercise_id = 1;
   string exercise_name_key = 2;
@@ -112,6 +125,21 @@ message ListTodayExerciseHistoryResponse {
   repeated TodayExerciseHistoryItem items = 1;
 }
 
+message SaveCustomExerciseRequest {
+  CustomExercise exercise = 1;
+}
+
+message SaveCustomExerciseResponse {
+  CustomExercise exercise = 1;
+}
+
+message ListCustomExercisesRequest {
+}
+
+message ListCustomExercisesResponse {
+  repeated CustomExercise exercises = 1;
+}
+
 service ExerciseSetRecordService {
   rpc SaveExerciseSetRecord(SaveExerciseSetRecordRequest) returns (SaveExerciseSetRecordResponse);
   rpc ListExerciseSetRecords(ListExerciseSetRecordsRequest) returns (ListExerciseSetRecordsResponse);
@@ -119,4 +147,6 @@ service ExerciseSetRecordService {
   rpc UpdateExerciseSetRecord(UpdateExerciseSetRecordRequest) returns (UpdateExerciseSetRecordResponse);
   rpc DeleteExerciseSetRecord(DeleteExerciseSetRecordRequest) returns (DeleteExerciseSetRecordResponse);
   rpc ListTodayExerciseHistory(ListTodayExerciseHistoryRequest) returns (ListTodayExerciseHistoryResponse);
+  rpc SaveCustomExercise(SaveCustomExerciseRequest) returns (SaveCustomExerciseResponse);
+  rpc ListCustomExercises(ListCustomExercisesRequest) returns (ListCustomExercisesResponse);
 }
