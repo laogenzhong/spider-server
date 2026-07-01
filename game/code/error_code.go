@@ -107,6 +107,15 @@ const (
 	// WeightDailyCreateLimitExceeded 当天体重记录新增数量超过上限。
 	WeightDailyCreateLimitExceeded int = 20011
 
+	// WeeklyTrainingGoalInvalid 每周训练目标值无效。
+	WeeklyTrainingGoalInvalid int = 20012
+
+	// WeeklyTrainingGoalQueryFailed 查询每周训练目标失败。
+	WeeklyTrainingGoalQueryFailed int = 20013
+
+	// WeeklyTrainingGoalSaveFailed 保存每周训练目标失败。
+	WeeklyTrainingGoalSaveFailed int = 20014
+
 	// TrainingTagNameEmpty 训练标签名称为空。
 	TrainingTagNameEmpty int = 30001
 
