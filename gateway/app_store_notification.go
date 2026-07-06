@@ -20,6 +20,7 @@ type appStoreServerNotificationV2Request struct {
 func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 	var req appStoreServerNotificationV2Request
 	if err := c.ShouldBindJSON(&req); err != nil {
+		applogger.Printf("苹果请求 App Store notification invalid body path=%s client=%s err=%v", c.FullPath(), c.ClientIP(), err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": http.StatusBadRequest,
 			"msg":  "invalid request body",
@@ -28,7 +29,15 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 	}
 
 	signedPayload := strings.TrimSpace(req.SignedPayload)
+	applogger.Printf(
+		"苹果请求 App Store notification received path=%s client=%s payload_length=%d payload_dots=%d",
+		c.FullPath(),
+		c.ClientIP(),
+		len(signedPayload),
+		strings.Count(signedPayload, "."),
+	)
 	if signedPayload == "" {
+		applogger.Printf("苹果请求 App Store notification empty payload path=%s client=%s", c.FullPath(), c.ClientIP())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": http.StatusBadRequest,
 			"msg":  "signedPayload is empty",
@@ -39,7 +48,7 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 	verifier := appstore.DefaultVerifier()
 	notification, transaction, renewalInfo, err := verifier.VerifyNotification(c.Request.Context(), signedPayload)
 	if errors.Is(err, appstore.ErrVerifierConfigInvalid) {
-		applogger.Printf("app store notification verifier config invalid: %v", err)
+		applogger.Printf("苹果请求 App Store notification verifier config invalid: %v", err)
 		recordAppStoreNotificationVerifyFailure(
 			signedPayload,
 			http.StatusServiceUnavailable,
@@ -55,7 +64,7 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		applogger.Printf("app store notification verify failed: %v", err)
+		applogger.Printf("苹果请求 App Store notification verify failed: %v", err)
 		recordAppStoreNotificationVerifyFailure(
 			signedPayload,
 			http.StatusBadRequest,
@@ -70,6 +79,17 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 		})
 		return
 	}
+	applogger.Printf(
+		"苹果请求 App Store notification verified uuid=%s type=%s subtype=%s status=%d product=%s transaction=%s original=%s environment=%s",
+		notification.NotificationUUID,
+		notification.NotificationType,
+		notification.Subtype,
+		notification.Data.Status,
+		appStoreNotificationProductID(transaction, renewalInfo),
+		appStoreNotificationTransactionID(transaction),
+		appStoreNotificationOriginalTransactionID(transaction, renewalInfo),
+		firstNonEmpty(notification.Data.Environment, transactionEnvironment(transaction), renewalEnvironment(renewalInfo)),
+	)
 
 	cfg := verifier.Config()
 	if err := mysqlmodel.SaveAppStoreServerNotificationAndApplyVIP(
@@ -81,7 +101,7 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 		cfg.LifetimeProductID,
 		time.Now(),
 	); err != nil {
-		applogger.Printf("app store notification save/apply failed: uuid=%s type=%s subtype=%s err=%v",
+		applogger.Printf("苹果请求 App Store notification save/apply failed: uuid=%s type=%s subtype=%s err=%v",
 			notification.NotificationUUID,
 			notification.NotificationType,
 			notification.Subtype,
@@ -94,6 +114,15 @@ func (s *GatewayServer) appStoreServerNotificationV2Handler(c *gin.Context) {
 		})
 		return
 	}
+	applogger.Printf(
+		"苹果请求 App Store notification processed uuid=%s type=%s subtype=%s product=%s transaction=%s original=%s",
+		notification.NotificationUUID,
+		notification.NotificationType,
+		notification.Subtype,
+		appStoreNotificationProductID(transaction, renewalInfo),
+		appStoreNotificationTransactionID(transaction),
+		appStoreNotificationOriginalTransactionID(transaction, renewalInfo),
+	)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
@@ -250,4 +279,33 @@ func renewalExpirationIntent(renewalInfo *appstore.RenewalInfo) int32 {
 
 func renewalIsInBillingRetryPeriod(renewalInfo *appstore.RenewalInfo) bool {
 	return renewalInfo != nil && renewalInfo.IsInBillingRetryPeriod
+}
+
+func appStoreNotificationProductID(transaction *appstore.Transaction, renewalInfo *appstore.RenewalInfo) string {
+	productID := ""
+	if transaction != nil {
+		productID = transaction.ProductID
+	}
+	if renewalInfo != nil {
+		productID = firstNonEmpty(productID, renewalInfo.ProductID)
+	}
+	return productID
+}
+
+func appStoreNotificationTransactionID(transaction *appstore.Transaction) string {
+	if transaction == nil {
+		return ""
+	}
+	return transaction.TransactionID
+}
+
+func appStoreNotificationOriginalTransactionID(transaction *appstore.Transaction, renewalInfo *appstore.RenewalInfo) string {
+	originalTransactionID := ""
+	if transaction != nil {
+		originalTransactionID = transaction.OriginalTransactionID
+	}
+	if renewalInfo != nil {
+		originalTransactionID = firstNonEmpty(originalTransactionID, renewalInfo.OriginalTransactionID)
+	}
+	return originalTransactionID
 }
