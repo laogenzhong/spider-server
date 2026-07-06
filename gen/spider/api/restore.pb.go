@@ -39,6 +39,8 @@ const (
 	RestoreDataType_RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS RestoreDataType = 5
 	// 用户自定义动作。
 	RestoreDataType_RESTORE_DATA_TYPE_CUSTOM_EXERCISES RestoreDataType = 6
+	// 动作库训练手动结束标记。
+	RestoreDataType_RESTORE_DATA_TYPE_EXERCISE_TRAINING_SESSION_END_MARKERS RestoreDataType = 7
 )
 
 // Enum value maps for RestoreDataType.
@@ -51,15 +53,17 @@ var (
 		4: "RESTORE_DATA_TYPE_BODY_PHOTOS",
 		5: "RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS",
 		6: "RESTORE_DATA_TYPE_CUSTOM_EXERCISES",
+		7: "RESTORE_DATA_TYPE_EXERCISE_TRAINING_SESSION_END_MARKERS",
 	}
 	RestoreDataType_value = map[string]int32{
-		"RESTORE_DATA_TYPE_UNKNOWN":              0,
-		"RESTORE_DATA_TYPE_WEIGHT_RECORDS":       1,
-		"RESTORE_DATA_TYPE_TRAINING_TAGS":        2,
-		"RESTORE_DATA_TYPE_WORKOUT_TAG_BINDINGS": 3,
-		"RESTORE_DATA_TYPE_BODY_PHOTOS":          4,
-		"RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS": 5,
-		"RESTORE_DATA_TYPE_CUSTOM_EXERCISES":     6,
+		"RESTORE_DATA_TYPE_UNKNOWN":                               0,
+		"RESTORE_DATA_TYPE_WEIGHT_RECORDS":                        1,
+		"RESTORE_DATA_TYPE_TRAINING_TAGS":                         2,
+		"RESTORE_DATA_TYPE_WORKOUT_TAG_BINDINGS":                  3,
+		"RESTORE_DATA_TYPE_BODY_PHOTOS":                           4,
+		"RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS":                  5,
+		"RESTORE_DATA_TYPE_CUSTOM_EXERCISES":                      6,
+		"RESTORE_DATA_TYPE_EXERCISE_TRAINING_SESSION_END_MARKERS": 7,
 	}
 )
 
@@ -867,6 +871,79 @@ func (x *CustomExerciseSyncItem) GetChangedAt() int64 {
 	return 0
 }
 
+// ExerciseTrainingSessionEndMarkerSyncItem 表示一条动作库训练结束标记同步项。
+type ExerciseTrainingSessionEndMarkerSyncItem struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 动作库训练结束标记。
+	Marker *ExerciseTrainingSessionEndMarker `protobuf:"bytes,1,opt,name=marker,proto3" json:"marker,omitempty"`
+	// true 表示该结束标记已被服务端删除，客户端应删除本地对应标记。
+	Deleted bool `protobuf:"varint,2,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	// 删除时间，毫秒时间戳；deleted = true 时有效。
+	DeletedAt int64 `protobuf:"varint,3,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
+	// 本记录最近变更时间，毫秒时间戳。
+	ChangedAt     int64 `protobuf:"varint,4,opt,name=changed_at,json=changedAt,proto3" json:"changed_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExerciseTrainingSessionEndMarkerSyncItem) Reset() {
+	*x = ExerciseTrainingSessionEndMarkerSyncItem{}
+	mi := &file_primary_restore_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExerciseTrainingSessionEndMarkerSyncItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExerciseTrainingSessionEndMarkerSyncItem) ProtoMessage() {}
+
+func (x *ExerciseTrainingSessionEndMarkerSyncItem) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_restore_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExerciseTrainingSessionEndMarkerSyncItem.ProtoReflect.Descriptor instead.
+func (*ExerciseTrainingSessionEndMarkerSyncItem) Descriptor() ([]byte, []int) {
+	return file_primary_restore_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ExerciseTrainingSessionEndMarkerSyncItem) GetMarker() *ExerciseTrainingSessionEndMarker {
+	if x != nil {
+		return x.Marker
+	}
+	return nil
+}
+
+func (x *ExerciseTrainingSessionEndMarkerSyncItem) GetDeleted() bool {
+	if x != nil {
+		return x.Deleted
+	}
+	return false
+}
+
+func (x *ExerciseTrainingSessionEndMarkerSyncItem) GetDeletedAt() int64 {
+	if x != nil {
+		return x.DeletedAt
+	}
+	return 0
+}
+
+func (x *ExerciseTrainingSessionEndMarkerSyncItem) GetChangedAt() int64 {
+	if x != nil {
+		return x.ChangedAt
+	}
+	return 0
+}
+
 // WeightRecordRestoreBatch 表示一批体重记录同步项。
 type WeightRecordRestoreBatch struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -878,7 +955,7 @@ type WeightRecordRestoreBatch struct {
 
 func (x *WeightRecordRestoreBatch) Reset() {
 	*x = WeightRecordRestoreBatch{}
-	mi := &file_primary_restore_proto_msgTypes[10]
+	mi := &file_primary_restore_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -890,7 +967,7 @@ func (x *WeightRecordRestoreBatch) String() string {
 func (*WeightRecordRestoreBatch) ProtoMessage() {}
 
 func (x *WeightRecordRestoreBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_restore_proto_msgTypes[10]
+	mi := &file_primary_restore_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -903,7 +980,7 @@ func (x *WeightRecordRestoreBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WeightRecordRestoreBatch.ProtoReflect.Descriptor instead.
 func (*WeightRecordRestoreBatch) Descriptor() ([]byte, []int) {
-	return file_primary_restore_proto_rawDescGZIP(), []int{10}
+	return file_primary_restore_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *WeightRecordRestoreBatch) GetItems() []*WeightRecordSyncItem {
@@ -924,7 +1001,7 @@ type TrainingTagRestoreBatch struct {
 
 func (x *TrainingTagRestoreBatch) Reset() {
 	*x = TrainingTagRestoreBatch{}
-	mi := &file_primary_restore_proto_msgTypes[11]
+	mi := &file_primary_restore_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -936,7 +1013,7 @@ func (x *TrainingTagRestoreBatch) String() string {
 func (*TrainingTagRestoreBatch) ProtoMessage() {}
 
 func (x *TrainingTagRestoreBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_restore_proto_msgTypes[11]
+	mi := &file_primary_restore_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -949,7 +1026,7 @@ func (x *TrainingTagRestoreBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrainingTagRestoreBatch.ProtoReflect.Descriptor instead.
 func (*TrainingTagRestoreBatch) Descriptor() ([]byte, []int) {
-	return file_primary_restore_proto_rawDescGZIP(), []int{11}
+	return file_primary_restore_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TrainingTagRestoreBatch) GetItems() []*TrainingTagSyncItem {
@@ -970,7 +1047,7 @@ type WorkoutTagBindingRestoreBatch struct {
 
 func (x *WorkoutTagBindingRestoreBatch) Reset() {
 	*x = WorkoutTagBindingRestoreBatch{}
-	mi := &file_primary_restore_proto_msgTypes[12]
+	mi := &file_primary_restore_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -982,7 +1059,7 @@ func (x *WorkoutTagBindingRestoreBatch) String() string {
 func (*WorkoutTagBindingRestoreBatch) ProtoMessage() {}
 
 func (x *WorkoutTagBindingRestoreBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_restore_proto_msgTypes[12]
+	mi := &file_primary_restore_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -995,7 +1072,7 @@ func (x *WorkoutTagBindingRestoreBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkoutTagBindingRestoreBatch.ProtoReflect.Descriptor instead.
 func (*WorkoutTagBindingRestoreBatch) Descriptor() ([]byte, []int) {
-	return file_primary_restore_proto_rawDescGZIP(), []int{12}
+	return file_primary_restore_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *WorkoutTagBindingRestoreBatch) GetItems() []*WorkoutTagBindingSyncItem {
@@ -1016,7 +1093,7 @@ type BodyPhotoRestoreBatch struct {
 
 func (x *BodyPhotoRestoreBatch) Reset() {
 	*x = BodyPhotoRestoreBatch{}
-	mi := &file_primary_restore_proto_msgTypes[13]
+	mi := &file_primary_restore_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1028,7 +1105,7 @@ func (x *BodyPhotoRestoreBatch) String() string {
 func (*BodyPhotoRestoreBatch) ProtoMessage() {}
 
 func (x *BodyPhotoRestoreBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_restore_proto_msgTypes[13]
+	mi := &file_primary_restore_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1041,7 +1118,7 @@ func (x *BodyPhotoRestoreBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BodyPhotoRestoreBatch.ProtoReflect.Descriptor instead.
 func (*BodyPhotoRestoreBatch) Descriptor() ([]byte, []int) {
-	return file_primary_restore_proto_rawDescGZIP(), []int{13}
+	return file_primary_restore_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *BodyPhotoRestoreBatch) GetItems() []*BodyPhotoSyncItem {
@@ -1062,7 +1139,7 @@ type ExerciseSetRecordRestoreBatch struct {
 
 func (x *ExerciseSetRecordRestoreBatch) Reset() {
 	*x = ExerciseSetRecordRestoreBatch{}
-	mi := &file_primary_restore_proto_msgTypes[14]
+	mi := &file_primary_restore_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1074,7 +1151,7 @@ func (x *ExerciseSetRecordRestoreBatch) String() string {
 func (*ExerciseSetRecordRestoreBatch) ProtoMessage() {}
 
 func (x *ExerciseSetRecordRestoreBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_restore_proto_msgTypes[14]
+	mi := &file_primary_restore_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1087,7 +1164,7 @@ func (x *ExerciseSetRecordRestoreBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExerciseSetRecordRestoreBatch.ProtoReflect.Descriptor instead.
 func (*ExerciseSetRecordRestoreBatch) Descriptor() ([]byte, []int) {
-	return file_primary_restore_proto_rawDescGZIP(), []int{14}
+	return file_primary_restore_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ExerciseSetRecordRestoreBatch) GetItems() []*ExerciseSetRecordSyncItem {
@@ -1108,7 +1185,7 @@ type CustomExerciseRestoreBatch struct {
 
 func (x *CustomExerciseRestoreBatch) Reset() {
 	*x = CustomExerciseRestoreBatch{}
-	mi := &file_primary_restore_proto_msgTypes[15]
+	mi := &file_primary_restore_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1120,7 +1197,7 @@ func (x *CustomExerciseRestoreBatch) String() string {
 func (*CustomExerciseRestoreBatch) ProtoMessage() {}
 
 func (x *CustomExerciseRestoreBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_restore_proto_msgTypes[15]
+	mi := &file_primary_restore_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1133,10 +1210,56 @@ func (x *CustomExerciseRestoreBatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomExerciseRestoreBatch.ProtoReflect.Descriptor instead.
 func (*CustomExerciseRestoreBatch) Descriptor() ([]byte, []int) {
-	return file_primary_restore_proto_rawDescGZIP(), []int{15}
+	return file_primary_restore_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CustomExerciseRestoreBatch) GetItems() []*CustomExerciseSyncItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+// ExerciseTrainingSessionEndMarkerRestoreBatch 表示一批动作库训练结束标记同步项。
+type ExerciseTrainingSessionEndMarkerRestoreBatch struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 动作库训练结束标记同步项列表。
+	Items         []*ExerciseTrainingSessionEndMarkerSyncItem `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExerciseTrainingSessionEndMarkerRestoreBatch) Reset() {
+	*x = ExerciseTrainingSessionEndMarkerRestoreBatch{}
+	mi := &file_primary_restore_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExerciseTrainingSessionEndMarkerRestoreBatch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExerciseTrainingSessionEndMarkerRestoreBatch) ProtoMessage() {}
+
+func (x *ExerciseTrainingSessionEndMarkerRestoreBatch) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_restore_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExerciseTrainingSessionEndMarkerRestoreBatch.ProtoReflect.Descriptor instead.
+func (*ExerciseTrainingSessionEndMarkerRestoreBatch) Descriptor() ([]byte, []int) {
+	return file_primary_restore_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ExerciseTrainingSessionEndMarkerRestoreBatch) GetItems() []*ExerciseTrainingSessionEndMarkerSyncItem {
 	if x != nil {
 		return x.Items
 	}
@@ -1174,6 +1297,7 @@ type RestoreBatchResponse struct {
 	//	*RestoreBatchResponse_BodyPhotos
 	//	*RestoreBatchResponse_ExerciseSetRecords
 	//	*RestoreBatchResponse_CustomExercises
+	//	*RestoreBatchResponse_ExerciseTrainingSessionEndMarkers
 	Payload       isRestoreBatchResponse_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1181,7 +1305,7 @@ type RestoreBatchResponse struct {
 
 func (x *RestoreBatchResponse) Reset() {
 	*x = RestoreBatchResponse{}
-	mi := &file_primary_restore_proto_msgTypes[16]
+	mi := &file_primary_restore_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1193,7 +1317,7 @@ func (x *RestoreBatchResponse) String() string {
 func (*RestoreBatchResponse) ProtoMessage() {}
 
 func (x *RestoreBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_restore_proto_msgTypes[16]
+	mi := &file_primary_restore_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1206,7 +1330,7 @@ func (x *RestoreBatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreBatchResponse.ProtoReflect.Descriptor instead.
 func (*RestoreBatchResponse) Descriptor() ([]byte, []int) {
-	return file_primary_restore_proto_rawDescGZIP(), []int{16}
+	return file_primary_restore_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RestoreBatchResponse) GetDataType() RestoreDataType {
@@ -1333,6 +1457,15 @@ func (x *RestoreBatchResponse) GetCustomExercises() *CustomExerciseRestoreBatch 
 	return nil
 }
 
+func (x *RestoreBatchResponse) GetExerciseTrainingSessionEndMarkers() *ExerciseTrainingSessionEndMarkerRestoreBatch {
+	if x != nil {
+		if x, ok := x.Payload.(*RestoreBatchResponse_ExerciseTrainingSessionEndMarkers); ok {
+			return x.ExerciseTrainingSessionEndMarkers
+		}
+	}
+	return nil
+}
+
 type isRestoreBatchResponse_Payload interface {
 	isRestoreBatchResponse_Payload()
 }
@@ -1361,6 +1494,10 @@ type RestoreBatchResponse_CustomExercises struct {
 	CustomExercises *CustomExerciseRestoreBatch `protobuf:"bytes,25,opt,name=custom_exercises,json=customExercises,proto3,oneof"`
 }
 
+type RestoreBatchResponse_ExerciseTrainingSessionEndMarkers struct {
+	ExerciseTrainingSessionEndMarkers *ExerciseTrainingSessionEndMarkerRestoreBatch `protobuf:"bytes,26,opt,name=exercise_training_session_end_markers,json=exerciseTrainingSessionEndMarkers,proto3,oneof"`
+}
+
 func (*RestoreBatchResponse_WeightRecords) isRestoreBatchResponse_Payload() {}
 
 func (*RestoreBatchResponse_TrainingTags) isRestoreBatchResponse_Payload() {}
@@ -1372,6 +1509,8 @@ func (*RestoreBatchResponse_BodyPhotos) isRestoreBatchResponse_Payload() {}
 func (*RestoreBatchResponse_ExerciseSetRecords) isRestoreBatchResponse_Payload() {}
 
 func (*RestoreBatchResponse_CustomExercises) isRestoreBatchResponse_Payload() {}
+
+func (*RestoreBatchResponse_ExerciseTrainingSessionEndMarkers) isRestoreBatchResponse_Payload() {}
 
 var File_primary_restore_proto protoreflect.FileDescriptor
 
@@ -1450,6 +1589,13 @@ const file_primary_restore_proto_rawDesc = "" +
 	"\n" +
 	"deleted_at\x18\x03 \x01(\x03R\tdeletedAt\x12\x1d\n" +
 	"\n" +
+	"changed_at\x18\x04 \x01(\x03R\tchangedAt\"\xc1\x01\n" +
+	"(ExerciseTrainingSessionEndMarkerSyncItem\x12=\n" +
+	"\x06marker\x18\x01 \x01(\v2%.api.ExerciseTrainingSessionEndMarkerR\x06marker\x12\x18\n" +
+	"\adeleted\x18\x02 \x01(\bR\adeleted\x12\x1d\n" +
+	"\n" +
+	"deleted_at\x18\x03 \x01(\x03R\tdeletedAt\x12\x1d\n" +
+	"\n" +
 	"changed_at\x18\x04 \x01(\x03R\tchangedAt\"K\n" +
 	"\x18WeightRecordRestoreBatch\x12/\n" +
 	"\x05items\x18\x01 \x03(\v2\x19.api.WeightRecordSyncItemR\x05items\"I\n" +
@@ -1462,7 +1608,9 @@ const file_primary_restore_proto_rawDesc = "" +
 	"\x1dExerciseSetRecordRestoreBatch\x124\n" +
 	"\x05items\x18\x01 \x03(\v2\x1e.api.ExerciseSetRecordSyncItemR\x05items\"O\n" +
 	"\x1aCustomExerciseRestoreBatch\x121\n" +
-	"\x05items\x18\x01 \x03(\v2\x1b.api.CustomExerciseSyncItemR\x05items\"\xbf\x06\n" +
+	"\x05items\x18\x01 \x03(\v2\x1b.api.CustomExerciseSyncItemR\x05items\"s\n" +
+	",ExerciseTrainingSessionEndMarkerRestoreBatch\x12C\n" +
+	"\x05items\x18\x01 \x03(\v2-.api.ExerciseTrainingSessionEndMarkerSyncItemR\x05items\"\xc7\a\n" +
 	"\x14RestoreBatchResponse\x121\n" +
 	"\tdata_type\x18\x01 \x01(\x0e2\x14.api.RestoreDataTypeR\bdataType\x12\x1f\n" +
 	"\vbatch_index\x18\x02 \x01(\rR\n" +
@@ -1482,8 +1630,9 @@ const file_primary_restore_proto_rawDesc = "" +
 	"\vbody_photos\x18\x17 \x01(\v2\x1a.api.BodyPhotoRestoreBatchH\x00R\n" +
 	"bodyPhotos\x12V\n" +
 	"\x14exercise_set_records\x18\x18 \x01(\v2\".api.ExerciseSetRecordRestoreBatchH\x00R\x12exerciseSetRecords\x12L\n" +
-	"\x10custom_exercises\x18\x19 \x01(\v2\x1f.api.CustomExerciseRestoreBatchH\x00R\x0fcustomExercisesB\t\n" +
-	"\apayload*\x9e\x02\n" +
+	"\x10custom_exercises\x18\x19 \x01(\v2\x1f.api.CustomExerciseRestoreBatchH\x00R\x0fcustomExercises\x12\x85\x01\n" +
+	"%exercise_training_session_end_markers\x18\x1a \x01(\v21.api.ExerciseTrainingSessionEndMarkerRestoreBatchH\x00R!exerciseTrainingSessionEndMarkersB\t\n" +
+	"\apayload*\xdb\x02\n" +
 	"\x0fRestoreDataType\x12\x1d\n" +
 	"\x19RESTORE_DATA_TYPE_UNKNOWN\x10\x00\x12$\n" +
 	" RESTORE_DATA_TYPE_WEIGHT_RECORDS\x10\x01\x12#\n" +
@@ -1491,7 +1640,8 @@ const file_primary_restore_proto_rawDesc = "" +
 	"&RESTORE_DATA_TYPE_WORKOUT_TAG_BINDINGS\x10\x03\x12!\n" +
 	"\x1dRESTORE_DATA_TYPE_BODY_PHOTOS\x10\x04\x12*\n" +
 	"&RESTORE_DATA_TYPE_EXERCISE_SET_RECORDS\x10\x05\x12&\n" +
-	"\"RESTORE_DATA_TYPE_CUSTOM_EXERCISES\x10\x062\xa5\x01\n" +
+	"\"RESTORE_DATA_TYPE_CUSTOM_EXERCISES\x10\x06\x12;\n" +
+	"7RESTORE_DATA_TYPE_EXERCISE_TRAINING_SESSION_END_MARKERS\x10\a2\xa5\x01\n" +
 	"\x14ClientRestoreService\x12C\n" +
 	"\x0eGetRestorePlan\x12\x17.api.RestorePlanRequest\x1a\x18.api.RestorePlanResponse\x12H\n" +
 	"\x11FetchRestoreBatch\x12\x18.api.RestoreBatchRequest\x1a\x19.api.RestoreBatchResponseB\x10Z\x0espider/api;apib\x06proto3"
@@ -1509,64 +1659,70 @@ func file_primary_restore_proto_rawDescGZIP() []byte {
 }
 
 var file_primary_restore_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_primary_restore_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_primary_restore_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_primary_restore_proto_goTypes = []any{
-	(RestoreDataType)(0),                  // 0: api.RestoreDataType
-	(*RestorePlanRequest)(nil),            // 1: api.RestorePlanRequest
-	(*RestoreTask)(nil),                   // 2: api.RestoreTask
-	(*RestorePlanResponse)(nil),           // 3: api.RestorePlanResponse
-	(*RestoreBatchRequest)(nil),           // 4: api.RestoreBatchRequest
-	(*WeightRecordSyncItem)(nil),          // 5: api.WeightRecordSyncItem
-	(*TrainingTagSyncItem)(nil),           // 6: api.TrainingTagSyncItem
-	(*WorkoutTagBindingSyncItem)(nil),     // 7: api.WorkoutTagBindingSyncItem
-	(*BodyPhotoSyncItem)(nil),             // 8: api.BodyPhotoSyncItem
-	(*ExerciseSetRecordSyncItem)(nil),     // 9: api.ExerciseSetRecordSyncItem
-	(*CustomExerciseSyncItem)(nil),        // 10: api.CustomExerciseSyncItem
-	(*WeightRecordRestoreBatch)(nil),      // 11: api.WeightRecordRestoreBatch
-	(*TrainingTagRestoreBatch)(nil),       // 12: api.TrainingTagRestoreBatch
-	(*WorkoutTagBindingRestoreBatch)(nil), // 13: api.WorkoutTagBindingRestoreBatch
-	(*BodyPhotoRestoreBatch)(nil),         // 14: api.BodyPhotoRestoreBatch
-	(*ExerciseSetRecordRestoreBatch)(nil), // 15: api.ExerciseSetRecordRestoreBatch
-	(*CustomExerciseRestoreBatch)(nil),    // 16: api.CustomExerciseRestoreBatch
-	(*RestoreBatchResponse)(nil),          // 17: api.RestoreBatchResponse
-	(*WeightRecord)(nil),                  // 18: health.WeightRecord
-	(*TrainingTag)(nil),                   // 19: api.TrainingTag
-	(*WorkoutTagBinding)(nil),             // 20: api.WorkoutTagBinding
-	(*BodyPhotoRecord)(nil),               // 21: api.BodyPhotoRecord
-	(*ExerciseSetRecord)(nil),             // 22: api.ExerciseSetRecord
-	(*CustomExercise)(nil),                // 23: api.CustomExercise
+	(RestoreDataType)(0),                                 // 0: api.RestoreDataType
+	(*RestorePlanRequest)(nil),                           // 1: api.RestorePlanRequest
+	(*RestoreTask)(nil),                                  // 2: api.RestoreTask
+	(*RestorePlanResponse)(nil),                          // 3: api.RestorePlanResponse
+	(*RestoreBatchRequest)(nil),                          // 4: api.RestoreBatchRequest
+	(*WeightRecordSyncItem)(nil),                         // 5: api.WeightRecordSyncItem
+	(*TrainingTagSyncItem)(nil),                          // 6: api.TrainingTagSyncItem
+	(*WorkoutTagBindingSyncItem)(nil),                    // 7: api.WorkoutTagBindingSyncItem
+	(*BodyPhotoSyncItem)(nil),                            // 8: api.BodyPhotoSyncItem
+	(*ExerciseSetRecordSyncItem)(nil),                    // 9: api.ExerciseSetRecordSyncItem
+	(*CustomExerciseSyncItem)(nil),                       // 10: api.CustomExerciseSyncItem
+	(*ExerciseTrainingSessionEndMarkerSyncItem)(nil),     // 11: api.ExerciseTrainingSessionEndMarkerSyncItem
+	(*WeightRecordRestoreBatch)(nil),                     // 12: api.WeightRecordRestoreBatch
+	(*TrainingTagRestoreBatch)(nil),                      // 13: api.TrainingTagRestoreBatch
+	(*WorkoutTagBindingRestoreBatch)(nil),                // 14: api.WorkoutTagBindingRestoreBatch
+	(*BodyPhotoRestoreBatch)(nil),                        // 15: api.BodyPhotoRestoreBatch
+	(*ExerciseSetRecordRestoreBatch)(nil),                // 16: api.ExerciseSetRecordRestoreBatch
+	(*CustomExerciseRestoreBatch)(nil),                   // 17: api.CustomExerciseRestoreBatch
+	(*ExerciseTrainingSessionEndMarkerRestoreBatch)(nil), // 18: api.ExerciseTrainingSessionEndMarkerRestoreBatch
+	(*RestoreBatchResponse)(nil),                         // 19: api.RestoreBatchResponse
+	(*WeightRecord)(nil),                                 // 20: health.WeightRecord
+	(*TrainingTag)(nil),                                  // 21: api.TrainingTag
+	(*WorkoutTagBinding)(nil),                            // 22: api.WorkoutTagBinding
+	(*BodyPhotoRecord)(nil),                              // 23: api.BodyPhotoRecord
+	(*ExerciseSetRecord)(nil),                            // 24: api.ExerciseSetRecord
+	(*CustomExercise)(nil),                               // 25: api.CustomExercise
+	(*ExerciseTrainingSessionEndMarker)(nil),             // 26: api.ExerciseTrainingSessionEndMarker
 }
 var file_primary_restore_proto_depIdxs = []int32{
 	0,  // 0: api.RestoreTask.data_type:type_name -> api.RestoreDataType
 	2,  // 1: api.RestorePlanResponse.tasks:type_name -> api.RestoreTask
-	18, // 2: api.WeightRecordSyncItem.record:type_name -> health.WeightRecord
-	19, // 3: api.TrainingTagSyncItem.tag:type_name -> api.TrainingTag
-	20, // 4: api.WorkoutTagBindingSyncItem.binding:type_name -> api.WorkoutTagBinding
-	21, // 5: api.BodyPhotoSyncItem.record:type_name -> api.BodyPhotoRecord
-	22, // 6: api.ExerciseSetRecordSyncItem.record:type_name -> api.ExerciseSetRecord
-	23, // 7: api.CustomExerciseSyncItem.exercise:type_name -> api.CustomExercise
-	5,  // 8: api.WeightRecordRestoreBatch.items:type_name -> api.WeightRecordSyncItem
-	6,  // 9: api.TrainingTagRestoreBatch.items:type_name -> api.TrainingTagSyncItem
-	7,  // 10: api.WorkoutTagBindingRestoreBatch.items:type_name -> api.WorkoutTagBindingSyncItem
-	8,  // 11: api.BodyPhotoRestoreBatch.items:type_name -> api.BodyPhotoSyncItem
-	9,  // 12: api.ExerciseSetRecordRestoreBatch.items:type_name -> api.ExerciseSetRecordSyncItem
-	10, // 13: api.CustomExerciseRestoreBatch.items:type_name -> api.CustomExerciseSyncItem
-	0,  // 14: api.RestoreBatchResponse.data_type:type_name -> api.RestoreDataType
-	11, // 15: api.RestoreBatchResponse.weight_records:type_name -> api.WeightRecordRestoreBatch
-	12, // 16: api.RestoreBatchResponse.training_tags:type_name -> api.TrainingTagRestoreBatch
-	13, // 17: api.RestoreBatchResponse.workout_tag_bindings:type_name -> api.WorkoutTagBindingRestoreBatch
-	14, // 18: api.RestoreBatchResponse.body_photos:type_name -> api.BodyPhotoRestoreBatch
-	15, // 19: api.RestoreBatchResponse.exercise_set_records:type_name -> api.ExerciseSetRecordRestoreBatch
-	16, // 20: api.RestoreBatchResponse.custom_exercises:type_name -> api.CustomExerciseRestoreBatch
-	1,  // 21: api.ClientRestoreService.GetRestorePlan:input_type -> api.RestorePlanRequest
-	4,  // 22: api.ClientRestoreService.FetchRestoreBatch:input_type -> api.RestoreBatchRequest
-	3,  // 23: api.ClientRestoreService.GetRestorePlan:output_type -> api.RestorePlanResponse
-	17, // 24: api.ClientRestoreService.FetchRestoreBatch:output_type -> api.RestoreBatchResponse
-	23, // [23:25] is the sub-list for method output_type
-	21, // [21:23] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	20, // 2: api.WeightRecordSyncItem.record:type_name -> health.WeightRecord
+	21, // 3: api.TrainingTagSyncItem.tag:type_name -> api.TrainingTag
+	22, // 4: api.WorkoutTagBindingSyncItem.binding:type_name -> api.WorkoutTagBinding
+	23, // 5: api.BodyPhotoSyncItem.record:type_name -> api.BodyPhotoRecord
+	24, // 6: api.ExerciseSetRecordSyncItem.record:type_name -> api.ExerciseSetRecord
+	25, // 7: api.CustomExerciseSyncItem.exercise:type_name -> api.CustomExercise
+	26, // 8: api.ExerciseTrainingSessionEndMarkerSyncItem.marker:type_name -> api.ExerciseTrainingSessionEndMarker
+	5,  // 9: api.WeightRecordRestoreBatch.items:type_name -> api.WeightRecordSyncItem
+	6,  // 10: api.TrainingTagRestoreBatch.items:type_name -> api.TrainingTagSyncItem
+	7,  // 11: api.WorkoutTagBindingRestoreBatch.items:type_name -> api.WorkoutTagBindingSyncItem
+	8,  // 12: api.BodyPhotoRestoreBatch.items:type_name -> api.BodyPhotoSyncItem
+	9,  // 13: api.ExerciseSetRecordRestoreBatch.items:type_name -> api.ExerciseSetRecordSyncItem
+	10, // 14: api.CustomExerciseRestoreBatch.items:type_name -> api.CustomExerciseSyncItem
+	11, // 15: api.ExerciseTrainingSessionEndMarkerRestoreBatch.items:type_name -> api.ExerciseTrainingSessionEndMarkerSyncItem
+	0,  // 16: api.RestoreBatchResponse.data_type:type_name -> api.RestoreDataType
+	12, // 17: api.RestoreBatchResponse.weight_records:type_name -> api.WeightRecordRestoreBatch
+	13, // 18: api.RestoreBatchResponse.training_tags:type_name -> api.TrainingTagRestoreBatch
+	14, // 19: api.RestoreBatchResponse.workout_tag_bindings:type_name -> api.WorkoutTagBindingRestoreBatch
+	15, // 20: api.RestoreBatchResponse.body_photos:type_name -> api.BodyPhotoRestoreBatch
+	16, // 21: api.RestoreBatchResponse.exercise_set_records:type_name -> api.ExerciseSetRecordRestoreBatch
+	17, // 22: api.RestoreBatchResponse.custom_exercises:type_name -> api.CustomExerciseRestoreBatch
+	18, // 23: api.RestoreBatchResponse.exercise_training_session_end_markers:type_name -> api.ExerciseTrainingSessionEndMarkerRestoreBatch
+	1,  // 24: api.ClientRestoreService.GetRestorePlan:input_type -> api.RestorePlanRequest
+	4,  // 25: api.ClientRestoreService.FetchRestoreBatch:input_type -> api.RestoreBatchRequest
+	3,  // 26: api.ClientRestoreService.GetRestorePlan:output_type -> api.RestorePlanResponse
+	19, // 27: api.ClientRestoreService.FetchRestoreBatch:output_type -> api.RestoreBatchResponse
+	26, // [26:28] is the sub-list for method output_type
+	24, // [24:26] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_primary_restore_proto_init() }
@@ -1578,13 +1734,14 @@ func file_primary_restore_proto_init() {
 	file_primary_weight_proto_init()
 	file_primary_body_photo_proto_init()
 	file_primary_exercise_record_proto_init()
-	file_primary_restore_proto_msgTypes[16].OneofWrappers = []any{
+	file_primary_restore_proto_msgTypes[18].OneofWrappers = []any{
 		(*RestoreBatchResponse_WeightRecords)(nil),
 		(*RestoreBatchResponse_TrainingTags)(nil),
 		(*RestoreBatchResponse_WorkoutTagBindings)(nil),
 		(*RestoreBatchResponse_BodyPhotos)(nil),
 		(*RestoreBatchResponse_ExerciseSetRecords)(nil),
 		(*RestoreBatchResponse_CustomExercises)(nil),
+		(*RestoreBatchResponse_ExerciseTrainingSessionEndMarkers)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1592,7 +1749,7 @@ func file_primary_restore_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_primary_restore_proto_rawDesc), len(file_primary_restore_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

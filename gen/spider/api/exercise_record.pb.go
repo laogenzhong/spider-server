@@ -322,6 +322,91 @@ func (x *CustomExercise) GetSubcategoryKey() string {
 	return ""
 }
 
+// 动作库训练手动结束标记，用于把 3 小时内的动作记录强制切成两次训练。
+type ExerciseTrainingSessionEndMarker struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Uid            uint64                 `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
+	ClientMarkerId string                 `protobuf:"bytes,3,opt,name=client_marker_id,json=clientMarkerId,proto3" json:"client_marker_id,omitempty"`
+	EndedAt        int64                  `protobuf:"varint,4,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
+	CreatedAt      int64                  `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt      int64                  `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ExerciseTrainingSessionEndMarker) Reset() {
+	*x = ExerciseTrainingSessionEndMarker{}
+	mi := &file_primary_exercise_record_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExerciseTrainingSessionEndMarker) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExerciseTrainingSessionEndMarker) ProtoMessage() {}
+
+func (x *ExerciseTrainingSessionEndMarker) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_exercise_record_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExerciseTrainingSessionEndMarker.ProtoReflect.Descriptor instead.
+func (*ExerciseTrainingSessionEndMarker) Descriptor() ([]byte, []int) {
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ExerciseTrainingSessionEndMarker) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ExerciseTrainingSessionEndMarker) GetUid() uint64 {
+	if x != nil {
+		return x.Uid
+	}
+	return 0
+}
+
+func (x *ExerciseTrainingSessionEndMarker) GetClientMarkerId() string {
+	if x != nil {
+		return x.ClientMarkerId
+	}
+	return ""
+}
+
+func (x *ExerciseTrainingSessionEndMarker) GetEndedAt() int64 {
+	if x != nil {
+		return x.EndedAt
+	}
+	return 0
+}
+
+func (x *ExerciseTrainingSessionEndMarker) GetCreatedAt() int64 {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return 0
+}
+
+func (x *ExerciseTrainingSessionEndMarker) GetUpdatedAt() int64 {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return 0
+}
+
 type SaveExerciseSetRecordRequest struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	ExerciseId           string                 `protobuf:"bytes,1,opt,name=exercise_id,json=exerciseId,proto3" json:"exercise_id,omitempty"`
@@ -339,7 +424,7 @@ type SaveExerciseSetRecordRequest struct {
 
 func (x *SaveExerciseSetRecordRequest) Reset() {
 	*x = SaveExerciseSetRecordRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[2]
+	mi := &file_primary_exercise_record_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +436,7 @@ func (x *SaveExerciseSetRecordRequest) String() string {
 func (*SaveExerciseSetRecordRequest) ProtoMessage() {}
 
 func (x *SaveExerciseSetRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[2]
+	mi := &file_primary_exercise_record_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +449,7 @@ func (x *SaveExerciseSetRecordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveExerciseSetRecordRequest.ProtoReflect.Descriptor instead.
 func (*SaveExerciseSetRecordRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{2}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SaveExerciseSetRecordRequest) GetExerciseId() string {
@@ -439,7 +524,7 @@ type SaveExerciseSetRecordResponse struct {
 
 func (x *SaveExerciseSetRecordResponse) Reset() {
 	*x = SaveExerciseSetRecordResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[3]
+	mi := &file_primary_exercise_record_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -451,7 +536,7 @@ func (x *SaveExerciseSetRecordResponse) String() string {
 func (*SaveExerciseSetRecordResponse) ProtoMessage() {}
 
 func (x *SaveExerciseSetRecordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[3]
+	mi := &file_primary_exercise_record_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -464,7 +549,7 @@ func (x *SaveExerciseSetRecordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveExerciseSetRecordResponse.ProtoReflect.Descriptor instead.
 func (*SaveExerciseSetRecordResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{3}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SaveExerciseSetRecordResponse) GetRecord() *ExerciseSetRecord {
@@ -485,7 +570,7 @@ type ListExerciseSetRecordsRequest struct {
 
 func (x *ListExerciseSetRecordsRequest) Reset() {
 	*x = ListExerciseSetRecordsRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[4]
+	mi := &file_primary_exercise_record_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -497,7 +582,7 @@ func (x *ListExerciseSetRecordsRequest) String() string {
 func (*ListExerciseSetRecordsRequest) ProtoMessage() {}
 
 func (x *ListExerciseSetRecordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[4]
+	mi := &file_primary_exercise_record_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -510,7 +595,7 @@ func (x *ListExerciseSetRecordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExerciseSetRecordsRequest.ProtoReflect.Descriptor instead.
 func (*ListExerciseSetRecordsRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{4}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListExerciseSetRecordsRequest) GetExerciseId() string {
@@ -545,7 +630,7 @@ type ListExerciseSetRecordsResponse struct {
 
 func (x *ListExerciseSetRecordsResponse) Reset() {
 	*x = ListExerciseSetRecordsResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[5]
+	mi := &file_primary_exercise_record_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -557,7 +642,7 @@ func (x *ListExerciseSetRecordsResponse) String() string {
 func (*ListExerciseSetRecordsResponse) ProtoMessage() {}
 
 func (x *ListExerciseSetRecordsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[5]
+	mi := &file_primary_exercise_record_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,7 +655,7 @@ func (x *ListExerciseSetRecordsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExerciseSetRecordsResponse.ProtoReflect.Descriptor instead.
 func (*ListExerciseSetRecordsResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{5}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListExerciseSetRecordsResponse) GetRecords() []*ExerciseSetRecord {
@@ -604,7 +689,7 @@ type ListExerciseSetRecordsByTimeRangeRequest struct {
 
 func (x *ListExerciseSetRecordsByTimeRangeRequest) Reset() {
 	*x = ListExerciseSetRecordsByTimeRangeRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[6]
+	mi := &file_primary_exercise_record_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -616,7 +701,7 @@ func (x *ListExerciseSetRecordsByTimeRangeRequest) String() string {
 func (*ListExerciseSetRecordsByTimeRangeRequest) ProtoMessage() {}
 
 func (x *ListExerciseSetRecordsByTimeRangeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[6]
+	mi := &file_primary_exercise_record_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -629,7 +714,7 @@ func (x *ListExerciseSetRecordsByTimeRangeRequest) ProtoReflect() protoreflect.M
 
 // Deprecated: Use ListExerciseSetRecordsByTimeRangeRequest.ProtoReflect.Descriptor instead.
 func (*ListExerciseSetRecordsByTimeRangeRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{6}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListExerciseSetRecordsByTimeRangeRequest) GetStartAt() int64 {
@@ -655,7 +740,7 @@ type ListExerciseSetRecordsByTimeRangeResponse struct {
 
 func (x *ListExerciseSetRecordsByTimeRangeResponse) Reset() {
 	*x = ListExerciseSetRecordsByTimeRangeResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[7]
+	mi := &file_primary_exercise_record_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -667,7 +752,7 @@ func (x *ListExerciseSetRecordsByTimeRangeResponse) String() string {
 func (*ListExerciseSetRecordsByTimeRangeResponse) ProtoMessage() {}
 
 func (x *ListExerciseSetRecordsByTimeRangeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[7]
+	mi := &file_primary_exercise_record_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -680,7 +765,7 @@ func (x *ListExerciseSetRecordsByTimeRangeResponse) ProtoReflect() protoreflect.
 
 // Deprecated: Use ListExerciseSetRecordsByTimeRangeResponse.ProtoReflect.Descriptor instead.
 func (*ListExerciseSetRecordsByTimeRangeResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{7}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListExerciseSetRecordsByTimeRangeResponse) GetRecords() []*ExerciseSetRecord {
@@ -707,7 +792,7 @@ type UpdateExerciseSetRecordRequest struct {
 
 func (x *UpdateExerciseSetRecordRequest) Reset() {
 	*x = UpdateExerciseSetRecordRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[8]
+	mi := &file_primary_exercise_record_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -719,7 +804,7 @@ func (x *UpdateExerciseSetRecordRequest) String() string {
 func (*UpdateExerciseSetRecordRequest) ProtoMessage() {}
 
 func (x *UpdateExerciseSetRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[8]
+	mi := &file_primary_exercise_record_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -732,7 +817,7 @@ func (x *UpdateExerciseSetRecordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateExerciseSetRecordRequest.ProtoReflect.Descriptor instead.
 func (*UpdateExerciseSetRecordRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{8}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateExerciseSetRecordRequest) GetId() uint64 {
@@ -807,7 +892,7 @@ type UpdateExerciseSetRecordResponse struct {
 
 func (x *UpdateExerciseSetRecordResponse) Reset() {
 	*x = UpdateExerciseSetRecordResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[9]
+	mi := &file_primary_exercise_record_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -819,7 +904,7 @@ func (x *UpdateExerciseSetRecordResponse) String() string {
 func (*UpdateExerciseSetRecordResponse) ProtoMessage() {}
 
 func (x *UpdateExerciseSetRecordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[9]
+	mi := &file_primary_exercise_record_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -832,7 +917,7 @@ func (x *UpdateExerciseSetRecordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateExerciseSetRecordResponse.ProtoReflect.Descriptor instead.
 func (*UpdateExerciseSetRecordResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{9}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateExerciseSetRecordResponse) GetRecord() *ExerciseSetRecord {
@@ -851,7 +936,7 @@ type DeleteExerciseSetRecordRequest struct {
 
 func (x *DeleteExerciseSetRecordRequest) Reset() {
 	*x = DeleteExerciseSetRecordRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[10]
+	mi := &file_primary_exercise_record_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -863,7 +948,7 @@ func (x *DeleteExerciseSetRecordRequest) String() string {
 func (*DeleteExerciseSetRecordRequest) ProtoMessage() {}
 
 func (x *DeleteExerciseSetRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[10]
+	mi := &file_primary_exercise_record_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -876,7 +961,7 @@ func (x *DeleteExerciseSetRecordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExerciseSetRecordRequest.ProtoReflect.Descriptor instead.
 func (*DeleteExerciseSetRecordRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{10}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteExerciseSetRecordRequest) GetId() uint64 {
@@ -895,7 +980,7 @@ type DeleteExerciseSetRecordResponse struct {
 
 func (x *DeleteExerciseSetRecordResponse) Reset() {
 	*x = DeleteExerciseSetRecordResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[11]
+	mi := &file_primary_exercise_record_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -907,7 +992,7 @@ func (x *DeleteExerciseSetRecordResponse) String() string {
 func (*DeleteExerciseSetRecordResponse) ProtoMessage() {}
 
 func (x *DeleteExerciseSetRecordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[11]
+	mi := &file_primary_exercise_record_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -920,7 +1005,7 @@ func (x *DeleteExerciseSetRecordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteExerciseSetRecordResponse.ProtoReflect.Descriptor instead.
 func (*DeleteExerciseSetRecordResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{11}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteExerciseSetRecordResponse) GetSuccess() bool {
@@ -940,7 +1025,7 @@ type ListTodayExerciseHistoryRequest struct {
 
 func (x *ListTodayExerciseHistoryRequest) Reset() {
 	*x = ListTodayExerciseHistoryRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[12]
+	mi := &file_primary_exercise_record_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -952,7 +1037,7 @@ func (x *ListTodayExerciseHistoryRequest) String() string {
 func (*ListTodayExerciseHistoryRequest) ProtoMessage() {}
 
 func (x *ListTodayExerciseHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[12]
+	mi := &file_primary_exercise_record_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -965,7 +1050,7 @@ func (x *ListTodayExerciseHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTodayExerciseHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListTodayExerciseHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{12}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListTodayExerciseHistoryRequest) GetRecordDate() string {
@@ -993,7 +1078,7 @@ type TodayExerciseHistoryItem struct {
 
 func (x *TodayExerciseHistoryItem) Reset() {
 	*x = TodayExerciseHistoryItem{}
-	mi := &file_primary_exercise_record_proto_msgTypes[13]
+	mi := &file_primary_exercise_record_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1005,7 +1090,7 @@ func (x *TodayExerciseHistoryItem) String() string {
 func (*TodayExerciseHistoryItem) ProtoMessage() {}
 
 func (x *TodayExerciseHistoryItem) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[13]
+	mi := &file_primary_exercise_record_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1018,7 +1103,7 @@ func (x *TodayExerciseHistoryItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TodayExerciseHistoryItem.ProtoReflect.Descriptor instead.
 func (*TodayExerciseHistoryItem) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{13}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *TodayExerciseHistoryItem) GetExerciseId() string {
@@ -1100,7 +1185,7 @@ type ListTodayExerciseHistoryResponse struct {
 
 func (x *ListTodayExerciseHistoryResponse) Reset() {
 	*x = ListTodayExerciseHistoryResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[14]
+	mi := &file_primary_exercise_record_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1112,7 +1197,7 @@ func (x *ListTodayExerciseHistoryResponse) String() string {
 func (*ListTodayExerciseHistoryResponse) ProtoMessage() {}
 
 func (x *ListTodayExerciseHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[14]
+	mi := &file_primary_exercise_record_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1125,7 +1210,7 @@ func (x *ListTodayExerciseHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTodayExerciseHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListTodayExerciseHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{14}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListTodayExerciseHistoryResponse) GetItems() []*TodayExerciseHistoryItem {
@@ -1144,7 +1229,7 @@ type SaveCustomExerciseRequest struct {
 
 func (x *SaveCustomExerciseRequest) Reset() {
 	*x = SaveCustomExerciseRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[15]
+	mi := &file_primary_exercise_record_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1156,7 +1241,7 @@ func (x *SaveCustomExerciseRequest) String() string {
 func (*SaveCustomExerciseRequest) ProtoMessage() {}
 
 func (x *SaveCustomExerciseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[15]
+	mi := &file_primary_exercise_record_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1169,7 +1254,7 @@ func (x *SaveCustomExerciseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveCustomExerciseRequest.ProtoReflect.Descriptor instead.
 func (*SaveCustomExerciseRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{15}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SaveCustomExerciseRequest) GetExercise() *CustomExercise {
@@ -1188,7 +1273,7 @@ type SaveCustomExerciseResponse struct {
 
 func (x *SaveCustomExerciseResponse) Reset() {
 	*x = SaveCustomExerciseResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[16]
+	mi := &file_primary_exercise_record_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1200,7 +1285,7 @@ func (x *SaveCustomExerciseResponse) String() string {
 func (*SaveCustomExerciseResponse) ProtoMessage() {}
 
 func (x *SaveCustomExerciseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[16]
+	mi := &file_primary_exercise_record_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1213,7 +1298,7 @@ func (x *SaveCustomExerciseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveCustomExerciseResponse.ProtoReflect.Descriptor instead.
 func (*SaveCustomExerciseResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{16}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SaveCustomExerciseResponse) GetExercise() *CustomExercise {
@@ -1231,7 +1316,7 @@ type ListCustomExercisesRequest struct {
 
 func (x *ListCustomExercisesRequest) Reset() {
 	*x = ListCustomExercisesRequest{}
-	mi := &file_primary_exercise_record_proto_msgTypes[17]
+	mi := &file_primary_exercise_record_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1243,7 +1328,7 @@ func (x *ListCustomExercisesRequest) String() string {
 func (*ListCustomExercisesRequest) ProtoMessage() {}
 
 func (x *ListCustomExercisesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[17]
+	mi := &file_primary_exercise_record_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1256,7 +1341,7 @@ func (x *ListCustomExercisesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCustomExercisesRequest.ProtoReflect.Descriptor instead.
 func (*ListCustomExercisesRequest) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{17}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{18}
 }
 
 type ListCustomExercisesResponse struct {
@@ -1268,7 +1353,7 @@ type ListCustomExercisesResponse struct {
 
 func (x *ListCustomExercisesResponse) Reset() {
 	*x = ListCustomExercisesResponse{}
-	mi := &file_primary_exercise_record_proto_msgTypes[18]
+	mi := &file_primary_exercise_record_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1280,7 +1365,7 @@ func (x *ListCustomExercisesResponse) String() string {
 func (*ListCustomExercisesResponse) ProtoMessage() {}
 
 func (x *ListCustomExercisesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_exercise_record_proto_msgTypes[18]
+	mi := &file_primary_exercise_record_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1293,12 +1378,204 @@ func (x *ListCustomExercisesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCustomExercisesResponse.ProtoReflect.Descriptor instead.
 func (*ListCustomExercisesResponse) Descriptor() ([]byte, []int) {
-	return file_primary_exercise_record_proto_rawDescGZIP(), []int{18}
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListCustomExercisesResponse) GetExercises() []*CustomExercise {
 	if x != nil {
 		return x.Exercises
+	}
+	return nil
+}
+
+type SaveExerciseTrainingSessionEndMarkerRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ClientMarkerId string                 `protobuf:"bytes,1,opt,name=client_marker_id,json=clientMarkerId,proto3" json:"client_marker_id,omitempty"`
+	EndedAt        int64                  `protobuf:"varint,2,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SaveExerciseTrainingSessionEndMarkerRequest) Reset() {
+	*x = SaveExerciseTrainingSessionEndMarkerRequest{}
+	mi := &file_primary_exercise_record_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveExerciseTrainingSessionEndMarkerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveExerciseTrainingSessionEndMarkerRequest) ProtoMessage() {}
+
+func (x *SaveExerciseTrainingSessionEndMarkerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_exercise_record_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveExerciseTrainingSessionEndMarkerRequest.ProtoReflect.Descriptor instead.
+func (*SaveExerciseTrainingSessionEndMarkerRequest) Descriptor() ([]byte, []int) {
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *SaveExerciseTrainingSessionEndMarkerRequest) GetClientMarkerId() string {
+	if x != nil {
+		return x.ClientMarkerId
+	}
+	return ""
+}
+
+func (x *SaveExerciseTrainingSessionEndMarkerRequest) GetEndedAt() int64 {
+	if x != nil {
+		return x.EndedAt
+	}
+	return 0
+}
+
+type SaveExerciseTrainingSessionEndMarkerResponse struct {
+	state         protoimpl.MessageState            `protogen:"open.v1"`
+	Marker        *ExerciseTrainingSessionEndMarker `protobuf:"bytes,1,opt,name=marker,proto3" json:"marker,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveExerciseTrainingSessionEndMarkerResponse) Reset() {
+	*x = SaveExerciseTrainingSessionEndMarkerResponse{}
+	mi := &file_primary_exercise_record_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveExerciseTrainingSessionEndMarkerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveExerciseTrainingSessionEndMarkerResponse) ProtoMessage() {}
+
+func (x *SaveExerciseTrainingSessionEndMarkerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_exercise_record_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveExerciseTrainingSessionEndMarkerResponse.ProtoReflect.Descriptor instead.
+func (*SaveExerciseTrainingSessionEndMarkerResponse) Descriptor() ([]byte, []int) {
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *SaveExerciseTrainingSessionEndMarkerResponse) GetMarker() *ExerciseTrainingSessionEndMarker {
+	if x != nil {
+		return x.Marker
+	}
+	return nil
+}
+
+type ListExerciseTrainingSessionEndMarkersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StartAt       int64                  `protobuf:"varint,1,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
+	EndAt         int64                  `protobuf:"varint,2,opt,name=end_at,json=endAt,proto3" json:"end_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListExerciseTrainingSessionEndMarkersRequest) Reset() {
+	*x = ListExerciseTrainingSessionEndMarkersRequest{}
+	mi := &file_primary_exercise_record_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListExerciseTrainingSessionEndMarkersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListExerciseTrainingSessionEndMarkersRequest) ProtoMessage() {}
+
+func (x *ListExerciseTrainingSessionEndMarkersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_exercise_record_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListExerciseTrainingSessionEndMarkersRequest.ProtoReflect.Descriptor instead.
+func (*ListExerciseTrainingSessionEndMarkersRequest) Descriptor() ([]byte, []int) {
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ListExerciseTrainingSessionEndMarkersRequest) GetStartAt() int64 {
+	if x != nil {
+		return x.StartAt
+	}
+	return 0
+}
+
+func (x *ListExerciseTrainingSessionEndMarkersRequest) GetEndAt() int64 {
+	if x != nil {
+		return x.EndAt
+	}
+	return 0
+}
+
+type ListExerciseTrainingSessionEndMarkersResponse struct {
+	state         protoimpl.MessageState              `protogen:"open.v1"`
+	Markers       []*ExerciseTrainingSessionEndMarker `protobuf:"bytes,1,rep,name=markers,proto3" json:"markers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListExerciseTrainingSessionEndMarkersResponse) Reset() {
+	*x = ListExerciseTrainingSessionEndMarkersResponse{}
+	mi := &file_primary_exercise_record_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListExerciseTrainingSessionEndMarkersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListExerciseTrainingSessionEndMarkersResponse) ProtoMessage() {}
+
+func (x *ListExerciseTrainingSessionEndMarkersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_exercise_record_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListExerciseTrainingSessionEndMarkersResponse.ProtoReflect.Descriptor instead.
+func (*ListExerciseTrainingSessionEndMarkersResponse) Descriptor() ([]byte, []int) {
+	return file_primary_exercise_record_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListExerciseTrainingSessionEndMarkersResponse) GetMarkers() []*ExerciseTrainingSessionEndMarker {
+	if x != nil {
+		return x.Markers
 	}
 	return nil
 }
@@ -1340,7 +1617,16 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"created_at\x18\a \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\b \x01(\x03R\tupdatedAt\x12'\n" +
-	"\x0fsubcategory_key\x18\t \x01(\tR\x0esubcategoryKey\"\xed\x02\n" +
+	"\x0fsubcategory_key\x18\t \x01(\tR\x0esubcategoryKey\"\xc7\x01\n" +
+	" ExerciseTrainingSessionEndMarker\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
+	"\x03uid\x18\x02 \x01(\x04R\x03uid\x12(\n" +
+	"\x10client_marker_id\x18\x03 \x01(\tR\x0eclientMarkerId\x12\x19\n" +
+	"\bended_at\x18\x04 \x01(\x03R\aendedAt\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\x03R\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\x06 \x01(\x03R\tupdatedAt\"\xed\x02\n" +
 	"\x1cSaveExerciseSetRecordRequest\x12\x1f\n" +
 	"\vexercise_id\x18\x01 \x01(\tR\n" +
 	"exerciseId\x12*\n" +
@@ -1416,11 +1702,21 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"\bexercise\x18\x01 \x01(\v2\x13.api.CustomExerciseR\bexercise\"\x1c\n" +
 	"\x1aListCustomExercisesRequest\"P\n" +
 	"\x1bListCustomExercisesResponse\x121\n" +
-	"\texercises\x18\x01 \x03(\v2\x13.api.CustomExerciseR\texercises*l\n" +
+	"\texercises\x18\x01 \x03(\v2\x13.api.CustomExerciseR\texercises\"r\n" +
+	"+SaveExerciseTrainingSessionEndMarkerRequest\x12(\n" +
+	"\x10client_marker_id\x18\x01 \x01(\tR\x0eclientMarkerId\x12\x19\n" +
+	"\bended_at\x18\x02 \x01(\x03R\aendedAt\"m\n" +
+	",SaveExerciseTrainingSessionEndMarkerResponse\x12=\n" +
+	"\x06marker\x18\x01 \x01(\v2%.api.ExerciseTrainingSessionEndMarkerR\x06marker\"`\n" +
+	",ListExerciseTrainingSessionEndMarkersRequest\x12\x19\n" +
+	"\bstart_at\x18\x01 \x01(\x03R\astartAt\x12\x15\n" +
+	"\x06end_at\x18\x02 \x01(\x03R\x05endAt\"p\n" +
+	"-ListExerciseTrainingSessionEndMarkersResponse\x12?\n" +
+	"\amarkers\x18\x01 \x03(\v2%.api.ExerciseTrainingSessionEndMarkerR\amarkers*l\n" +
 	"\x12ExerciseWeightUnit\x12\x1c\n" +
 	"\x18EXERCISE_WEIGHT_UNIT_JIN\x10\x00\x12\x1b\n" +
 	"\x17EXERCISE_WEIGHT_UNIT_KG\x10\x01\x12\x1b\n" +
-	"\x17EXERCISE_WEIGHT_UNIT_LB\x10\x022\xc8\x06\n" +
+	"\x17EXERCISE_WEIGHT_UNIT_LB\x10\x022\xe7\b\n" +
 	"\x18ExerciseSetRecordService\x12^\n" +
 	"\x15SaveExerciseSetRecord\x12!.api.SaveExerciseSetRecordRequest\x1a\".api.SaveExerciseSetRecordResponse\x12a\n" +
 	"\x16ListExerciseSetRecords\x12\".api.ListExerciseSetRecordsRequest\x1a#.api.ListExerciseSetRecordsResponse\x12\x82\x01\n" +
@@ -1429,7 +1725,9 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"\x17DeleteExerciseSetRecord\x12#.api.DeleteExerciseSetRecordRequest\x1a$.api.DeleteExerciseSetRecordResponse\x12g\n" +
 	"\x18ListTodayExerciseHistory\x12$.api.ListTodayExerciseHistoryRequest\x1a%.api.ListTodayExerciseHistoryResponse\x12U\n" +
 	"\x12SaveCustomExercise\x12\x1e.api.SaveCustomExerciseRequest\x1a\x1f.api.SaveCustomExerciseResponse\x12X\n" +
-	"\x13ListCustomExercises\x12\x1f.api.ListCustomExercisesRequest\x1a .api.ListCustomExercisesResponseB\x10Z\x0espider/api;apib\x06proto3"
+	"\x13ListCustomExercises\x12\x1f.api.ListCustomExercisesRequest\x1a .api.ListCustomExercisesResponse\x12\x8b\x01\n" +
+	"$SaveExerciseTrainingSessionEndMarker\x120.api.SaveExerciseTrainingSessionEndMarkerRequest\x1a1.api.SaveExerciseTrainingSessionEndMarkerResponse\x12\x8e\x01\n" +
+	"%ListExerciseTrainingSessionEndMarkers\x121.api.ListExerciseTrainingSessionEndMarkersRequest\x1a2.api.ListExerciseTrainingSessionEndMarkersResponseB\x10Z\x0espider/api;apib\x06proto3"
 
 var (
 	file_primary_exercise_record_proto_rawDescOnce sync.Once
@@ -1444,28 +1742,33 @@ func file_primary_exercise_record_proto_rawDescGZIP() []byte {
 }
 
 var file_primary_exercise_record_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_primary_exercise_record_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_primary_exercise_record_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_primary_exercise_record_proto_goTypes = []any{
-	(ExerciseWeightUnit)(0),                           // 0: api.ExerciseWeightUnit
-	(*ExerciseSetRecord)(nil),                         // 1: api.ExerciseSetRecord
-	(*CustomExercise)(nil),                            // 2: api.CustomExercise
-	(*SaveExerciseSetRecordRequest)(nil),              // 3: api.SaveExerciseSetRecordRequest
-	(*SaveExerciseSetRecordResponse)(nil),             // 4: api.SaveExerciseSetRecordResponse
-	(*ListExerciseSetRecordsRequest)(nil),             // 5: api.ListExerciseSetRecordsRequest
-	(*ListExerciseSetRecordsResponse)(nil),            // 6: api.ListExerciseSetRecordsResponse
-	(*ListExerciseSetRecordsByTimeRangeRequest)(nil),  // 7: api.ListExerciseSetRecordsByTimeRangeRequest
-	(*ListExerciseSetRecordsByTimeRangeResponse)(nil), // 8: api.ListExerciseSetRecordsByTimeRangeResponse
-	(*UpdateExerciseSetRecordRequest)(nil),            // 9: api.UpdateExerciseSetRecordRequest
-	(*UpdateExerciseSetRecordResponse)(nil),           // 10: api.UpdateExerciseSetRecordResponse
-	(*DeleteExerciseSetRecordRequest)(nil),            // 11: api.DeleteExerciseSetRecordRequest
-	(*DeleteExerciseSetRecordResponse)(nil),           // 12: api.DeleteExerciseSetRecordResponse
-	(*ListTodayExerciseHistoryRequest)(nil),           // 13: api.ListTodayExerciseHistoryRequest
-	(*TodayExerciseHistoryItem)(nil),                  // 14: api.TodayExerciseHistoryItem
-	(*ListTodayExerciseHistoryResponse)(nil),          // 15: api.ListTodayExerciseHistoryResponse
-	(*SaveCustomExerciseRequest)(nil),                 // 16: api.SaveCustomExerciseRequest
-	(*SaveCustomExerciseResponse)(nil),                // 17: api.SaveCustomExerciseResponse
-	(*ListCustomExercisesRequest)(nil),                // 18: api.ListCustomExercisesRequest
-	(*ListCustomExercisesResponse)(nil),               // 19: api.ListCustomExercisesResponse
+	(ExerciseWeightUnit)(0),                               // 0: api.ExerciseWeightUnit
+	(*ExerciseSetRecord)(nil),                             // 1: api.ExerciseSetRecord
+	(*CustomExercise)(nil),                                // 2: api.CustomExercise
+	(*ExerciseTrainingSessionEndMarker)(nil),              // 3: api.ExerciseTrainingSessionEndMarker
+	(*SaveExerciseSetRecordRequest)(nil),                  // 4: api.SaveExerciseSetRecordRequest
+	(*SaveExerciseSetRecordResponse)(nil),                 // 5: api.SaveExerciseSetRecordResponse
+	(*ListExerciseSetRecordsRequest)(nil),                 // 6: api.ListExerciseSetRecordsRequest
+	(*ListExerciseSetRecordsResponse)(nil),                // 7: api.ListExerciseSetRecordsResponse
+	(*ListExerciseSetRecordsByTimeRangeRequest)(nil),      // 8: api.ListExerciseSetRecordsByTimeRangeRequest
+	(*ListExerciseSetRecordsByTimeRangeResponse)(nil),     // 9: api.ListExerciseSetRecordsByTimeRangeResponse
+	(*UpdateExerciseSetRecordRequest)(nil),                // 10: api.UpdateExerciseSetRecordRequest
+	(*UpdateExerciseSetRecordResponse)(nil),               // 11: api.UpdateExerciseSetRecordResponse
+	(*DeleteExerciseSetRecordRequest)(nil),                // 12: api.DeleteExerciseSetRecordRequest
+	(*DeleteExerciseSetRecordResponse)(nil),               // 13: api.DeleteExerciseSetRecordResponse
+	(*ListTodayExerciseHistoryRequest)(nil),               // 14: api.ListTodayExerciseHistoryRequest
+	(*TodayExerciseHistoryItem)(nil),                      // 15: api.TodayExerciseHistoryItem
+	(*ListTodayExerciseHistoryResponse)(nil),              // 16: api.ListTodayExerciseHistoryResponse
+	(*SaveCustomExerciseRequest)(nil),                     // 17: api.SaveCustomExerciseRequest
+	(*SaveCustomExerciseResponse)(nil),                    // 18: api.SaveCustomExerciseResponse
+	(*ListCustomExercisesRequest)(nil),                    // 19: api.ListCustomExercisesRequest
+	(*ListCustomExercisesResponse)(nil),                   // 20: api.ListCustomExercisesResponse
+	(*SaveExerciseTrainingSessionEndMarkerRequest)(nil),   // 21: api.SaveExerciseTrainingSessionEndMarkerRequest
+	(*SaveExerciseTrainingSessionEndMarkerResponse)(nil),  // 22: api.SaveExerciseTrainingSessionEndMarkerResponse
+	(*ListExerciseTrainingSessionEndMarkersRequest)(nil),  // 23: api.ListExerciseTrainingSessionEndMarkersRequest
+	(*ListExerciseTrainingSessionEndMarkersResponse)(nil), // 24: api.ListExerciseTrainingSessionEndMarkersResponse
 }
 var file_primary_exercise_record_proto_depIdxs = []int32{
 	0,  // 0: api.ExerciseSetRecord.weight_unit:type_name -> api.ExerciseWeightUnit
@@ -1477,31 +1780,37 @@ var file_primary_exercise_record_proto_depIdxs = []int32{
 	1,  // 6: api.UpdateExerciseSetRecordResponse.record:type_name -> api.ExerciseSetRecord
 	0,  // 7: api.TodayExerciseHistoryItem.weight_unit:type_name -> api.ExerciseWeightUnit
 	1,  // 8: api.TodayExerciseHistoryItem.latest_records:type_name -> api.ExerciseSetRecord
-	14, // 9: api.ListTodayExerciseHistoryResponse.items:type_name -> api.TodayExerciseHistoryItem
+	15, // 9: api.ListTodayExerciseHistoryResponse.items:type_name -> api.TodayExerciseHistoryItem
 	2,  // 10: api.SaveCustomExerciseRequest.exercise:type_name -> api.CustomExercise
 	2,  // 11: api.SaveCustomExerciseResponse.exercise:type_name -> api.CustomExercise
 	2,  // 12: api.ListCustomExercisesResponse.exercises:type_name -> api.CustomExercise
-	3,  // 13: api.ExerciseSetRecordService.SaveExerciseSetRecord:input_type -> api.SaveExerciseSetRecordRequest
-	5,  // 14: api.ExerciseSetRecordService.ListExerciseSetRecords:input_type -> api.ListExerciseSetRecordsRequest
-	7,  // 15: api.ExerciseSetRecordService.ListExerciseSetRecordsByTimeRange:input_type -> api.ListExerciseSetRecordsByTimeRangeRequest
-	9,  // 16: api.ExerciseSetRecordService.UpdateExerciseSetRecord:input_type -> api.UpdateExerciseSetRecordRequest
-	11, // 17: api.ExerciseSetRecordService.DeleteExerciseSetRecord:input_type -> api.DeleteExerciseSetRecordRequest
-	13, // 18: api.ExerciseSetRecordService.ListTodayExerciseHistory:input_type -> api.ListTodayExerciseHistoryRequest
-	16, // 19: api.ExerciseSetRecordService.SaveCustomExercise:input_type -> api.SaveCustomExerciseRequest
-	18, // 20: api.ExerciseSetRecordService.ListCustomExercises:input_type -> api.ListCustomExercisesRequest
-	4,  // 21: api.ExerciseSetRecordService.SaveExerciseSetRecord:output_type -> api.SaveExerciseSetRecordResponse
-	6,  // 22: api.ExerciseSetRecordService.ListExerciseSetRecords:output_type -> api.ListExerciseSetRecordsResponse
-	8,  // 23: api.ExerciseSetRecordService.ListExerciseSetRecordsByTimeRange:output_type -> api.ListExerciseSetRecordsByTimeRangeResponse
-	10, // 24: api.ExerciseSetRecordService.UpdateExerciseSetRecord:output_type -> api.UpdateExerciseSetRecordResponse
-	12, // 25: api.ExerciseSetRecordService.DeleteExerciseSetRecord:output_type -> api.DeleteExerciseSetRecordResponse
-	15, // 26: api.ExerciseSetRecordService.ListTodayExerciseHistory:output_type -> api.ListTodayExerciseHistoryResponse
-	17, // 27: api.ExerciseSetRecordService.SaveCustomExercise:output_type -> api.SaveCustomExerciseResponse
-	19, // 28: api.ExerciseSetRecordService.ListCustomExercises:output_type -> api.ListCustomExercisesResponse
-	21, // [21:29] is the sub-list for method output_type
-	13, // [13:21] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	3,  // 13: api.SaveExerciseTrainingSessionEndMarkerResponse.marker:type_name -> api.ExerciseTrainingSessionEndMarker
+	3,  // 14: api.ListExerciseTrainingSessionEndMarkersResponse.markers:type_name -> api.ExerciseTrainingSessionEndMarker
+	4,  // 15: api.ExerciseSetRecordService.SaveExerciseSetRecord:input_type -> api.SaveExerciseSetRecordRequest
+	6,  // 16: api.ExerciseSetRecordService.ListExerciseSetRecords:input_type -> api.ListExerciseSetRecordsRequest
+	8,  // 17: api.ExerciseSetRecordService.ListExerciseSetRecordsByTimeRange:input_type -> api.ListExerciseSetRecordsByTimeRangeRequest
+	10, // 18: api.ExerciseSetRecordService.UpdateExerciseSetRecord:input_type -> api.UpdateExerciseSetRecordRequest
+	12, // 19: api.ExerciseSetRecordService.DeleteExerciseSetRecord:input_type -> api.DeleteExerciseSetRecordRequest
+	14, // 20: api.ExerciseSetRecordService.ListTodayExerciseHistory:input_type -> api.ListTodayExerciseHistoryRequest
+	17, // 21: api.ExerciseSetRecordService.SaveCustomExercise:input_type -> api.SaveCustomExerciseRequest
+	19, // 22: api.ExerciseSetRecordService.ListCustomExercises:input_type -> api.ListCustomExercisesRequest
+	21, // 23: api.ExerciseSetRecordService.SaveExerciseTrainingSessionEndMarker:input_type -> api.SaveExerciseTrainingSessionEndMarkerRequest
+	23, // 24: api.ExerciseSetRecordService.ListExerciseTrainingSessionEndMarkers:input_type -> api.ListExerciseTrainingSessionEndMarkersRequest
+	5,  // 25: api.ExerciseSetRecordService.SaveExerciseSetRecord:output_type -> api.SaveExerciseSetRecordResponse
+	7,  // 26: api.ExerciseSetRecordService.ListExerciseSetRecords:output_type -> api.ListExerciseSetRecordsResponse
+	9,  // 27: api.ExerciseSetRecordService.ListExerciseSetRecordsByTimeRange:output_type -> api.ListExerciseSetRecordsByTimeRangeResponse
+	11, // 28: api.ExerciseSetRecordService.UpdateExerciseSetRecord:output_type -> api.UpdateExerciseSetRecordResponse
+	13, // 29: api.ExerciseSetRecordService.DeleteExerciseSetRecord:output_type -> api.DeleteExerciseSetRecordResponse
+	16, // 30: api.ExerciseSetRecordService.ListTodayExerciseHistory:output_type -> api.ListTodayExerciseHistoryResponse
+	18, // 31: api.ExerciseSetRecordService.SaveCustomExercise:output_type -> api.SaveCustomExerciseResponse
+	20, // 32: api.ExerciseSetRecordService.ListCustomExercises:output_type -> api.ListCustomExercisesResponse
+	22, // 33: api.ExerciseSetRecordService.SaveExerciseTrainingSessionEndMarker:output_type -> api.SaveExerciseTrainingSessionEndMarkerResponse
+	24, // 34: api.ExerciseSetRecordService.ListExerciseTrainingSessionEndMarkers:output_type -> api.ListExerciseTrainingSessionEndMarkersResponse
+	25, // [25:35] is the sub-list for method output_type
+	15, // [15:25] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_primary_exercise_record_proto_init() }
@@ -1515,7 +1824,7 @@ func file_primary_exercise_record_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_primary_exercise_record_proto_rawDesc), len(file_primary_exercise_record_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

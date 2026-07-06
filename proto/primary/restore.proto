@@ -31,6 +31,9 @@ enum RestoreDataType {
 
   // 用户自定义动作。
   RESTORE_DATA_TYPE_CUSTOM_EXERCISES = 6;
+
+  // 动作库训练手动结束标记。
+  RESTORE_DATA_TYPE_EXERCISE_TRAINING_SESSION_END_MARKERS = 7;
 }
 
 // RestorePlanRequest 表示获取客户端数据同步计划的请求。
@@ -200,6 +203,21 @@ message CustomExerciseSyncItem {
   int64 changed_at = 4;
 }
 
+// ExerciseTrainingSessionEndMarkerSyncItem 表示一条动作库训练结束标记同步项。
+message ExerciseTrainingSessionEndMarkerSyncItem {
+  // 动作库训练结束标记。
+  ExerciseTrainingSessionEndMarker marker = 1;
+
+  // true 表示该结束标记已被服务端删除，客户端应删除本地对应标记。
+  bool deleted = 2;
+
+  // 删除时间，毫秒时间戳；deleted = true 时有效。
+  int64 deleted_at = 3;
+
+  // 本记录最近变更时间，毫秒时间戳。
+  int64 changed_at = 4;
+}
+
 // WeightRecordRestoreBatch 表示一批体重记录同步项。
 message WeightRecordRestoreBatch {
   // 体重记录同步项列表。
@@ -234,6 +252,12 @@ message ExerciseSetRecordRestoreBatch {
 message CustomExerciseRestoreBatch {
   // 自定义动作同步项列表。
   repeated CustomExerciseSyncItem items = 1;
+}
+
+// ExerciseTrainingSessionEndMarkerRestoreBatch 表示一批动作库训练结束标记同步项。
+message ExerciseTrainingSessionEndMarkerRestoreBatch {
+  // 动作库训练结束标记同步项列表。
+  repeated ExerciseTrainingSessionEndMarkerSyncItem items = 1;
 }
 
 // RestoreBatchResponse 表示某个同步任务的一批数据。
@@ -273,6 +297,7 @@ message RestoreBatchResponse {
     BodyPhotoRestoreBatch body_photos = 23;
     ExerciseSetRecordRestoreBatch exercise_set_records = 24;
     CustomExerciseRestoreBatch custom_exercises = 25;
+    ExerciseTrainingSessionEndMarkerRestoreBatch exercise_training_session_end_markers = 26;
   }
 }
 

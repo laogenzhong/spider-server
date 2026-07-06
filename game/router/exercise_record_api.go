@@ -259,6 +259,53 @@ func (a *ExerciseSetRecordApi) ListCustomExercises(ctx context.Context, req *pb.
 	return &pb.ListCustomExercisesResponse{Exercises: respExercises}, nil
 }
 
+// SaveExerciseTrainingSessionEndMarker 保存一条动作库训练手动结束标记。
+func (a *ExerciseSetRecordApi) SaveExerciseTrainingSessionEndMarker(ctx context.Context, req *pb.SaveExerciseTrainingSessionEndMarkerRequest) (*pb.SaveExerciseTrainingSessionEndMarkerResponse, error) {
+	uid := session.GetUser(ctx).UID()
+
+	clientMarkerID := strings.TrimSpace(req.GetClientMarkerId())
+	if clientMarkerID == "" {
+		return session.Error(ctx, gamecode.ExerciseSessionEndMarkerClientIDEmpty, &pb.SaveExerciseTrainingSessionEndMarkerResponse{})
+	}
+	if req.GetEndedAt() <= 0 {
+		return session.Error(ctx, gamecode.ExerciseSessionEndMarkerEndedAtInvalid, &pb.SaveExerciseTrainingSessionEndMarkerResponse{})
+	}
+
+	marker, err := mysqlmodel.SaveExerciseTrainingSessionEndMarker(&mysqlmodel.ExerciseTrainingSessionEndMarker{
+		UID:            uid,
+		ClientMarkerID: clientMarkerID,
+		EndedAt:        req.GetEndedAt(),
+	})
+	if err != nil {
+		return session.Error(ctx, gamecode.ExerciseSessionEndMarkerSaveFailed, &pb.SaveExerciseTrainingSessionEndMarkerResponse{})
+	}
+
+	return &pb.SaveExerciseTrainingSessionEndMarkerResponse{
+		Marker: mysqlmodel.ExerciseTrainingSessionEndMarkerToPB(marker),
+	}, nil
+}
+
+// ListExerciseTrainingSessionEndMarkers 按时间范围查询动作库训练手动结束标记。
+func (a *ExerciseSetRecordApi) ListExerciseTrainingSessionEndMarkers(ctx context.Context, req *pb.ListExerciseTrainingSessionEndMarkersRequest) (*pb.ListExerciseTrainingSessionEndMarkersResponse, error) {
+	uid := session.GetUser(ctx).UID()
+
+	if req.GetStartAt() <= 0 || req.GetEndAt() <= 0 || req.GetStartAt() > req.GetEndAt() {
+		return session.Error(ctx, gamecode.ExerciseRecordTimeRangeInvalid, &pb.ListExerciseTrainingSessionEndMarkersResponse{})
+	}
+
+	markers, err := mysqlmodel.ListExerciseTrainingSessionEndMarkersByTimeRange(uid, req.GetStartAt(), req.GetEndAt())
+	if err != nil {
+		return session.Error(ctx, gamecode.ExerciseSessionEndMarkerListFailed, &pb.ListExerciseTrainingSessionEndMarkersResponse{})
+	}
+
+	respMarkers := make([]*pb.ExerciseTrainingSessionEndMarker, 0, len(markers))
+	for _, marker := range markers {
+		respMarkers = append(respMarkers, mysqlmodel.ExerciseTrainingSessionEndMarkerToPB(marker))
+	}
+
+	return &pb.ListExerciseTrainingSessionEndMarkersResponse{Markers: respMarkers}, nil
+}
+
 func validExerciseWeightUnit(unit pb.ExerciseWeightUnit) bool {
 	switch unit {
 	case pb.ExerciseWeightUnit_EXERCISE_WEIGHT_UNIT_JIN,

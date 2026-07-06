@@ -47,6 +47,17 @@ type CustomExercise struct {
 	DeletedAt       gorm.DeletedAt `gorm:"index"`
 }
 
+// ExerciseTrainingSessionEndMarker 表示用户手动结束动作库训练的边界标记。
+type ExerciseTrainingSessionEndMarker struct {
+	ID             uint64         `gorm:"primaryKey;autoIncrement"`
+	UID            uint64         `gorm:"not null;uniqueIndex:idx_uid_exercise_session_end_marker_client,priority:1;index:idx_uid_exercise_session_end_marker_ended,priority:1"`
+	ClientMarkerID string         `gorm:"type:varchar(64);not null;uniqueIndex:idx_uid_exercise_session_end_marker_client,priority:2"`
+	EndedAt        int64          `gorm:"not null;index:idx_uid_exercise_session_end_marker_ended,priority:2"`
+	CreatedAt      time.Time      `gorm:"not null"`
+	UpdatedAt      time.Time      `gorm:"not null"`
+	DeletedAt      gorm.DeletedAt `gorm:"index"`
+}
+
 const (
 	MaxExerciseSetRecordPageSize = 20
 	DefaultExerciseSetPageSize   = 20
@@ -536,6 +547,156 @@ func ListCustomExerciseChangesPage(uid uint64, startSnapshotID int64, endSnapsho
 	return exercises, nil
 }
 
+// SaveExerciseTrainingSessionEndMarker 保存或更新一条动作库训练手动结束标记。
+func SaveExerciseTrainingSessionEndMarker(marker *ExerciseTrainingSessionEndMarker) (*ExerciseTrainingSessionEndMarker, error) {
+	if marker == nil {
+		return nil, fmt.Errorf("session end marker is nil")
+	}
+	if marker.UID == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	marker.ClientMarkerID = strings.TrimSpace(marker.ClientMarkerID)
+	if marker.ClientMarkerID == "" {
+		return nil, fmt.Errorf("client_marker_id is empty")
+	}
+	if marker.EndedAt <= 0 {
+		marker.EndedAt = time.Now().UnixMilli()
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	marker.CreatedAt = now
+	marker.UpdatedAt = now
+	if err := db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "uid"},
+			{Name: "client_marker_id"},
+		},
+		DoUpdates: clause.Assignments(map[string]any{
+			"ended_at":   marker.EndedAt,
+			"updated_at": now,
+			"deleted_at": nil,
+		}),
+	}).Create(marker).Error; err != nil {
+		return nil, err
+	}
+
+	return GetExerciseTrainingSessionEndMarkerByClientID(marker.UID, marker.ClientMarkerID)
+}
+
+// GetExerciseTrainingSessionEndMarkerByClientID 根据客户端标记 id 查询训练结束标记。
+func GetExerciseTrainingSessionEndMarkerByClientID(uid uint64, clientMarkerID string) (*ExerciseTrainingSessionEndMarker, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	clientMarkerID = strings.TrimSpace(clientMarkerID)
+	if clientMarkerID == "" {
+		return nil, fmt.Errorf("client_marker_id is empty")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+	marker := &ExerciseTrainingSessionEndMarker{}
+	if err := db.Where("uid = ? AND client_marker_id = ?", uid, clientMarkerID).First(marker).Error; err != nil {
+		return nil, err
+	}
+	return marker, nil
+}
+
+// ListExerciseTrainingSessionEndMarkersByTimeRange 按结束时间范围查询训练结束标记。
+func ListExerciseTrainingSessionEndMarkersByTimeRange(uid uint64, startAt int64, endAt int64) ([]*ExerciseTrainingSessionEndMarker, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if startAt <= 0 || endAt <= 0 || startAt > endAt {
+		return nil, fmt.Errorf("time range is invalid")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var markers []*ExerciseTrainingSessionEndMarker
+	if err := db.Where("uid = ? AND ended_at >= ? AND ended_at <= ?", uid, startAt, endAt).
+		Order("ended_at ASC, id ASC").
+		Find(&markers).Error; err != nil {
+		return nil, err
+	}
+
+	return markers, nil
+}
+
+// CountExerciseTrainingSessionEndMarkerChanges 统计快照范围内变更过的动作库训练结束标记。
+func CountExerciseTrainingSessionEndMarkerChanges(uid uint64, startSnapshotID int64, endSnapshotID int64) (uint64, string, string, error) {
+	if uid == 0 {
+		return 0, "", "", fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 || startSnapshotID > endSnapshotID {
+		return 0, "", "", fmt.Errorf("snapshot range is invalid")
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return 0, "", "", err
+	}
+
+	var count int64
+	if err := exerciseTrainingSessionEndMarkerChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Model(&ExerciseTrainingSessionEndMarker{}).
+		Count(&count).Error; err != nil {
+		return 0, "", "", err
+	}
+	if count == 0 {
+		return 0, "", "", nil
+	}
+
+	startDate, endDate, err := exerciseTrainingSessionEndMarkerDateRange(
+		exerciseTrainingSessionEndMarkerChangesQuery(db, uid, startSnapshotID, endSnapshotID).Model(&ExerciseTrainingSessionEndMarker{}),
+	)
+	if err != nil {
+		return 0, "", "", err
+	}
+	return uint64(count), startDate, endDate, nil
+}
+
+// ListExerciseTrainingSessionEndMarkerChangesPage 分页查询快照范围内变更过的动作库训练结束标记。
+func ListExerciseTrainingSessionEndMarkerChangesPage(uid uint64, startSnapshotID int64, endSnapshotID int64, limit int, offset int) ([]*ExerciseTrainingSessionEndMarker, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	if endSnapshotID <= 0 || startSnapshotID > endSnapshotID {
+		return nil, fmt.Errorf("snapshot range is invalid")
+	}
+	if limit <= 0 {
+		limit = DefaultExerciseSetPageSize
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	var markers []*ExerciseTrainingSessionEndMarker
+	if err := exerciseTrainingSessionEndMarkerChangesQuery(db, uid, startSnapshotID, endSnapshotID).
+		Order(exerciseTrainingSessionEndMarkerChangedAtSQL() + " ASC, ended_at ASC, id ASC").
+		Limit(limit).
+		Offset(offset).
+		Find(&markers).Error; err != nil {
+		return nil, err
+	}
+	return markers, nil
+}
+
 func normalizeExerciseRecordPageSize(pageSize int32) int {
 	if pageSize <= 0 {
 		return DefaultExerciseSetPageSize
@@ -654,6 +815,47 @@ func customExerciseChangedAtSQL() string {
 	return "GREATEST(updated_at, COALESCE(deleted_at, updated_at))"
 }
 
+func exerciseTrainingSessionEndMarkerChangesQuery(db *gorm.DB, uid uint64, startSnapshotID int64, endSnapshotID int64) *gorm.DB {
+	endTime := time.UnixMilli(endSnapshotID)
+	query := db.Unscoped().Where("uid = ?", uid)
+	if startSnapshotID <= 0 {
+		return query.Where("created_at <= ? AND (deleted_at IS NULL OR deleted_at > ?)", endTime, endTime)
+	}
+
+	startTime := time.UnixMilli(startSnapshotID)
+	return query.Where(
+		"(created_at > ? AND created_at <= ?) OR (updated_at > ? AND updated_at <= ?) OR (deleted_at IS NOT NULL AND deleted_at > ? AND deleted_at <= ?)",
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+		startTime,
+		endTime,
+	)
+}
+
+func exerciseTrainingSessionEndMarkerChangedAtSQL() string {
+	return "GREATEST(updated_at, COALESCE(deleted_at, updated_at))"
+}
+
+func exerciseTrainingSessionEndMarkerDateRange(query *gorm.DB) (string, string, error) {
+	var result struct {
+		MinEndedAt int64
+		MaxEndedAt int64
+	}
+	if err := query.
+		Select("MIN(ended_at) AS min_ended_at, MAX(ended_at) AS max_ended_at").
+		Scan(&result).Error; err != nil {
+		return "", "", err
+	}
+	if result.MinEndedAt <= 0 || result.MaxEndedAt <= 0 {
+		return "", "", nil
+	}
+	return time.UnixMilli(result.MinEndedAt).Format("2006-01-02"),
+		time.UnixMilli(result.MaxEndedAt).Format("2006-01-02"),
+		nil
+}
+
 // ExerciseRecordToPB 将 MySQL 动作记录转换为 pb 模型。
 func ExerciseRecordToPB(record *ExerciseSetRecord) *pb.ExerciseSetRecord {
 	if record == nil {
@@ -697,5 +899,20 @@ func CustomExerciseToPB(exercise *CustomExercise) *pb.CustomExercise {
 		TypeKey:        exercise.TypeKey,
 		CreatedAt:      createdAt,
 		UpdatedAt:      exercise.UpdatedAt.UnixMilli(),
+	}
+}
+
+// ExerciseTrainingSessionEndMarkerToPB 将 MySQL 动作库训练结束标记转换为 pb 模型。
+func ExerciseTrainingSessionEndMarkerToPB(marker *ExerciseTrainingSessionEndMarker) *pb.ExerciseTrainingSessionEndMarker {
+	if marker == nil {
+		return nil
+	}
+	return &pb.ExerciseTrainingSessionEndMarker{
+		Id:             marker.ID,
+		Uid:            marker.UID,
+		ClientMarkerId: marker.ClientMarkerID,
+		EndedAt:        marker.EndedAt,
+		CreatedAt:      marker.CreatedAt.UnixMilli(),
+		UpdatedAt:      marker.UpdatedAt.UnixMilli(),
 	}
 }

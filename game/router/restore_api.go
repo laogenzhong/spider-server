@@ -15,12 +15,13 @@ const (
 	defaultRestoreBatchSize uint32 = 200
 	maxRestoreBatchSize     uint32 = 1000
 
-	restoreTaskWeightRecords      = "weight_records"
-	restoreTaskTrainingTags       = "training_tags"
-	restoreTaskWorkoutTagBindings = "workout_tag_bindings"
-	restoreTaskBodyPhotos         = "body_photos"
-	restoreTaskExerciseSetRecords = "exercise_set_records"
-	restoreTaskCustomExercises    = "custom_exercises"
+	restoreTaskWeightRecords             = "weight_records"
+	restoreTaskTrainingTags              = "training_tags"
+	restoreTaskWorkoutTagBindings        = "workout_tag_bindings"
+	restoreTaskBodyPhotos                = "body_photos"
+	restoreTaskExerciseSetRecords        = "exercise_set_records"
+	restoreTaskCustomExercises           = "custom_exercises"
+	restoreTaskExerciseSessionEndMarkers = "exercise_training_session_end_markers"
 )
 
 // ClientRestoreApi 实现客户端本地数据全量恢复和增量同步相关 gRPC 接口。
@@ -141,6 +142,22 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 			batchSize,
 		))
 		totalCount += customExerciseCount
+	}
+
+	exerciseSessionEndMarkerCount, markerStartDate, markerEndDate, err := mysqlmodel.CountExerciseTrainingSessionEndMarkerChanges(uid, startSnapshotID, endSnapshotID)
+	if err != nil {
+		return session.Error(ctx, gamecode.RestoreCountExerciseSessionEndMarkersFailed, &pb.RestorePlanResponse{})
+	}
+	if exerciseSessionEndMarkerCount > 0 {
+		tasks = append(tasks, buildRestoreTask(
+			restoreTaskExerciseSessionEndMarkers,
+			pb.RestoreDataType_RESTORE_DATA_TYPE_EXERCISE_TRAINING_SESSION_END_MARKERS,
+			markerStartDate,
+			markerEndDate,
+			exerciseSessionEndMarkerCount,
+			batchSize,
+		))
+		totalCount += exerciseSessionEndMarkerCount
 	}
 
 	return &pb.RestorePlanResponse{
@@ -385,6 +402,39 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		)
 		resp.Payload = &pb.RestoreBatchResponse_CustomExercises{
 			CustomExercises: &pb.CustomExerciseRestoreBatch{Items: items},
+		}
+		return resp, nil
+
+	case restoreTaskExerciseSessionEndMarkers:
+		count, _, _, err := mysqlmodel.CountExerciseTrainingSessionEndMarkerChanges(uid, startSnapshotID, endSnapshotID)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreCountExerciseSessionEndMarkersFailed, &pb.RestoreBatchResponse{})
+		}
+		markers, err := mysqlmodel.ListExerciseTrainingSessionEndMarkerChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreFetchExerciseSessionEndMarkersFailed, &pb.RestoreBatchResponse{})
+		}
+		items := make([]*pb.ExerciseTrainingSessionEndMarkerSyncItem, 0, len(markers))
+		for _, marker := range markers {
+			items = append(items, &pb.ExerciseTrainingSessionEndMarkerSyncItem{
+				Marker:    mysqlmodel.ExerciseTrainingSessionEndMarkerToPB(marker),
+				Deleted:   isDeletedInSnapshot(marker.DeletedAt, endSnapshotID),
+				DeletedAt: deletedAtMillis(marker.DeletedAt, endSnapshotID),
+				ChangedAt: changedAtMillis(marker.UpdatedAt, marker.DeletedAt, endSnapshotID),
+			})
+		}
+
+		resp := buildRestoreBatchResponse(
+			pb.RestoreDataType_RESTORE_DATA_TYPE_EXERCISE_TRAINING_SESSION_END_MARKERS,
+			req.GetBatchIndex(),
+			uint32(len(items)),
+			count,
+			batchSize,
+			startSnapshotID,
+			endSnapshotID,
+		)
+		resp.Payload = &pb.RestoreBatchResponse_ExerciseTrainingSessionEndMarkers{
+			ExerciseTrainingSessionEndMarkers: &pb.ExerciseTrainingSessionEndMarkerRestoreBatch{Items: items},
 		}
 		return resp, nil
 	}

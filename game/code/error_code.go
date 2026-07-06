@@ -248,6 +248,12 @@ const (
 	// RestoreFetchCustomExercisesFailed 拉取自定义动作同步数据失败。
 	RestoreFetchCustomExercisesFailed int = 40018
 
+	// RestoreCountExerciseSessionEndMarkersFailed 统计动作库训练结束标记同步数据失败。
+	RestoreCountExerciseSessionEndMarkersFailed int = 40019
+
+	// RestoreFetchExerciseSessionEndMarkersFailed 拉取动作库训练结束标记同步数据失败。
+	RestoreFetchExerciseSessionEndMarkersFailed int = 40020
+
 	// FriendProfileQueryFailed 获取朋友资料失败。
 	FriendProfileQueryFailed int = 50001
 
@@ -454,4 +460,16 @@ const (
 
 	// CustomExerciseVIPRequired 新增自定义动作需要 VIP 权益。
 	CustomExerciseVIPRequired int = 80020
+
+	// ExerciseSessionEndMarkerClientIDEmpty 动作库训练结束标记缺少客户端 id。
+	ExerciseSessionEndMarkerClientIDEmpty int = 80021
+
+	// ExerciseSessionEndMarkerEndedAtInvalid 动作库训练结束标记时间无效。
+	ExerciseSessionEndMarkerEndedAtInvalid int = 80022
+
+	// ExerciseSessionEndMarkerSaveFailed 保存动作库训练结束标记失败。
+	ExerciseSessionEndMarkerSaveFailed int = 80023
+
+	// ExerciseSessionEndMarkerListFailed 查询动作库训练结束标记失败。
+	ExerciseSessionEndMarkerListFailed int = 80024
 )
