@@ -13,6 +13,7 @@ func (s *GRPCServer) Init() {
 		pb.RegisterSignApiServer(server, &router.SignApi{})
 		pb.RegisterWeightRecordServiceServer(server, &router.WeightApi{})
 		pb.RegisterWeeklyTrainingGoalServiceServer(server, &router.WeeklyTrainingGoalApi{})
+		pb.RegisterOnboardingProfileServiceServer(server, &router.OnboardingProfileApi{})
 		pb.RegisterExerciseSetRecordServiceServer(server, &router.ExerciseSetRecordApi{})
 		pb.RegisterTrainingTagServiceServer(server, &router.TrainingTagApi{})
 		pb.RegisterClientRestoreServiceServer(server, &router.ClientRestoreApi{})

@@ -116,6 +116,12 @@ const (
 	// WeeklyTrainingGoalSaveFailed 保存每周训练目标失败。
 	WeeklyTrainingGoalSaveFailed int = 20014
 
+	// OnboardingProfileInvalid onboarding 画像数据无效。
+	OnboardingProfileInvalid int = 20015
+
+	// OnboardingProfileSaveFailed 保存 onboarding 画像失败。
+	OnboardingProfileSaveFailed int = 20016
+
 	// TrainingTagNameEmpty 训练标签名称为空。
 	TrainingTagNameEmpty int = 30001
 

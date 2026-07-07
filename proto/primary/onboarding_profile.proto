@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package health;
+
+option go_package = "spider/api;api";
+
+message UploadOnboardingProfileRequest {
+  int32 schema_version = 1;
+  int64 completed_at = 2;
+  string profile_json = 3;
+}
+
+message UploadOnboardingProfileResponse {
+  bool success = 1;
+}
+
+service OnboardingProfileService {
+  rpc UploadOnboardingProfile(UploadOnboardingProfileRequest) returns (UploadOnboardingProfileResponse);
+}
