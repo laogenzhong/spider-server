@@ -22,6 +22,7 @@ const (
 	restoreTaskExerciseSetRecords        = "exercise_set_records"
 	restoreTaskCustomExercises           = "custom_exercises"
 	restoreTaskExerciseSessionEndMarkers = "exercise_training_session_end_markers"
+	restoreTaskUserPreferences           = "user_preferences"
 )
 
 // ClientRestoreApi 实现客户端本地数据全量恢复和增量同步相关 gRPC 接口。
@@ -158,6 +159,22 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 			batchSize,
 		))
 		totalCount += exerciseSessionEndMarkerCount
+	}
+
+	userPreferencesCount, err := mysqlmodel.CountUserPreferencesChanges(uid, startSnapshotID, endSnapshotID)
+	if err != nil {
+		return session.Error(ctx, gamecode.RestoreCountUserPreferencesFailed, &pb.RestorePlanResponse{})
+	}
+	if userPreferencesCount > 0 {
+		tasks = append(tasks, buildRestoreTask(
+			restoreTaskUserPreferences,
+			pb.RestoreDataType_RESTORE_DATA_TYPE_USER_PREFERENCES,
+			"",
+			"",
+			userPreferencesCount,
+			batchSize,
+		))
+		totalCount += userPreferencesCount
 	}
 
 	return &pb.RestorePlanResponse{
@@ -435,6 +452,39 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		)
 		resp.Payload = &pb.RestoreBatchResponse_ExerciseTrainingSessionEndMarkers{
 			ExerciseTrainingSessionEndMarkers: &pb.ExerciseTrainingSessionEndMarkerRestoreBatch{Items: items},
+		}
+		return resp, nil
+
+	case restoreTaskUserPreferences:
+		count, err := mysqlmodel.CountUserPreferencesChanges(uid, startSnapshotID, endSnapshotID)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreCountUserPreferencesFailed, &pb.RestoreBatchResponse{})
+		}
+		records, err := mysqlmodel.ListUserPreferencesChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreFetchUserPreferencesFailed, &pb.RestoreBatchResponse{})
+		}
+		items := make([]*pb.UserPreferencesSyncItem, 0, len(records))
+		for _, record := range records {
+			items = append(items, &pb.UserPreferencesSyncItem{
+				Preferences: mysqlmodel.UserPreferencesToPB(record),
+				Deleted:     isDeletedInSnapshot(record.DeletedAt, endSnapshotID),
+				DeletedAt:   deletedAtMillis(record.DeletedAt, endSnapshotID),
+				ChangedAt:   changedAtMillis(record.UpdatedAt, record.DeletedAt, endSnapshotID),
+			})
+		}
+
+		resp := buildRestoreBatchResponse(
+			pb.RestoreDataType_RESTORE_DATA_TYPE_USER_PREFERENCES,
+			req.GetBatchIndex(),
+			uint32(len(items)),
+			count,
+			batchSize,
+			startSnapshotID,
+			endSnapshotID,
+		)
+		resp.Payload = &pb.RestoreBatchResponse_UserPreferences{
+			UserPreferences: &pb.UserPreferencesRestoreBatch{Items: items},
 		}
 		return resp, nil
 	}

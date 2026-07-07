@@ -122,6 +122,12 @@ const (
 	// OnboardingProfileSaveFailed 保存 onboarding 画像失败。
 	OnboardingProfileSaveFailed int = 20016
 
+	// UserPreferencesInvalid 用户偏好数据无效。
+	UserPreferencesInvalid int = 20017
+
+	// UserPreferencesSaveFailed 保存用户偏好失败。
+	UserPreferencesSaveFailed int = 20018
+
 	// TrainingTagNameEmpty 训练标签名称为空。
 	TrainingTagNameEmpty int = 30001
 
@@ -259,6 +265,12 @@ const (
 
 	// RestoreFetchExerciseSessionEndMarkersFailed 拉取动作库训练结束标记同步数据失败。
 	RestoreFetchExerciseSessionEndMarkersFailed int = 40020
+
+	// RestoreCountUserPreferencesFailed 统计用户偏好同步数据失败。
+	RestoreCountUserPreferencesFailed int = 40021
+
+	// RestoreFetchUserPreferencesFailed 拉取用户偏好同步数据失败。
+	RestoreFetchUserPreferencesFailed int = 40022
 
 	// FriendProfileQueryFailed 获取朋友资料失败。
 	FriendProfileQueryFailed int = 50001
