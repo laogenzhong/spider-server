@@ -23,6 +23,7 @@ const (
 	restoreTaskCustomExercises           = "custom_exercises"
 	restoreTaskExerciseSessionEndMarkers = "exercise_training_session_end_markers"
 	restoreTaskUserPreferences           = "user_preferences"
+	restoreTaskWeeklyTrainingGoal        = "weekly_training_goal"
 )
 
 // ClientRestoreApi 实现客户端本地数据全量恢复和增量同步相关 gRPC 接口。
@@ -175,6 +176,22 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 			batchSize,
 		))
 		totalCount += userPreferencesCount
+	}
+
+	weeklyTrainingGoalCount, err := mysqlmodel.CountWeeklyTrainingGoalChanges(uid, startSnapshotID, endSnapshotID)
+	if err != nil {
+		return session.Error(ctx, gamecode.RestoreCountWeeklyTrainingGoalFailed, &pb.RestorePlanResponse{})
+	}
+	if weeklyTrainingGoalCount > 0 {
+		tasks = append(tasks, buildRestoreTask(
+			restoreTaskWeeklyTrainingGoal,
+			pb.RestoreDataType_RESTORE_DATA_TYPE_WEEKLY_TRAINING_GOAL,
+			"",
+			"",
+			weeklyTrainingGoalCount,
+			batchSize,
+		))
+		totalCount += weeklyTrainingGoalCount
 	}
 
 	return &pb.RestorePlanResponse{
@@ -485,6 +502,39 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		)
 		resp.Payload = &pb.RestoreBatchResponse_UserPreferences{
 			UserPreferences: &pb.UserPreferencesRestoreBatch{Items: items},
+		}
+		return resp, nil
+
+	case restoreTaskWeeklyTrainingGoal:
+		count, err := mysqlmodel.CountWeeklyTrainingGoalChanges(uid, startSnapshotID, endSnapshotID)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreCountWeeklyTrainingGoalFailed, &pb.RestoreBatchResponse{})
+		}
+		records, err := mysqlmodel.ListWeeklyTrainingGoalChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
+		if err != nil {
+			return session.Error(ctx, gamecode.RestoreFetchWeeklyTrainingGoalFailed, &pb.RestoreBatchResponse{})
+		}
+		items := make([]*pb.WeeklyTrainingGoalSyncItem, 0, len(records))
+		for _, record := range records {
+			items = append(items, &pb.WeeklyTrainingGoalSyncItem{
+				Goal:      mysqlmodel.WeeklyTrainingGoalToPB(record),
+				Deleted:   isDeletedInSnapshot(record.DeletedAt, endSnapshotID),
+				DeletedAt: deletedAtMillis(record.DeletedAt, endSnapshotID),
+				ChangedAt: changedAtMillis(record.UpdatedAt, record.DeletedAt, endSnapshotID),
+			})
+		}
+
+		resp := buildRestoreBatchResponse(
+			pb.RestoreDataType_RESTORE_DATA_TYPE_WEEKLY_TRAINING_GOAL,
+			req.GetBatchIndex(),
+			uint32(len(items)),
+			count,
+			batchSize,
+			startSnapshotID,
+			endSnapshotID,
+		)
+		resp.Payload = &pb.RestoreBatchResponse_WeeklyTrainingGoal{
+			WeeklyTrainingGoal: &pb.WeeklyTrainingGoalRestoreBatch{Items: items},
 		}
 		return resp, nil
 	}

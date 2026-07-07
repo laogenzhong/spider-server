@@ -7,6 +7,7 @@ import "primary/weight.proto";
 import "primary/body_photo.proto";
 import "primary/exercise_record.proto";
 import "primary/user_preferences.proto";
+import "primary/weekly_goal.proto";
 
 option go_package = "spider/api;api";
 
@@ -38,6 +39,9 @@ enum RestoreDataType {
 
   // 用户级外观和界面偏好。
   RESTORE_DATA_TYPE_USER_PREFERENCES = 8;
+
+  // 每周训练目标。
+  RESTORE_DATA_TYPE_WEEKLY_TRAINING_GOAL = 9;
 }
 
 // RestorePlanRequest 表示获取客户端数据同步计划的请求。
@@ -237,6 +241,21 @@ message UserPreferencesSyncItem {
   int64 changed_at = 4;
 }
 
+// WeeklyTrainingGoalSyncItem 表示一条每周训练目标同步项。
+message WeeklyTrainingGoalSyncItem {
+  // 每周训练目标。
+  health.WeeklyTrainingGoal goal = 1;
+
+  // true 表示该目标已被服务端删除，客户端应回退本地默认值。
+  bool deleted = 2;
+
+  // 删除时间，毫秒时间戳；deleted = true 时有效。
+  int64 deleted_at = 3;
+
+  // 本记录最近变更时间，毫秒时间戳。
+  int64 changed_at = 4;
+}
+
 // WeightRecordRestoreBatch 表示一批体重记录同步项。
 message WeightRecordRestoreBatch {
   // 体重记录同步项列表。
@@ -285,6 +304,12 @@ message UserPreferencesRestoreBatch {
   repeated UserPreferencesSyncItem items = 1;
 }
 
+// WeeklyTrainingGoalRestoreBatch 表示一批每周训练目标同步项。
+message WeeklyTrainingGoalRestoreBatch {
+  // 每周训练目标同步项列表。
+  repeated WeeklyTrainingGoalSyncItem items = 1;
+}
+
 // RestoreBatchResponse 表示某个同步任务的一批数据。
 message RestoreBatchResponse {
   // 数据类型，方便客户端分发到不同本地表。
@@ -324,6 +349,7 @@ message RestoreBatchResponse {
     CustomExerciseRestoreBatch custom_exercises = 25;
     ExerciseTrainingSessionEndMarkerRestoreBatch exercise_training_session_end_markers = 26;
     UserPreferencesRestoreBatch user_preferences = 27;
+    WeeklyTrainingGoalRestoreBatch weekly_training_goal = 28;
   }
 }
 

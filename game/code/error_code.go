@@ -272,6 +272,12 @@ const (
 	// RestoreFetchUserPreferencesFailed 拉取用户偏好同步数据失败。
 	RestoreFetchUserPreferencesFailed int = 40022
 
+	// RestoreCountWeeklyTrainingGoalFailed 统计每周训练目标同步数据失败。
+	RestoreCountWeeklyTrainingGoalFailed int = 40023
+
+	// RestoreFetchWeeklyTrainingGoalFailed 拉取每周训练目标同步数据失败。
+	RestoreFetchWeeklyTrainingGoalFailed int = 40024
+
 	// FriendProfileQueryFailed 获取朋友资料失败。
 	FriendProfileQueryFailed int = 50001
 

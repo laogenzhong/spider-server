@@ -21,7 +21,7 @@ func (a *WeeklyTrainingGoalApi) GetWeeklyTrainingGoal(ctx context.Context, req *
 		return session.Error(ctx, gamecode.WeeklyTrainingGoalQueryFailed, &pb.GetWeeklyTrainingGoalResponse{})
 	}
 
-	return &pb.GetWeeklyTrainingGoalResponse{Goal: convertWeeklyTrainingGoal(goal)}, nil
+	return &pb.GetWeeklyTrainingGoalResponse{Goal: mysqlmodel.WeeklyTrainingGoalToPB(goal)}, nil
 }
 
 func (a *WeeklyTrainingGoalApi) SaveWeeklyTrainingGoal(ctx context.Context, req *pb.SaveWeeklyTrainingGoalRequest) (*pb.SaveWeeklyTrainingGoalResponse, error) {
@@ -38,24 +38,9 @@ func (a *WeeklyTrainingGoalApi) SaveWeeklyTrainingGoal(ctx context.Context, req 
 		return session.Error(ctx, gamecode.WeeklyTrainingGoalSaveFailed, &pb.SaveWeeklyTrainingGoalResponse{})
 	}
 
-	return &pb.SaveWeeklyTrainingGoalResponse{Goal: convertWeeklyTrainingGoal(goal)}, nil
+	return &pb.SaveWeeklyTrainingGoalResponse{Goal: mysqlmodel.WeeklyTrainingGoalToPB(goal)}, nil
 }
 
 func isValidWeeklyTrainingGoal(value int32) bool {
 	return value >= 0 && value <= mysqlmodel.MaxWeeklyTrainingGoal
-}
-
-func convertWeeklyTrainingGoal(goal *mysqlmodel.WeeklyTrainingGoal) *pb.WeeklyTrainingGoal {
-	if goal == nil {
-		return nil
-	}
-
-	return &pb.WeeklyTrainingGoal{
-		Id:               goal.ID,
-		Uid:              goal.UID,
-		StrengthSessions: goal.StrengthSessions,
-		CardioSessions:   goal.CardioSessions,
-		CreatedAt:        millis(goal.CreatedAt),
-		UpdatedAt:        millis(goal.UpdatedAt),
-	}
 }
