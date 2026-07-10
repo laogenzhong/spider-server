@@ -53,6 +53,7 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 		&mysqlmodel2.WorkoutLocation{},
 		&mysqlmodel2.WorkoutNote{},
 		&mysqlmodel2.BodyPhotoRecord{},
+		&mysqlmodel2.UserFeedback{},
 		&mysqlmodel2.FriendProfileRecord{},
 		&mysqlmodel2.FriendRequestRecord{},
 		&mysqlmodel2.FriendRelationRecord{},

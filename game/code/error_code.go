@@ -74,6 +74,18 @@ const (
 	// SignRegistrationDisabled 自定义账号注册已关闭。
 	SignRegistrationDisabled int = 10021
 
+	// FeedbackContentEmpty 反馈内容为空。
+	FeedbackContentEmpty int = 90001
+
+	// FeedbackContentTooLong 反馈内容超过长度限制。
+	FeedbackContentTooLong int = 90002
+
+	// FeedbackDailyLimitExceeded 当天反馈次数超过上限。
+	FeedbackDailyLimitExceeded int = 90003
+
+	// FeedbackSaveFailed 保存反馈失败。
+	FeedbackSaveFailed int = 90004
+
 	// WeightRecordDateEmpty 体重记录日期为空。
 	WeightRecordDateEmpty int = 20001
 

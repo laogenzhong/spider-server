@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+// SubmitFeedbackRequest 提交用户反馈。
+message SubmitFeedbackRequest {
+  // 反馈内容，最多 1000 字符。
+  string content = 1;
+}
+
+// SubmitFeedbackResponse 返回反馈提交结果。
+message SubmitFeedbackResponse {
+  // 是否提交成功。
+  bool success = 1;
+  // 当天已提交次数。
+  int32 used_today = 2;
+  // 每天最多提交次数。
+  int32 daily_limit = 3;
+}
+
+service FeedbackService {
+  // 提交用户反馈。
+  rpc SubmitFeedback(SubmitFeedbackRequest) returns (SubmitFeedbackResponse);
+}
