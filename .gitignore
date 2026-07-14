@@ -12,3 +12,5 @@ config.server.yaml
 downloads/
 /exercise_body_part_json/
 /generated/
+*.offer-reply-state.json
+OfferCodeOneTimeUseCodes_*.csv
