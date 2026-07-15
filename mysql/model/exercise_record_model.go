@@ -145,9 +145,12 @@ func UpdateExerciseSetRecord(record *ExerciseSetRecord) (*ExerciseSetRecord, err
 		"reps":                   record.Reps,
 		"recorded_at":            record.RecordedAt,
 	}
-	result := db.Model(&ExerciseSetRecord{}).
-		Where("uid = ? AND id = ?", record.UID, record.ID).
-		Updates(updates)
+	query := db.Model(&ExerciseSetRecord{}).
+		Where("uid = ? AND id = ?", record.UID, record.ID)
+	if record.ExerciseID != "" {
+		query = query.Where("exercise_id = ?", record.ExerciseID)
+	}
+	result := query.Updates(updates)
 	if result.Error != nil {
 		return nil, result.Error
 	}

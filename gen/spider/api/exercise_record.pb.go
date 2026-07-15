@@ -786,8 +786,10 @@ type UpdateExerciseSetRecordRequest struct {
 	WeightUnit           ExerciseWeightUnit     `protobuf:"varint,7,opt,name=weight_unit,json=weightUnit,proto3,enum=api.ExerciseWeightUnit" json:"weight_unit,omitempty"`
 	Reps                 int32                  `protobuf:"varint,8,opt,name=reps,proto3" json:"reps,omitempty"`
 	RecordedAt           int64                  `protobuf:"varint,9,opt,name=recorded_at,json=recordedAt,proto3" json:"recorded_at,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// 新客户端用于校验记录归属；旧客户端不传时保持兼容。
+	ExerciseId    string `protobuf:"bytes,10,opt,name=exercise_id,json=exerciseId,proto3" json:"exercise_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateExerciseSetRecordRequest) Reset() {
@@ -881,6 +883,13 @@ func (x *UpdateExerciseSetRecordRequest) GetRecordedAt() int64 {
 		return x.RecordedAt
 	}
 	return 0
+}
+
+func (x *UpdateExerciseSetRecordRequest) GetExerciseId() string {
+	if x != nil {
+		return x.ExerciseId
+	}
+	return ""
 }
 
 type UpdateExerciseSetRecordResponse struct {
@@ -1657,7 +1666,7 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"\bstart_at\x18\x01 \x01(\x03R\astartAt\x12\x15\n" +
 	"\x06end_at\x18\x02 \x01(\x03R\x05endAt\"]\n" +
 	")ListExerciseSetRecordsByTimeRangeResponse\x120\n" +
-	"\arecords\x18\x01 \x03(\v2\x16.api.ExerciseSetRecordR\arecords\"\xde\x02\n" +
+	"\arecords\x18\x01 \x03(\v2\x16.api.ExerciseSetRecordR\arecords\"\xff\x02\n" +
 	"\x1eUpdateExerciseSetRecordRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12*\n" +
 	"\x11exercise_name_key\x18\x02 \x01(\tR\x0fexerciseNameKey\x124\n" +
@@ -1670,7 +1679,10 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"weightUnit\x12\x12\n" +
 	"\x04reps\x18\b \x01(\x05R\x04reps\x12\x1f\n" +
 	"\vrecorded_at\x18\t \x01(\x03R\n" +
-	"recordedAt\"Q\n" +
+	"recordedAt\x12\x1f\n" +
+	"\vexercise_id\x18\n" +
+	" \x01(\tR\n" +
+	"exerciseId\"Q\n" +
 	"\x1fUpdateExerciseSetRecordResponse\x12.\n" +
 	"\x06record\x18\x01 \x01(\v2\x16.api.ExerciseSetRecordR\x06record\"0\n" +
 	"\x1eDeleteExerciseSetRecordRequest\x12\x0e\n" +

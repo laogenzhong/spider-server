@@ -135,6 +135,7 @@ func (a *ExerciseSetRecordApi) UpdateExerciseSetRecord(ctx context.Context, req 
 	record, err := mysqlmodel.UpdateExerciseSetRecord(&mysqlmodel.ExerciseSetRecord{
 		ID:                   req.GetId(),
 		UID:                  uid,
+		ExerciseID:           strings.TrimSpace(req.GetExerciseId()),
 		ExerciseNameKey:      req.GetExerciseNameKey(),
 		ExerciseNameSnapshot: req.GetExerciseNameSnapshot(),
 		CategoryKey:          req.GetCategoryKey(),

@@ -99,6 +99,8 @@ message UpdateExerciseSetRecordRequest {
   ExerciseWeightUnit weight_unit = 7;
   int32 reps = 8;
   int64 recorded_at = 9;
+  // 新客户端用于校验记录归属；旧客户端不传时保持兼容。
+  string exercise_id = 10;
 }
 
 message UpdateExerciseSetRecordResponse {
