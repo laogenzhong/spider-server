@@ -93,6 +93,8 @@ type AppleTransaction struct {
 	SignedAt              *time.Time
 	SignedTransactionJWS  string `gorm:"type:text"`
 	AppAccountToken       string `gorm:"size:64;index"`
+	OfferIdentifier       string `gorm:"size:128;index"`
+	OfferType             int32  `gorm:"index;not null;default:0"`
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             gorm.DeletedAt `gorm:"index"`
@@ -146,6 +148,8 @@ type AppStoreServerNotification struct {
 	RevocationAt          *time.Time
 	RevocationReason      int32
 	TransactionSignedAt   *time.Time
+	OfferIdentifier       string `gorm:"size:128;index"`
+	OfferType             int32  `gorm:"index;not null;default:0"`
 	AutoRenewProductID    string `gorm:"size:128"`
 	AutoRenewStatus       int32
 	ExpirationIntent      int32
@@ -958,6 +962,8 @@ func appStoreServerNotificationFromPayload(
 		record.RevocationAt = millisToTimePtr(transaction.RevocationDate)
 		record.RevocationReason = transaction.RevocationReason
 		record.TransactionSignedAt = millisToTimePtr(transaction.SignedDate)
+		record.OfferIdentifier = strings.TrimSpace(transaction.OfferIdentifier)
+		record.OfferType = transaction.OfferType
 	}
 
 	if renewalInfo != nil {
@@ -1052,6 +1058,8 @@ func upsertAppleTransaction(db *gorm.DB, record *AppleTransaction, updateOrderID
 		"signed_at",
 		"signed_transaction_jws",
 		"app_account_token",
+		"offer_identifier",
+		"offer_type",
 		"updated_at",
 	}
 	if updateOrderID {
@@ -1170,6 +1178,8 @@ func upsertAppStoreServerNotification(db *gorm.DB, record *AppStoreServerNotific
 			"revocation_at",
 			"revocation_reason",
 			"transaction_signed_at",
+			"offer_identifier",
+			"offer_type",
 			"auto_renew_product_id",
 			"auto_renew_status",
 			"expiration_intent",
@@ -1301,6 +1311,8 @@ func appleTransactionFromVerifiedPayload(uid uint64, tx appstore.Transaction, si
 		SignedAt:              millisToTimePtr(tx.SignedDate),
 		SignedTransactionJWS:  strings.TrimSpace(signedTransactionJWS),
 		AppAccountToken:       strings.TrimSpace(tx.AppAccountToken),
+		OfferIdentifier:       strings.TrimSpace(tx.OfferIdentifier),
+		OfferType:             tx.OfferType,
 	}
 }
 
@@ -1323,6 +1335,8 @@ func appleTransactionFromNotificationRecord(uid uint64, notification *AppStoreSe
 		RevocationReason:      notification.RevocationReason,
 		SignedAt:              notification.TransactionSignedAt,
 		SignedTransactionJWS:  strings.TrimSpace(notification.SignedTransactionJWS),
+		OfferIdentifier:       strings.TrimSpace(notification.OfferIdentifier),
+		OfferType:             notification.OfferType,
 	}
 }
 

@@ -2,6 +2,7 @@ package mysqlmodel
 
 import (
 	"errors"
+	"spider-server/game/appstore"
 	"testing"
 	"time"
 )
@@ -169,6 +170,45 @@ func TestCurrentVIPStatusFromEntitlementKeepsAppleAfterAdminGrantRevoked(t *test
 	}
 	if status.ExpiresAt != entitlement.ExpiresAt {
 		t.Fatalf("ExpiresAt = %v, want %v", status.ExpiresAt, entitlement.ExpiresAt)
+	}
+}
+
+func TestAppleTransactionFromVerifiedPayloadKeepsOfferFields(t *testing.T) {
+	transaction := appstore.Transaction{
+		TransactionID:         "tx-1",
+		OriginalTransactionID: "original-1",
+		ProductID:             "hh.spider.vip.monthly",
+		OfferIdentifier:       "SUMMER2026",
+		OfferType:             3,
+	}
+
+	record := appleTransactionFromVerifiedPayload(7, transaction, "signed-jws")
+	if record.OfferIdentifier != transaction.OfferIdentifier {
+		t.Fatalf("OfferIdentifier = %q, want %q", record.OfferIdentifier, transaction.OfferIdentifier)
+	}
+	if record.OfferType != transaction.OfferType {
+		t.Fatalf("OfferType = %d, want %d", record.OfferType, transaction.OfferType)
+	}
+}
+
+func TestAppleTransactionFromNotificationRecordKeepsOfferFields(t *testing.T) {
+	notification := &AppStoreServerNotification{
+		TransactionID:         "tx-1",
+		OriginalTransactionID: "original-1",
+		ProductID:             "hh.spider.vip.monthly",
+		OfferIdentifier:       "SUMMER2026",
+		OfferType:             3,
+	}
+
+	record := appleTransactionFromNotificationRecord(7, notification)
+	if record == nil {
+		t.Fatal("record = nil, want AppleTransaction")
+	}
+	if record.OfferIdentifier != notification.OfferIdentifier {
+		t.Fatalf("OfferIdentifier = %q, want %q", record.OfferIdentifier, notification.OfferIdentifier)
+	}
+	if record.OfferType != notification.OfferType {
+		t.Fatalf("OfferType = %d, want %d", record.OfferType, notification.OfferType)
 	}
 }
 
