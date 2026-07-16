@@ -7,6 +7,8 @@ go.mod 里的 module 名 + 项目内相对目录
 
 ## 配置文件和启动规则
 
+Vue 3 本地管理后台位于 `admin-console/`，包含 VIP 管理、版本配置、付费/退款查询、日活和每日注册查询。部署与安全配置见 `docs/admin-console.md`。
+
 服务端和后台工具都从 YAML 配置文件读取数据库、gRPC 地址、密钥、Apple 配置等运行参数。配置文件选择规则如下：
 
 - 服务端 `spider-server`：默认读取当前目录的 `config.yaml`。

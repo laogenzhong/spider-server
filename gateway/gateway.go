@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	appconfig "spider-server/common/config"
 	applogger "spider-server/common/logger"
 	"spider-server/gateway/refgrpc"
 	"strings"
@@ -18,11 +19,20 @@ import (
 type GatewayServer struct {
 	host       string
 	wsUpgrader websocket.Upgrader
+	adminAuth  *adminConsoleAuth
 }
 
-func NewGatewayServer(host string) *GatewayServer {
+func NewGatewayServer(host string, adminConfigs ...appconfig.AdminConfig) *GatewayServer {
+	adminConfig := appconfig.Default().Admin
+	if len(adminConfigs) > 0 {
+		adminConfig = adminConfigs[0]
+		if strings.TrimSpace(adminConfig.ConsoleSecret) == "" {
+			adminConfig.ConsoleSecret = adminConfig.VIPGrantSecret
+		}
+	}
 	return &GatewayServer{
-		host: host,
+		host:      host,
+		adminAuth: newAdminConsoleAuth(adminConfig),
 		wsUpgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -63,6 +73,7 @@ func (s *GatewayServer) Router() *gin.Engine {
 	router.GET("/ping", s.pingHandler)
 	router.POST("/app-store/notifications/v2", s.appStoreServerNotificationV2Handler)
 	router.POST("/app-store-server-notifications/v2", s.appStoreServerNotificationV2Handler)
+	s.registerAdminConsoleRoutes(router)
 
 	// 普通 HTTP 二进制接口。
 	router.POST("/rpc", s.httpHandler)

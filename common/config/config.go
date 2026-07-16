@@ -115,7 +115,11 @@ type AppUpdateConfig struct {
 }
 
 type AdminConfig struct {
-	VIPGrantSecret string `yaml:"vip_grant_secret"`
+	VIPGrantSecret      string `yaml:"vip_grant_secret"`
+	ConsoleSecret       string `yaml:"console_secret"`
+	ConsoleRequireHTTPS bool   `yaml:"console_require_https"`
+	ConsoleMaxClockSkew string `yaml:"console_max_clock_skew"`
+	ActivitySnapshotAt  string `yaml:"activity_snapshot_at"`
 }
 
 type LoggerConfig struct {
@@ -205,7 +209,10 @@ func Default() Config {
 			MessageKo:              "계속 사용하려면 최신 버전으로 업데이트해 주세요.",
 		},
 		Admin: AdminConfig{
-			VIPGrantSecret: "",
+			VIPGrantSecret:      "",
+			ConsoleRequireHTTPS: true,
+			ConsoleMaxClockSkew: "90s",
+			ActivitySnapshotAt:  "23:59:30",
 		},
 		Logger: LoggerConfig{
 			Level:        "info",
@@ -287,6 +294,16 @@ func (c *Config) Normalize() {
 	}
 	if c.Sign.ReplayNonceCleanup == "" {
 		c.Sign.ReplayNonceCleanup = Default().Sign.ReplayNonceCleanup
+	}
+	c.Admin.ApplyEnv()
+	if c.Admin.ConsoleSecret == "" {
+		c.Admin.ConsoleSecret = c.Admin.VIPGrantSecret
+	}
+	if c.Admin.ConsoleMaxClockSkew == "" {
+		c.Admin.ConsoleMaxClockSkew = Default().Admin.ConsoleMaxClockSkew
+	}
+	if c.Admin.ActivitySnapshotAt == "" {
+		c.Admin.ActivitySnapshotAt = Default().Admin.ActivitySnapshotAt
 	}
 	c.AppleSignIn.ApplyEnv()
 	if c.AppleSignIn.TeamID == "" {
@@ -389,6 +406,16 @@ func (c SignConfig) ReplayNonceTTLDuration() time.Duration {
 
 func (c SignConfig) ReplayNonceCleanupDuration() time.Duration {
 	return durationOrDefault(c.ReplayNonceCleanup, 5*time.Second)
+}
+
+func (c *AdminConfig) ApplyEnv() {
+	if value := strings.TrimSpace(os.Getenv("ADMIN_CONSOLE_SECRET")); value != "" {
+		c.ConsoleSecret = value
+	}
+}
+
+func (c AdminConfig) ConsoleMaxClockSkewDuration() time.Duration {
+	return durationOrDefault(c.ConsoleMaxClockSkew, 90*time.Second)
 }
 
 func (c *AppleSignInConfig) ApplyEnv() {

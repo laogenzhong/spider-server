@@ -1,6 +1,9 @@
 /.idea/
 /node/client/node_modules
 /node/client/dist/
+/admin-console/node_modules/
+/admin-console/dist/
+/admin-console/.env.local
 
 /vendor/
 *.log

@@ -41,6 +41,7 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 		&mysqlmodel2.AppleSignInAccount{},
 		&mysqlmodel2.AppleSignInAccountDeletionLog{},
 		&mysqlmodel2.UserSession{},
+		&mysqlmodel2.DailyUserActivitySnapshot{},
 		&mysqlmodel2.WeightRecord{},
 		&mysqlmodel2.WeeklyTrainingGoal{},
 		&mysqlmodel2.OnboardingProfile{},

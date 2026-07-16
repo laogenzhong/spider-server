@@ -84,6 +84,11 @@ app_update:
 admin:
   # 后台开通 VIP 的共享密钥。admin_vip_cli 默认读取这里，留空时 AdminVIPApi.grantVIP 不可用。
   vip_grant_secret: "33cd455954929525a026ad9b53721021dc2f6b61c01de86f6158f189dd0d66db"
+  # 本地可留空并兼容使用 vip_grant_secret；线上建议通过 ADMIN_CONSOLE_SECRET 单独配置。
+  console_secret: "06b9dfd1fa023b2e28424c61d43f9b21270021b44444735ec0663e2e116fe591"
+  console_require_https: false
+  console_max_clock_skew: "90s"
+  activity_snapshot_at: "23:59:30"
 
 logger:
   level: "info"

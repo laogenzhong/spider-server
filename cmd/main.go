@@ -8,6 +8,7 @@ import (
 	appconfig "spider-server/common/config"
 	applogger "spider-server/common/logger"
 	"spider-server/game"
+	"spider-server/game/analytics"
 	"spider-server/game/appleauth"
 	"spider-server/game/appstore"
 	"spider-server/game/reconcile"
@@ -50,6 +51,7 @@ func main() {
 	)
 
 	mysqlconfig.InitWithConfig(cfg.MySQL)
+	analytics.StartDailyActivitySnapshotter(ctx, cfg.Admin.ActivitySnapshotAt)
 	if err := mysqlmodel.SeedAppUpdateConfigFromAppConfig(cfg.AppUpdate); err != nil {
 		applogger.Fatalf("seed app update config failed: %v", err)
 	}
@@ -64,7 +66,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		startGateway(cfg.Server) // 这里用你已经写好的 gateway 启动方法
+		startGateway(cfg) // 这里用你已经写好的 gateway 启动方法
 	}()
 	// 阻塞 main，直到收到退出信号
 	<-ctx.Done()
@@ -82,20 +84,20 @@ func startGame(grpcAddr string) {
 	}
 }
 
-func startGateway(cfg appconfig.ServerConfig) {
-	router := gateway.NewGatewayServer(cfg.GRPCTarget)
+func startGateway(cfg appconfig.Config) {
+	router := gateway.NewGatewayServer(cfg.Server.GRPCTarget, cfg.Admin)
 
 	server := &http.Server{
-		Addr:              cfg.GatewayAddr,
+		Addr:              cfg.Server.GatewayAddr,
 		Handler:           router.Router(),
-		ReadHeaderTimeout: cfg.ReadHeaderTimeoutDuration(),
+		ReadHeaderTimeout: cfg.Server.ReadHeaderTimeoutDuration(),
 	}
 
-	applogger.Printf("gateway server listening on %s", cfg.GatewayAddr)
-	applogger.Printf("http  endpoint: http://%s%s/ping", cfg.EndpointHost, cfg.GatewayAddr)
-	applogger.Printf("binary endpoint: http://%s%s/rpc", cfg.EndpointHost, cfg.GatewayAddr)
-	applogger.Printf("ws    endpoint: ws://%s%s/ws", cfg.EndpointHost, cfg.GatewayAddr)
-	applogger.Printf("app store notifications endpoint: http://%s%s/app-store/notifications/v2", cfg.EndpointHost, cfg.GatewayAddr)
+	applogger.Printf("gateway server listening on %s", cfg.Server.GatewayAddr)
+	applogger.Printf("http  endpoint: http://%s%s/ping", cfg.Server.EndpointHost, cfg.Server.GatewayAddr)
+	applogger.Printf("binary endpoint: http://%s%s/rpc", cfg.Server.EndpointHost, cfg.Server.GatewayAddr)
+	applogger.Printf("ws    endpoint: ws://%s%s/ws", cfg.Server.EndpointHost, cfg.Server.GatewayAddr)
+	applogger.Printf("app store notifications endpoint: http://%s%s/app-store/notifications/v2", cfg.Server.EndpointHost, cfg.Server.GatewayAddr)
 
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		applogger.Fatalf("gateway server failed: %v", err)
