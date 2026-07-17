@@ -7,6 +7,27 @@ import (
 	"time"
 )
 
+func TestParseAdminVIPUID(t *testing.T) {
+	tests := []struct {
+		input string
+		uid   uint64
+		ok    bool
+	}{
+		{input: "29", uid: 29, ok: true},
+		{input: " 29 ", uid: 29, ok: true},
+		{input: "SP000029", uid: 0, ok: false},
+		{input: "0", uid: 0, ok: false},
+		{input: "account29", uid: 0, ok: false},
+	}
+
+	for _, test := range tests {
+		uid, ok := parseAdminVIPUID(test.input)
+		if uid != test.uid || ok != test.ok {
+			t.Fatalf("parseAdminVIPUID(%q) = (%d, %v), want (%d, %v)", test.input, uid, ok, test.uid, test.ok)
+		}
+	}
+}
+
 func TestApplePurchaseOrderConfirmationSourcePrePurchase(t *testing.T) {
 	now := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
 	order := &ApplePurchaseOrder{

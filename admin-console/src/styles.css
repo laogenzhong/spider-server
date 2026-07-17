@@ -116,6 +116,19 @@ td small { color: #8a949b; font-size: 10px; }
 .status-pill.positive { color: #246f5d; background: #e5f3ef; }.status-pill.neutral { color: #69737a; background: #edf0f2; }.status-pill.negative { color: #9a4141; background: #f8e8e8; }.status-pill.warning { color: #92631d; background: #f8efd9; }
 .source-tag.offer_code { color: #665496; background: #eee9f8; }.source-tag.purchase { color: #2c6885; background: #e5f1f6; }
 .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; color: #6f7981; font-size: 11px; }
+.feedback-content { min-width: 320px; max-width: 680px; white-space: pre-wrap; line-height: 1.55; }
+.expanded-row, .expanded-row:hover { background: #f7f9fa; }
+.expanded-row > td { max-width: none; padding: 14px; }
+.record-detail-meta { margin-bottom: 9px; color: #78838b; font-size: 10px; }
+.record-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 12px; margin-bottom: 10px; }
+.record-detail-grid > div { min-width: 0; padding-right: 12px; border-right: 1px solid #e1e6e8; }
+.record-detail-grid > div:last-child { border-right: 0; }
+.record-detail-grid span, .record-detail-grid strong { display: block; }
+.record-detail-grid span { margin-bottom: 4px; color: #849099; font-size: 10px; }
+.record-detail-grid strong { font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.json-viewer { max-height: 360px; margin: 0; overflow: auto; padding: 12px; border: 1px solid #dfe4e7; border-radius: 5px; color: #354049; background: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+.feature-adoption-table td { vertical-align: middle; }
+.daily-count { color: #245f53; font-size: 18px; line-height: 1.1; }
 
 .update-section { max-width: 1120px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 18px; padding-bottom: 20px; border-bottom: 1px solid #dce1e4; }
@@ -200,6 +213,9 @@ td small { color: #8a949b; font-size: 10px; }
   .user-workspace { grid-template-columns: 1fr; }
   .action-panel { width: 100%; }
   .offer-reply-workspace { grid-template-columns: 1fr; }
+  .record-detail-grid { grid-template-columns: 1fr; }
+  .record-detail-grid > div { padding: 0 0 10px; border-right: 0; border-bottom: 1px solid #e1e6e8; }
+  .record-detail-grid > div:last-child { padding-bottom: 0; border-bottom: 0; }
 }
 
 @media (max-width: 760px) {

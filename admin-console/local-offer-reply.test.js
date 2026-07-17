@@ -58,6 +58,20 @@ test('merges uploaded CSV files without changing existing ids or usage', async (
   assert.equal(all.items[3].used, false)
 })
 
+test('lists and paginates redeemed filters in sequence order', async (t) => {
+  const { directory, service } = await makeService()
+  t.after(() => fs.rm(directory, { recursive: true, force: true }))
+
+  const firstPage = await service.list({ page: 1, pageSize: 2 })
+  const secondPage = await service.list({ page: 2, pageSize: 2 })
+  const redeemed = await service.list({ status: 'used' })
+  const unredeemed = await service.list({ status: 'unused' })
+  assert.deepEqual(firstPage.items.map((item) => item.id), [1, 2])
+  assert.deepEqual(secondPage.items.map((item) => item.id), [3])
+  assert.deepEqual(redeemed.items.map((item) => item.id), [1, 2])
+  assert.deepEqual(unredeemed.items.map((item) => item.id), [3])
+})
+
 test('generating replies and batch ranges update local usage state', async (t) => {
   const { directory, service } = await makeService()
   t.after(() => fs.rm(directory, { recursive: true, force: true }))

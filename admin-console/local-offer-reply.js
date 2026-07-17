@@ -52,7 +52,7 @@ export class LocalOfferReplyService {
       return String(item.id) === normalizedSearch
         || item.code.includes(normalizedSearch)
         || item.url.toUpperCase().includes(normalizedSearch)
-    })
+    }).sort((left, right) => left.id - right.id)
     const offset = (safePage - 1) * safePageSize
     return {
       items: filtered.slice(offset, offset + safePageSize),

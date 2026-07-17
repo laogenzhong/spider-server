@@ -64,6 +64,10 @@ func (s *GatewayServer) registerAdminConsoleRoutes(router *gin.Engine) {
 	group.GET("/refunds", s.adminRefundsHandler)
 	group.GET("/daily-active", s.adminDailyActiveHandler)
 	group.GET("/registrations", s.adminRegistrationsHandler)
+	group.GET("/feedback", s.adminFeedbackHandler)
+	group.GET("/onboarding-profiles", s.adminOnboardingProfilesHandler)
+	group.GET("/friend-profiles", s.adminFriendProfilesHandler)
+	group.GET("/feature-adoption", s.adminFeatureAdoptionHandler)
 }
 
 func (s *GatewayServer) adminHealthHandler(c *gin.Context) {
@@ -279,6 +283,62 @@ func (s *GatewayServer) adminRegistrationsHandler(c *gin.Context) {
 	items, total, err := mysqlmodel.ListAdminRegistrations(query)
 	if err != nil {
 		adminError(c, http.StatusInternalServerError, "查询注册用户失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminFeedbackHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminFeedback(query)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询用户反馈失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminOnboardingProfilesHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminOnboardingProfiles(query)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询 Onboard 信息失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminFriendProfilesHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminFriendProfiles(query)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询好友资料失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminFeatureAdoptionHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, true)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminDailyFeatureAdoption(query)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询功能新增数据失败")
 		return
 	}
 	adminPageOK(c, items, total, query)

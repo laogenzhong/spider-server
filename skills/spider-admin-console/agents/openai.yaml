@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spider Admin Console"
+  short_description: "Keep Spider Admin behavior and pagination consistent"
+  default_prompt: "Use $spider-admin-console when adding or changing Spider Admin pages, APIs, or paginated data."

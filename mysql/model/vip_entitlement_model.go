@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"spider-server/game/appstore"
 	"spider-server/mysql/config"
+	"strconv"
 	"strings"
 	"time"
 
@@ -472,6 +473,9 @@ func findUserByAdminVIPIdentifier(db *gorm.DB, identifier string, forUpdate bool
 	if forUpdate {
 		userQuery = userQuery.Clauses(clause.Locking{Strength: "UPDATE"})
 	}
+	if uid, ok := parseAdminVIPUID(identifier); ok {
+		return findUserByID(db, uid, forUpdate)
+	}
 
 	user := &User{}
 	err := userQuery.Where("account = ?", identifier).First(user).Error
@@ -496,6 +500,11 @@ func findUserByAdminVIPIdentifier(db *gorm.DB, identifier string, forUpdate bool
 		return findUserByID(db, uid, forUpdate)
 	}
 	return nil, ErrAdminVIPAccountNotFound
+}
+
+func parseAdminVIPUID(identifier string) (uint64, bool) {
+	uid, err := strconv.ParseUint(strings.TrimSpace(identifier), 10, 64)
+	return uid, err == nil && uid > 0
 }
 
 func findUserByID(db *gorm.DB, uid uint64, forUpdate bool) (*User, error) {

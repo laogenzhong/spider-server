@@ -4,8 +4,10 @@ import {
   Activity,
   BadgeDollarSign,
   CalendarPlus,
+  ChartNoAxesColumnIncreasing,
   CheckCheck,
   CircleUserRound,
+  ClipboardList,
   ClipboardCopy,
   Clock3,
   ExternalLink,
@@ -15,6 +17,7 @@ import {
   LoaderCircle,
   LogOut,
   MessageSquareReply,
+  MessageSquareText,
   RefreshCw,
   RotateCcw,
   Save,
@@ -23,6 +26,7 @@ import {
   ShieldCheck,
   UserRoundPlus,
   UserRoundCheck,
+  UsersRound,
 } from 'lucide-vue-next'
 import { localOfferReplyRequest, queryString, request } from './api'
 import Pagination from './components/Pagination.vue'
@@ -35,6 +39,10 @@ const navItems = [
   { id: 'activity', label: '日活用户', icon: Activity },
   { id: 'todayRegistrations', label: '今日注册', icon: UserRoundPlus },
   { id: 'registrations', label: '每日注册', icon: CalendarPlus },
+  { id: 'feedback', label: '用户反馈', icon: MessageSquareText },
+  { id: 'onboarding', label: 'Onboard 信息', icon: ClipboardList },
+  { id: 'friendProfiles', label: '好友资料', icon: UsersRound },
+  { id: 'featureAdoption', label: '功能新增', icon: ChartNoAxesColumnIncreasing },
   { id: 'offerReply', label: '兑换码回复', icon: MessageSquareReply },
   { id: 'update', label: '版本更新', icon: Settings2 },
 ]
@@ -44,6 +52,7 @@ const connected = ref(false)
 const loading = reactive({})
 const toast = reactive({ visible: false, type: 'success', message: '' })
 const today = localDateString(new Date())
+const thirtyDaysAgo = localDateString(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000))
 const operator = ref(localStorage.getItem('spider-admin-operator') || 'local_admin')
 
 const overview = reactive({
@@ -77,6 +86,16 @@ const todayRegistrations = reactive({ items: [], total: 0, page: 1, page_size: 3
 const todayRegistrationFilters = reactive({ search: '' })
 const registrations = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const registrationFilters = reactive({ search: '', from: today, to: today })
+const feedback = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const feedbackFilters = reactive({ search: '', from: thirtyDaysAgo, to: today })
+const onboardingProfiles = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const onboardingFilters = reactive({ search: '', from: thirtyDaysAgo, to: today })
+const expandedOnboardingID = ref(0)
+const friendProfiles = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const friendProfileFilters = reactive({ search: '', from: thirtyDaysAgo, to: today })
+const expandedFriendProfileID = ref(0)
+const featureAdoption = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const featureAdoptionFilters = reactive({ from: thirtyDaysAgo, to: today })
 
 const offerReplyStatus = reactive({ total_count: 0, used_count: 0, unused_count: 0, max_used_id: 0, next_id: 0 })
 const offerCodes = reactive({ items: [], total: 0, page: 1, page_size: 50 })
@@ -163,6 +182,10 @@ async function selectSection(id) {
   if (id === 'activity') await loadActivities()
   if (id === 'todayRegistrations') await loadTodayRegistrations()
   if (id === 'registrations') await loadRegistrations()
+  if (id === 'feedback') await loadFeedback()
+  if (id === 'onboarding') await loadOnboardingProfiles()
+  if (id === 'friendProfiles') await loadFriendProfiles()
+  if (id === 'featureAdoption') await loadFeatureAdoption()
   if (id === 'offerReply') await loadOfferReplyWorkspace()
   if (id === 'update') await loadAppUpdate()
 }
@@ -251,6 +274,32 @@ async function loadRegistrations(page = registrations.page) {
   }).catch(() => {})
 }
 
+async function loadFeedback(page = feedback.page) {
+  await withLoading('feedback', async () => {
+    Object.assign(feedback, await request(`/feedback${queryString({ ...feedbackFilters, page, page_size: feedback.page_size })}`))
+  }).catch(() => {})
+}
+
+async function loadOnboardingProfiles(page = onboardingProfiles.page) {
+  await withLoading('onboarding', async () => {
+    Object.assign(onboardingProfiles, await request(`/onboarding-profiles${queryString({ ...onboardingFilters, page, page_size: onboardingProfiles.page_size })}`))
+    expandedOnboardingID.value = 0
+  }).catch(() => {})
+}
+
+async function loadFriendProfiles(page = friendProfiles.page) {
+  await withLoading('friendProfiles', async () => {
+    Object.assign(friendProfiles, await request(`/friend-profiles${queryString({ ...friendProfileFilters, page, page_size: friendProfiles.page_size })}`))
+    expandedFriendProfileID.value = 0
+  }).catch(() => {})
+}
+
+async function loadFeatureAdoption(page = featureAdoption.page) {
+  await withLoading('featureAdoption', async () => {
+    Object.assign(featureAdoption, await request(`/feature-adoption${queryString({ ...featureAdoptionFilters, page, page_size: featureAdoption.page_size })}`))
+  }).catch(() => {})
+}
+
 function loadVisibleUserList(page = 1) {
   if (current.value === 'activity') return loadActivities(page)
   if (current.value === 'todayRegistrations') return loadTodayRegistrations(page)
@@ -292,7 +341,7 @@ async function generateOfferReply() {
     const generated = await localOfferReplyRequest('/replies', { method: 'POST', body: { input } })
     Object.assign(offerReplyResult, generated)
     Object.assign(offerReplyStatus, generated.status)
-    notify(generated.already_used ? `ID ${generated.id} 已使用，已重新生成回复` : `ID ${generated.id} 回复已生成并标记为已使用`)
+    notify(generated.already_used ? `ID ${generated.id} 已兑换，已重新生成回复` : `ID ${generated.id} 回复已生成并标记为已兑换`)
     return generated
   }).catch(() => null)
   if (result) await loadOfferCodes(offerCodes.page)
@@ -362,7 +411,7 @@ async function setOfferUsage(range, used, confirmBulk = false) {
     return
   }
   if (confirmBulk) {
-    const action = used ? '标记为已使用' : '恢复为未使用'
+    const action = used ? '标记为已兑换' : '恢复为未兑换'
     if (!window.confirm(`确认将序号 ${normalizedRange} ${action}？`)) return
   }
   const result = await withLoading('offerUsage', async () => localOfferReplyRequest('/usage', {
@@ -372,7 +421,7 @@ async function setOfferUsage(range, used, confirmBulk = false) {
   if (!result) return
   Object.assign(offerReplyStatus, result.status)
   offerUsageRange.value = ''
-  notify(`${used ? '已使用' : '未使用'}状态已更新 ${result.changed_count} 条`)
+  notify(`${used ? '已兑换' : '未兑换'}状态已更新 ${result.changed_count} 条`)
   await loadOfferCodes(offerCodes.page)
 }
 
@@ -404,6 +453,27 @@ function formatDateTime(value) {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   }).format(date)
+}
+
+function parseJSON(value) {
+  if (!value) return null
+  if (typeof value === 'object') return value
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
+}
+
+function formatJSON(value) {
+  const parsed = parseJSON(value)
+  return parsed ? JSON.stringify(parsed, null, 2) : (value || '暂无数据')
+}
+
+function onboardingSummary(value) {
+  const profile = parseJSON(value)
+  if (!profile) return '—'
+  return [profile.goal, profile.trainingFocus, profile.experience, profile.theme].filter(Boolean).join(' · ') || '—'
 }
 
 function sourceLabel(source, offerType) {
@@ -525,7 +595,7 @@ onMounted(async () => {
       <section v-else-if="current === 'vip'" class="page-section">
         <form class="search-bar" @submit.prevent="searchUser">
           <Search :size="18" />
-          <input v-model="userIdentifier" placeholder="账号、UID 或 SP 用户 ID" autocomplete="off" />
+          <input v-model="userIdentifier" placeholder="账号、UID（如 29）或 SP 用户 ID" autocomplete="off" />
           <button class="primary-button" type="submit" :disabled="loading.user">
             <LoaderCircle v-if="loading.user" :size="17" class="spin" />
             查询用户
@@ -686,6 +756,132 @@ onMounted(async () => {
         />
       </section>
 
+      <section v-else-if="current === 'feedback'" class="page-section">
+        <div class="filter-toolbar">
+          <input v-model="feedbackFilters.from" type="date" />
+          <input v-model="feedbackFilters.to" type="date" />
+          <div class="compact-search"><Search :size="16" /><input v-model="feedbackFilters.search" placeholder="UID / 账号 / 昵称 / 内容" @keyup.enter="loadFeedback(1)" /></div>
+          <button class="primary-button" type="button" @click="loadFeedback(1)">查询</button>
+        </div>
+        <div class="result-meta">共 {{ feedback.total }} 条</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用户</th><th>账号</th><th>反馈内容</th><th>提交时间</th></tr></thead>
+            <tbody>
+              <tr v-for="item in feedback.items" :key="item.id">
+                <td><strong>{{ item.nickname || `UID ${item.uid}` }}</strong><small>UID {{ item.uid }}</small></td>
+                <td>{{ item.account || '—' }}</td>
+                <td class="feedback-content">{{ item.content }}</td>
+                <td>{{ formatDateTime(item.created_at) }}</td>
+              </tr>
+              <tr v-if="!feedback.items?.length"><td colspan="4" class="empty-cell">暂无反馈</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination :data="feedback" :page-count="pageCount(feedback)" @change="loadFeedback" />
+      </section>
+
+      <section v-else-if="current === 'onboarding'" class="page-section">
+        <div class="filter-toolbar">
+          <input v-model="onboardingFilters.from" type="date" />
+          <input v-model="onboardingFilters.to" type="date" />
+          <div class="compact-search"><Search :size="16" /><input v-model="onboardingFilters.search" placeholder="UID / 账号 / 昵称" @keyup.enter="loadOnboardingProfiles(1)" /></div>
+          <button class="primary-button" type="button" @click="loadOnboardingProfiles(1)">查询</button>
+        </div>
+        <div class="result-meta">共 {{ onboardingProfiles.total }} 人</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用户</th><th>账号</th><th>资料概要</th><th>版本</th><th>完成时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <template v-for="item in onboardingProfiles.items" :key="item.id">
+                <tr>
+                  <td><strong>{{ item.nickname || `UID ${item.uid}` }}</strong><small>UID {{ item.uid }}</small></td>
+                  <td>{{ item.account || '—' }}</td>
+                  <td>{{ onboardingSummary(item.profile_json) }}</td>
+                  <td>v{{ item.schema_version }}</td>
+                  <td>{{ formatDateTime(item.completed_at) }}</td>
+                  <td><button class="secondary-button" type="button" @click="expandedOnboardingID = expandedOnboardingID === item.id ? 0 : item.id">{{ expandedOnboardingID === item.id ? '收起' : '查看内容' }}</button></td>
+                </tr>
+                <tr v-if="expandedOnboardingID === item.id" class="expanded-row">
+                  <td colspan="6">
+                    <div class="record-detail-meta">上传 {{ formatDateTime(item.created_at) }} · 更新 {{ formatDateTime(item.updated_at) }}</div>
+                    <pre class="json-viewer">{{ formatJSON(item.profile_json) }}</pre>
+                  </td>
+                </tr>
+              </template>
+              <tr v-if="!onboardingProfiles.items?.length"><td colspan="6" class="empty-cell">暂无 Onboard 信息</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination :data="onboardingProfiles" :page-count="pageCount(onboardingProfiles)" @change="loadOnboardingProfiles" />
+      </section>
+
+      <section v-else-if="current === 'friendProfiles'" class="page-section">
+        <div class="filter-toolbar">
+          <input v-model="friendProfileFilters.from" type="date" />
+          <input v-model="friendProfileFilters.to" type="date" />
+          <div class="compact-search"><Search :size="16" /><input v-model="friendProfileFilters.search" placeholder="UID / 账号 / Friend ID / 昵称" @keyup.enter="loadFriendProfiles(1)" /></div>
+          <button class="primary-button" type="button" @click="loadFriendProfiles(1)">查询</button>
+        </div>
+        <div class="result-meta">共 {{ friendProfiles.total }} 人</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用户</th><th>Friend ID</th><th>头像</th><th>简介</th><th>训练计划</th><th>训练公开</th><th>创建时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <template v-for="item in friendProfiles.items" :key="item.id">
+                <tr>
+                  <td><strong>{{ item.nickname || item.account || `UID ${item.uid}` }}</strong><small>UID {{ item.uid }} · {{ item.account || '无账号' }}</small></td>
+                  <td class="mono">{{ item.user_id }}</td>
+                  <td>{{ item.avatar_symbol || '—' }}</td>
+                  <td>{{ item.bio || '—' }}</td>
+                  <td>{{ item.plan_title || '—' }}</td>
+                  <td><span class="status-pill" :class="item.training_data_visible ? 'positive' : 'neutral'">{{ item.training_data_visible ? '公开' : '隐藏' }}</span><small>连续 {{ item.spark_days }} 天</small></td>
+                  <td>{{ formatDateTime(item.created_at) }}</td>
+                  <td><button class="secondary-button" type="button" @click="expandedFriendProfileID = expandedFriendProfileID === item.id ? 0 : item.id">{{ expandedFriendProfileID === item.id ? '收起' : '查看详情' }}</button></td>
+                </tr>
+                <tr v-if="expandedFriendProfileID === item.id" class="expanded-row">
+                  <td colspan="8">
+                    <div class="record-detail-grid">
+                      <div><span>计划描述</span><strong>{{ item.plan_description || '—' }}</strong></div>
+                      <div><span>快照更新时间</span><strong>{{ formatDateTime(item.snapshot_updated_at) }}</strong></div>
+                      <div><span>资料更新时间</span><strong>{{ formatDateTime(item.updated_at) }}</strong></div>
+                    </div>
+                    <pre class="json-viewer">{{ formatJSON(item.recent_training_json) }}</pre>
+                  </td>
+                </tr>
+              </template>
+              <tr v-if="!friendProfiles.items?.length"><td colspan="8" class="empty-cell">暂无好友资料</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination :data="friendProfiles" :page-count="pageCount(friendProfiles)" @change="loadFriendProfiles" />
+      </section>
+
+      <section v-else-if="current === 'featureAdoption'" class="page-section">
+        <div class="filter-toolbar">
+          <input v-model="featureAdoptionFilters.from" type="date" />
+          <input v-model="featureAdoptionFilters.to" type="date" />
+          <button class="primary-button" type="button" @click="loadFeatureAdoption(1)">查询</button>
+        </div>
+        <div class="result-meta">共 {{ featureAdoption.total }} 个有新增记录的日期</div>
+        <div class="table-wrap feature-adoption-table">
+          <table>
+            <thead><tr><th>日期</th><th>体重用户</th><th>标签用户</th><th>动作组用户</th><th>照片用户</th></tr></thead>
+            <tbody>
+              <tr v-for="item in featureAdoption.items" :key="item.date">
+                <td><strong>{{ item.date }}</strong></td>
+                <td><strong class="daily-count">{{ item.weight_users }}</strong><small>UID 去重</small></td>
+                <td><strong class="daily-count">{{ item.training_tag_users }}</strong><small>UID 去重</small></td>
+                <td><strong class="daily-count">{{ item.exercise_set_users }}</strong><small>UID 去重</small></td>
+                <td><strong class="daily-count">{{ item.body_photo_users }}</strong><small>UID 去重</small></td>
+              </tr>
+              <tr v-if="!featureAdoption.items?.length"><td colspan="5" class="empty-cell">暂无新增记录</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination :data="featureAdoption" :page-count="pageCount(featureAdoption)" @change="loadFeatureAdoption" />
+      </section>
+
       <section v-else-if="current === 'offerReply'" class="page-section offer-reply-section">
         <div class="section-toolbar">
           <div>
@@ -714,8 +910,8 @@ onMounted(async () => {
 
         <div class="offer-status-grid" aria-label="兑换码回复状态">
           <div><span>兑换码总数</span><strong>{{ offerReplyStatus.total_count }}</strong></div>
-          <div><span>已使用</span><strong>{{ offerReplyStatus.used_count }}</strong></div>
-          <div><span>未使用</span><strong>{{ offerReplyStatus.unused_count }}</strong></div>
+          <div><span>已兑换</span><strong>{{ offerReplyStatus.used_count }}</strong></div>
+          <div><span>未兑换</span><strong>{{ offerReplyStatus.unused_count }}</strong></div>
           <div><span>建议下一个</span><strong>{{ offerReplyStatus.next_id || '全部完成' }}</strong></div>
         </div>
 
@@ -748,7 +944,7 @@ onMounted(async () => {
                 <h3>回复内容</h3>
                 <p v-if="offerReplyResult.id">
                   ID {{ offerReplyResult.id }}
-                  <b v-if="offerReplyResult.already_used">· 此兑换码此前已使用</b>
+                  <b v-if="offerReplyResult.already_used">· 此兑换码此前已兑换</b>
                 </p>
               </div>
               <button class="secondary-button copy-reply-button" type="button" :disabled="!offerReplyResult.reply" @click="copyOfferReply">
@@ -764,10 +960,10 @@ onMounted(async () => {
           <div class="offer-batch-actions">
             <input v-model="offerUsageRange" placeholder="序号范围，如 1-99" @keyup.enter="setOfferUsage(offerUsageRange, true, true)" />
             <button class="primary-button" type="button" :disabled="loading.offerUsage" @click="setOfferUsage(offerUsageRange, true, true)">
-              <CheckCheck :size="16" />标记已使用
+              <CheckCheck :size="16" />标记已兑换
             </button>
             <button class="secondary-button" type="button" :disabled="loading.offerUsage" @click="setOfferUsage(offerUsageRange, false, true)">
-              <RotateCcw :size="16" />恢复未使用
+              <RotateCcw :size="16" />恢复未兑换
             </button>
           </div>
         </div>
@@ -775,8 +971,8 @@ onMounted(async () => {
         <div class="filter-toolbar offer-code-filters">
           <div class="segmented">
             <button type="button" :class="{ selected: offerCodeFilters.status === 'all' }" @click="offerCodeFilters.status = 'all'; loadOfferCodes(1)">全部</button>
-            <button type="button" :class="{ selected: offerCodeFilters.status === 'unused' }" @click="offerCodeFilters.status = 'unused'; loadOfferCodes(1)">未使用</button>
-            <button type="button" :class="{ selected: offerCodeFilters.status === 'used' }" @click="offerCodeFilters.status = 'used'; loadOfferCodes(1)">已使用</button>
+            <button type="button" :class="{ selected: offerCodeFilters.status === 'unused' }" @click="offerCodeFilters.status = 'unused'; loadOfferCodes(1)">未兑换</button>
+            <button type="button" :class="{ selected: offerCodeFilters.status === 'used' }" @click="offerCodeFilters.status = 'used'; loadOfferCodes(1)">已兑换</button>
           </div>
           <div class="compact-search"><Search :size="16" /><input v-model="offerCodeFilters.search" placeholder="序号 / 兑换码 / 链接" @keyup.enter="loadOfferCodes(1)" /></div>
           <button class="secondary-button" type="button" @click="loadOfferCodes(1)"><Search :size="16" />查询</button>
@@ -784,18 +980,18 @@ onMounted(async () => {
 
         <div class="table-wrap offer-code-table">
           <table>
-            <thead><tr><th>序号</th><th>兑换码</th><th>兑换链接</th><th>使用状态</th><th>状态来源</th><th>更新时间</th><th>操作</th></tr></thead>
+            <thead><tr><th>序号</th><th>兑换码</th><th>兑换链接</th><th>兑换状态</th><th>状态来源</th><th>更新时间</th><th>操作</th></tr></thead>
             <tbody>
               <tr v-for="item in offerCodes.items" :key="item.id">
                 <td class="mono">{{ item.id }}</td>
                 <td class="offer-code-cell"><strong>{{ item.code }}</strong><button class="icon-button" type="button" title="复制兑换码" @click="copyOfferCode(item.code)"><ClipboardCopy :size="14" /></button></td>
                 <td class="offer-url-cell"><a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.url }}</a></td>
-                <td><span class="status-pill" :class="item.used ? 'negative' : 'positive'">{{ item.used ? '已使用' : '未使用' }}</span></td>
+                <td><span class="status-pill" :class="item.used ? 'negative' : 'positive'">{{ item.used ? '已兑换' : '未兑换' }}</span></td>
                 <td>{{ offerUsageSourceLabel(item.used_source) }}</td>
                 <td>{{ formatDateTime(item.used_at || item.updated_at) }}</td>
                 <td>
-                  <button v-if="item.used" class="icon-button bordered" type="button" title="恢复未使用" @click="setOfferUsage(String(item.id), false)"><RotateCcw :size="14" /></button>
-                  <button v-else class="icon-button bordered" type="button" title="标记已使用" @click="setOfferUsage(String(item.id), true)"><CheckCheck :size="14" /></button>
+                  <button v-if="item.used" class="icon-button bordered" type="button" title="恢复未兑换" @click="setOfferUsage(String(item.id), false)"><RotateCcw :size="14" /></button>
+                  <button v-else class="icon-button bordered" type="button" title="标记已兑换" @click="setOfferUsage(String(item.id), true)"><CheckCheck :size="14" /></button>
                 </td>
               </tr>
               <tr v-if="!offerCodes.items?.length"><td colspan="7" class="empty-cell">暂无兑换码</td></tr>

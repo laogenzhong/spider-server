@@ -2,6 +2,7 @@ package mysqlmodel
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -105,6 +106,58 @@ type AdminUserListRecord struct {
 	LastSeenAt          *time.Time `json:"last_seen_at,omitempty"`
 	LastMethod          string     `json:"last_method,omitempty"`
 	TouchCount          uint64     `json:"touch_count,omitempty"`
+}
+
+type AdminFeedbackRecord struct {
+	ID        uint64    `json:"id"`
+	UID       uint64    `json:"uid"`
+	Account   string    `json:"account"`
+	Nickname  string    `json:"nickname"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type AdminOnboardingProfileRecord struct {
+	ID            uint64    `json:"id"`
+	UID           uint64    `json:"uid"`
+	Account       string    `json:"account"`
+	Nickname      string    `json:"nickname"`
+	SchemaVersion int       `json:"schema_version"`
+	CompletedAt   time.Time `json:"completed_at"`
+	ProfileJSON   string    `json:"profile_json"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type AdminFriendProfileRecord struct {
+	ID                  uint64    `json:"id"`
+	UID                 uint64    `json:"uid"`
+	Account             string    `json:"account"`
+	UserID              string    `json:"user_id"`
+	Nickname            string    `json:"nickname"`
+	AvatarSymbol        string    `json:"avatar_symbol"`
+	Bio                 string    `json:"bio"`
+	PlanTitle           string    `json:"plan_title"`
+	PlanDescription     string    `json:"plan_description"`
+	TrainingDataVisible bool      `json:"training_data_visible"`
+	SparkDays           int32     `json:"spark_days"`
+	RecentTrainingJSON  string    `json:"recent_training_json"`
+	SnapshotUpdatedAt   int64     `json:"snapshot_updated_at"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type AdminDailyFeatureRecord struct {
+	Date             string `json:"date"`
+	WeightUsers      int64  `json:"weight_users"`
+	TrainingTagUsers int64  `json:"training_tag_users"`
+	ExerciseSetUsers int64  `json:"exercise_set_users"`
+	BodyPhotoUsers   int64  `json:"body_photo_users"`
+}
+
+type adminDailyUIDCount struct {
+	Date      string `gorm:"column:activity_date"`
+	UserCount int64  `gorm:"column:user_count"`
 }
 
 func GetAdminUserDetail(identifier string, now time.Time) (*AdminUserDetail, error) {
@@ -429,6 +482,196 @@ func ListAdminRegistrations(query AdminPageQuery) ([]AdminUserListRecord, int64,
 	return records, total, nil
 }
 
+func ListAdminFeedback(query AdminPageQuery) ([]AdminFeedbackRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Table("user_feedbacks AS f").
+		Joins("LEFT JOIN users AS u ON u.id = f.uid AND u.deleted_at IS NULL").
+		Joins("LEFT JOIN friend_profile_records AS fp ON fp.uid = f.uid AND fp.deleted_at IS NULL").
+		Where("f.deleted_at IS NULL")
+	base = applyAdminFeedbackSearch(base, query.Search)
+	base = applyAdminTimeRange(base, "f.created_at", query.From, query.To)
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	records := make([]AdminFeedbackRecord, 0)
+	err = base.Select(`
+		f.id,
+		f.uid,
+		COALESCE(u.account, '') AS account,
+		COALESCE(fp.nickname, '') AS nickname,
+		f.content,
+		f.created_at`).
+		Order("f.created_at DESC, f.id DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize).
+		Scan(&records).Error
+	return records, total, err
+}
+
+func ListAdminOnboardingProfiles(query AdminPageQuery) ([]AdminOnboardingProfileRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Table("onboarding_profiles AS o").
+		Joins("LEFT JOIN users AS u ON u.id = o.uid AND u.deleted_at IS NULL").
+		Joins("LEFT JOIN friend_profile_records AS fp ON fp.uid = o.uid AND fp.deleted_at IS NULL").
+		Where("o.deleted_at IS NULL")
+	base = applyAdminUserSearch(base, query.Search)
+	base = applyAdminTimeRange(base, "o.completed_at", query.From, query.To)
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	records := make([]AdminOnboardingProfileRecord, 0)
+	err = base.Select(`
+		o.id,
+		o.uid,
+		COALESCE(u.account, '') AS account,
+		COALESCE(fp.nickname, '') AS nickname,
+		o.schema_version,
+		o.completed_at,
+		o.profile_json,
+		o.created_at,
+		o.updated_at`).
+		Order("o.completed_at DESC, o.id DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize).
+		Scan(&records).Error
+	return records, total, err
+}
+
+func ListAdminFriendProfiles(query AdminPageQuery) ([]AdminFriendProfileRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Table("friend_profile_records AS fp").
+		Joins("LEFT JOIN users AS u ON u.id = fp.uid AND u.deleted_at IS NULL").
+		Where("fp.deleted_at IS NULL")
+	base = applyAdminFriendProfileSearch(base, query.Search)
+	base = applyAdminTimeRange(base, "fp.created_at", query.From, query.To)
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	records := make([]AdminFriendProfileRecord, 0)
+	err = base.Select(`
+		fp.id,
+		fp.uid,
+		COALESCE(u.account, '') AS account,
+		fp.user_id,
+		fp.nickname,
+		fp.avatar_symbol,
+		fp.bio,
+		fp.plan_title,
+		fp.plan_description,
+		fp.training_data_visible,
+		fp.spark_days,
+		COALESCE(fp.recent_training_json, '[]') AS recent_training_json,
+		fp.snapshot_updated_at,
+		fp.created_at,
+		fp.updated_at`).
+		Order("fp.created_at DESC, fp.id DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize).
+		Scan(&records).Error
+	return records, total, err
+}
+
+func ListAdminDailyFeatureAdoption(query AdminPageQuery) ([]AdminDailyFeatureRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+
+	weight, err := listAdminDailyDistinctUIDs(db, "weight_records", "", query)
+	if err != nil {
+		return nil, 0, err
+	}
+	tags, err := listAdminDailyDistinctUIDs(db, "training_tags", "uid > 0", query)
+	if err != nil {
+		return nil, 0, err
+	}
+	exerciseSets, err := listAdminDailyDistinctUIDs(db, "exercise_set_records", "", query)
+	if err != nil {
+		return nil, 0, err
+	}
+	bodyPhotos, err := listAdminDailyDistinctUIDs(db, "body_photo_records", "", query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return mergeAdminDailyFeatureRecords(query, weight, tags, exerciseSets, bodyPhotos)
+}
+
+func listAdminDailyDistinctUIDs(db *gorm.DB, table string, condition string, query AdminPageQuery) ([]adminDailyUIDCount, error) {
+	base := db.Table(table).
+		Select("DATE(created_at) AS activity_date, COUNT(DISTINCT uid) AS user_count")
+	if condition != "" {
+		base = base.Where(condition)
+	}
+	base = applyAdminTimeRange(base, "created_at", query.From, query.To)
+	records := make([]adminDailyUIDCount, 0)
+	err := base.Group("DATE(created_at)").Scan(&records).Error
+	return records, err
+}
+
+func mergeAdminDailyFeatureRecords(
+	query AdminPageQuery,
+	weight []adminDailyUIDCount,
+	tags []adminDailyUIDCount,
+	exerciseSets []adminDailyUIDCount,
+	bodyPhotos []adminDailyUIDCount,
+) ([]AdminDailyFeatureRecord, int64, error) {
+	byDate := make(map[string]*AdminDailyFeatureRecord)
+	get := func(date string) *AdminDailyFeatureRecord {
+		if byDate[date] == nil {
+			byDate[date] = &AdminDailyFeatureRecord{Date: date}
+		}
+		return byDate[date]
+	}
+	for _, item := range weight {
+		get(item.Date).WeightUsers = item.UserCount
+	}
+	for _, item := range tags {
+		get(item.Date).TrainingTagUsers = item.UserCount
+	}
+	for _, item := range exerciseSets {
+		get(item.Date).ExerciseSetUsers = item.UserCount
+	}
+	for _, item := range bodyPhotos {
+		get(item.Date).BodyPhotoUsers = item.UserCount
+	}
+
+	all := make([]AdminDailyFeatureRecord, 0, len(byDate))
+	for _, item := range byDate {
+		all = append(all, *item)
+	}
+	sort.Slice(all, func(i, j int) bool { return all[i].Date > all[j].Date })
+	total := int64(len(all))
+	start := (query.Page - 1) * query.PageSize
+	if start >= len(all) {
+		return make([]AdminDailyFeatureRecord, 0), total, nil
+	}
+	end := start + query.PageSize
+	if end > len(all) {
+		end = len(all)
+	}
+	return all[start:end], total, nil
+}
+
 func normalizeAdminPageQuery(query AdminPageQuery) AdminPageQuery {
 	query.Search = strings.TrimSpace(query.Search)
 	if query.Page <= 0 {
@@ -487,6 +730,30 @@ func applyAdminUserSearch(db *gorm.DB, search string) *gorm.DB {
 		return db.Where("(u.id = ? OR u.account LIKE ? OR fp.nickname LIKE ?)", uid, like, like)
 	}
 	return db.Where("(u.account LIKE ? OR fp.nickname LIKE ?)", like, like)
+}
+
+func applyAdminFeedbackSearch(db *gorm.DB, search string) *gorm.DB {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return db
+	}
+	like := "%" + search + "%"
+	if uid, err := strconv.ParseUint(search, 10, 64); err == nil && uid > 0 {
+		return db.Where("(f.uid = ? OR u.account LIKE ? OR fp.nickname LIKE ? OR f.content LIKE ?)", uid, like, like, like)
+	}
+	return db.Where("(u.account LIKE ? OR fp.nickname LIKE ? OR f.content LIKE ?)", like, like, like)
+}
+
+func applyAdminFriendProfileSearch(db *gorm.DB, search string) *gorm.DB {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return db
+	}
+	like := "%" + search + "%"
+	if uid, err := strconv.ParseUint(search, 10, 64); err == nil && uid > 0 {
+		return db.Where("(fp.uid = ? OR u.account LIKE ? OR fp.user_id LIKE ? OR fp.nickname LIKE ? OR fp.bio LIKE ?)", uid, like, like, like, like)
+	}
+	return db.Where("(u.account LIKE ? OR fp.user_id LIKE ? OR fp.nickname LIKE ? OR fp.bio LIKE ?)", like, like, like, like)
 }
 
 func applyAdminTimeRange(db *gorm.DB, column string, from *time.Time, to *time.Time) *gorm.DB {
