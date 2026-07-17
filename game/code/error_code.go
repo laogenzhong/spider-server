@@ -290,6 +290,12 @@ const (
 	// RestoreFetchWeeklyTrainingGoalFailed 拉取每周训练目标同步数据失败。
 	RestoreFetchWeeklyTrainingGoalFailed int = 40024
 
+	// RestoreCountWorkoutDataSnapshotsFailed 统计动作与计划快照同步数据失败。
+	RestoreCountWorkoutDataSnapshotsFailed int = 40025
+
+	// RestoreFetchWorkoutDataSnapshotsFailed 拉取动作与计划快照同步数据失败。
+	RestoreFetchWorkoutDataSnapshotsFailed int = 40026
+
 	// FriendProfileQueryFailed 获取朋友资料失败。
 	FriendProfileQueryFailed int = 50001
 
@@ -508,4 +514,13 @@ const (
 
 	// ExerciseSessionEndMarkerListFailed 查询动作库训练结束标记失败。
 	ExerciseSessionEndMarkerListFailed int = 80024
+
+	// WorkoutDataSnapshotsEmpty 动作与计划同步快照为空。
+	WorkoutDataSnapshotsEmpty int = 80025
+
+	// WorkoutDataSnapshotInvalid 动作与计划同步快照格式无效。
+	WorkoutDataSnapshotInvalid int = 80026
+
+	// WorkoutDataSnapshotSaveFailed 保存动作与计划同步快照失败。
+	WorkoutDataSnapshotSaveFailed int = 80027
 )

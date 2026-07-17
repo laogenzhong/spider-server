@@ -4,15 +4,12 @@ package api;
 
 option go_package = "spider/api;api";
 
-// 动作重量单位。
-// weight_x10 始终表示对应单位 * 10 后的整数。
 enum ExerciseWeightUnit {
   EXERCISE_WEIGHT_UNIT_JIN = 0;
   EXERCISE_WEIGHT_UNIT_KG = 1;
   EXERCISE_WEIGHT_UNIT_LB = 2;
 }
 
-// 单组动作记录。
 message ExerciseSetRecord {
   uint64 id = 1;
   uint64 uid = 2;
@@ -27,9 +24,98 @@ message ExerciseSetRecord {
   int64 recorded_at = 11;
   int64 created_at = 12;
   int64 updated_at = 13;
+  string client_record_id = 14;
 }
 
-// 用户自定义动作。
+// WorkoutDataSnapshotKind 区分计划库快照和一次已结束训练快照。
+enum WorkoutDataSnapshotKind {
+  WORKOUT_DATA_SNAPSHOT_KIND_UNKNOWN = 0;
+  WORKOUT_DATA_SNAPSHOT_KIND_LIBRARY = 1;
+  WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION = 2;
+}
+
+message WorkoutPlanExerciseSetSnapshot {
+  string id = 1;
+  string weight_text = 2;
+  string reps_text = 3;
+}
+
+message WorkoutPlanExerciseSnapshot {
+  string id = 1;
+  string exercise_id = 2;
+  string name_key = 3;
+  string name_snapshot = 4;
+  string category_key = 5;
+  string type_key = 6;
+  string display_type_key = 7;
+  string custom_name = 8;
+  string custom_subcategory_key = 9;
+  string note = 10;
+  int32 set_count = 11;
+  string weight_unit = 12;
+  repeated WorkoutPlanExerciseSetSnapshot sets = 13;
+}
+
+message WorkoutPlanSnapshot {
+  string id = 1;
+  string title = 2;
+  repeated WorkoutPlanExerciseSnapshot exercises = 3;
+  int64 created_at = 4;
+  int64 updated_at = 5;
+}
+
+message WorkoutPlanFolderSnapshot {
+  string id = 1;
+  string title = 2;
+  repeated WorkoutPlanSnapshot plans = 3;
+  int64 created_at = 4;
+  int64 updated_at = 5;
+  int32 sort_index = 6;
+}
+
+// WorkoutLibrarySnapshot 是动作、计划和文件夹管理的完整客户端快照。
+message WorkoutLibrarySnapshot {
+  repeated CustomExercise custom_exercises = 1;
+  repeated WorkoutPlanFolderSnapshot folders = 2;
+  int64 changed_at = 3;
+}
+
+message WorkoutPlanRecordLinkSnapshot {
+  string id = 1;
+  string client_record_id = 2;
+  string plan_id = 3;
+  string plan_exercise_id = 4;
+  string exercise_id = 5;
+  int64 created_at = 6;
+}
+
+// WorkoutTrainingSessionSnapshot 一次提交整次训练及其全部动作组和计划关联。
+message WorkoutTrainingSessionSnapshot {
+  string session_id = 1;
+  string plan_id = 2;
+  string plan_title = 3;
+  bool standalone = 4;
+  int64 started_at = 5;
+  int64 ended_at = 6;
+  repeated ExerciseSetRecord records = 7;
+  repeated WorkoutPlanRecordLinkSnapshot record_links = 8;
+  ExerciseTrainingSessionEndMarker end_marker = 9;
+}
+
+// WorkoutDataSnapshot 是队列和恢复服务共用的快照载体。
+message WorkoutDataSnapshot {
+  uint64 id = 1;
+  uint64 uid = 2;
+  string client_snapshot_id = 3;
+  WorkoutDataSnapshotKind kind = 4;
+  string entity_id = 5;
+  int64 changed_at = 6;
+  WorkoutLibrarySnapshot library = 7;
+  WorkoutTrainingSessionSnapshot training_session = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+}
+
 message CustomExercise {
   uint64 id = 1;
   uint64 uid = 2;
@@ -42,7 +128,6 @@ message CustomExercise {
   string subcategory_key = 9;
 }
 
-// 动作库训练手动结束标记，用于把 3 小时内的动作记录强制切成两次训练。
 message ExerciseTrainingSessionEndMarker {
   uint64 id = 1;
   uint64 uid = 2;
@@ -99,7 +184,6 @@ message UpdateExerciseSetRecordRequest {
   ExerciseWeightUnit weight_unit = 7;
   int32 reps = 8;
   int64 recorded_at = 9;
-  // 新客户端用于校验记录归属；旧客户端不传时保持兼容。
   string exercise_id = 10;
 }
 
@@ -116,7 +200,6 @@ message DeleteExerciseSetRecordResponse {
 }
 
 message ListTodayExerciseHistoryRequest {
-  // 记录日期，格式 yyyy-MM-dd；为空时服务端使用当天。
   string record_date = 1;
 }
 
@@ -170,6 +253,14 @@ message ListExerciseTrainingSessionEndMarkersResponse {
   repeated ExerciseTrainingSessionEndMarker markers = 1;
 }
 
+message SyncWorkoutDataSnapshotsRequest {
+  repeated WorkoutDataSnapshot snapshots = 1;
+}
+
+message SyncWorkoutDataSnapshotsResponse {
+  repeated string accepted_client_snapshot_ids = 1;
+}
+
 service ExerciseSetRecordService {
   rpc SaveExerciseSetRecord(SaveExerciseSetRecordRequest) returns (SaveExerciseSetRecordResponse);
   rpc ListExerciseSetRecords(ListExerciseSetRecordsRequest) returns (ListExerciseSetRecordsResponse);
@@ -181,4 +272,5 @@ service ExerciseSetRecordService {
   rpc ListCustomExercises(ListCustomExercisesRequest) returns (ListCustomExercisesResponse);
   rpc SaveExerciseTrainingSessionEndMarker(SaveExerciseTrainingSessionEndMarkerRequest) returns (SaveExerciseTrainingSessionEndMarkerResponse);
   rpc ListExerciseTrainingSessionEndMarkers(ListExerciseTrainingSessionEndMarkersRequest) returns (ListExerciseTrainingSessionEndMarkersResponse);
+  rpc SyncWorkoutDataSnapshots(SyncWorkoutDataSnapshotsRequest) returns (SyncWorkoutDataSnapshotsResponse);
 }

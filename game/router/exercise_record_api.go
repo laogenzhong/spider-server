@@ -307,6 +307,53 @@ func (a *ExerciseSetRecordApi) ListExerciseTrainingSessionEndMarkers(ctx context
 	return &pb.ListExerciseTrainingSessionEndMarkersResponse{Markers: respMarkers}, nil
 }
 
+// SyncWorkoutDataSnapshots 批量保存动作库、计划文件夹或整次训练快照。
+// 客户端以 client_snapshot_id 和 kind/entity_id 保证重试幂等。
+func (a *ExerciseSetRecordApi) SyncWorkoutDataSnapshots(ctx context.Context, req *pb.SyncWorkoutDataSnapshotsRequest) (*pb.SyncWorkoutDataSnapshotsResponse, error) {
+	uid := session.GetUser(ctx).UID()
+	snapshots := req.GetSnapshots()
+	if len(snapshots) == 0 || len(snapshots) > 20 {
+		return session.Error(ctx, gamecode.WorkoutDataSnapshotsEmpty, &pb.SyncWorkoutDataSnapshotsResponse{})
+	}
+	for _, snapshot := range snapshots {
+		if !validWorkoutDataSnapshot(snapshot) {
+			return session.Error(ctx, gamecode.WorkoutDataSnapshotInvalid, &pb.SyncWorkoutDataSnapshotsResponse{})
+		}
+	}
+	accepted, err := mysqlmodel.SaveWorkoutDataSnapshots(uid, snapshots)
+	if err != nil {
+		return session.Error(ctx, gamecode.WorkoutDataSnapshotSaveFailed, &pb.SyncWorkoutDataSnapshotsResponse{})
+	}
+	return &pb.SyncWorkoutDataSnapshotsResponse{AcceptedClientSnapshotIds: accepted}, nil
+}
+
+func validWorkoutDataSnapshot(snapshot *pb.WorkoutDataSnapshot) bool {
+	if snapshot == nil || strings.TrimSpace(snapshot.GetClientSnapshotId()) == "" || strings.TrimSpace(snapshot.GetEntityId()) == "" || snapshot.GetChangedAt() <= 0 {
+		return false
+	}
+	if len(snapshot.GetClientSnapshotId()) > 64 || len(snapshot.GetEntityId()) > 64 {
+		return false
+	}
+	switch snapshot.GetKind() {
+	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_LIBRARY:
+		library := snapshot.GetLibrary()
+		return snapshot.Library != nil && len(library.GetFolders()) <= 100 && len(library.GetCustomExercises()) <= 500
+	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION:
+		training := snapshot.GetTrainingSession()
+		if snapshot.TrainingSession == nil || strings.TrimSpace(training.GetSessionId()) == "" || training.GetStartedAt() <= 0 || training.GetEndedAt() < training.GetStartedAt() || len(training.GetRecords()) > 1000 {
+			return false
+		}
+		for _, record := range training.GetRecords() {
+			if record == nil || strings.TrimSpace(record.GetClientRecordId()) == "" || strings.TrimSpace(record.GetExerciseId()) == "" || record.GetWeightX10() < 0 || record.GetReps() <= 0 || !validExerciseWeightUnit(record.GetWeightUnit()) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
+}
+
 func validExerciseWeightUnit(unit pb.ExerciseWeightUnit) bool {
 	switch unit {
 	case pb.ExerciseWeightUnit_EXERCISE_WEIGHT_UNIT_JIN,

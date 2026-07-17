@@ -42,6 +42,9 @@ enum RestoreDataType {
 
   // 每周训练目标。
   RESTORE_DATA_TYPE_WEEKLY_TRAINING_GOAL = 9;
+
+  // 动作、计划、文件夹及整次训练快照。
+  RESTORE_DATA_TYPE_WORKOUT_DATA_SNAPSHOTS = 10;
 }
 
 // RestorePlanRequest 表示获取客户端数据同步计划的请求。
@@ -256,6 +259,13 @@ message WeeklyTrainingGoalSyncItem {
   int64 changed_at = 4;
 }
 
+message WorkoutDataSnapshotSyncItem {
+  WorkoutDataSnapshot snapshot = 1;
+  bool deleted = 2;
+  int64 deleted_at = 3;
+  int64 changed_at = 4;
+}
+
 // WeightRecordRestoreBatch 表示一批体重记录同步项。
 message WeightRecordRestoreBatch {
   // 体重记录同步项列表。
@@ -310,6 +320,10 @@ message WeeklyTrainingGoalRestoreBatch {
   repeated WeeklyTrainingGoalSyncItem items = 1;
 }
 
+message WorkoutDataSnapshotRestoreBatch {
+  repeated WorkoutDataSnapshotSyncItem items = 1;
+}
+
 // RestoreBatchResponse 表示某个同步任务的一批数据。
 message RestoreBatchResponse {
   // 数据类型，方便客户端分发到不同本地表。
@@ -350,6 +364,7 @@ message RestoreBatchResponse {
     ExerciseTrainingSessionEndMarkerRestoreBatch exercise_training_session_end_markers = 26;
     UserPreferencesRestoreBatch user_preferences = 27;
     WeeklyTrainingGoalRestoreBatch weekly_training_goal = 28;
+    WorkoutDataSnapshotRestoreBatch workout_data_snapshots = 29;
   }
 }
 

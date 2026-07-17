@@ -29,6 +29,7 @@ const (
 	ExerciseSetRecordService_ListCustomExercises_FullMethodName                   = "/api.ExerciseSetRecordService/ListCustomExercises"
 	ExerciseSetRecordService_SaveExerciseTrainingSessionEndMarker_FullMethodName  = "/api.ExerciseSetRecordService/SaveExerciseTrainingSessionEndMarker"
 	ExerciseSetRecordService_ListExerciseTrainingSessionEndMarkers_FullMethodName = "/api.ExerciseSetRecordService/ListExerciseTrainingSessionEndMarkers"
+	ExerciseSetRecordService_SyncWorkoutDataSnapshots_FullMethodName              = "/api.ExerciseSetRecordService/SyncWorkoutDataSnapshots"
 )
 
 // ExerciseSetRecordServiceClient is the client API for ExerciseSetRecordService service.
@@ -45,6 +46,7 @@ type ExerciseSetRecordServiceClient interface {
 	ListCustomExercises(ctx context.Context, in *ListCustomExercisesRequest, opts ...grpc.CallOption) (*ListCustomExercisesResponse, error)
 	SaveExerciseTrainingSessionEndMarker(ctx context.Context, in *SaveExerciseTrainingSessionEndMarkerRequest, opts ...grpc.CallOption) (*SaveExerciseTrainingSessionEndMarkerResponse, error)
 	ListExerciseTrainingSessionEndMarkers(ctx context.Context, in *ListExerciseTrainingSessionEndMarkersRequest, opts ...grpc.CallOption) (*ListExerciseTrainingSessionEndMarkersResponse, error)
+	SyncWorkoutDataSnapshots(ctx context.Context, in *SyncWorkoutDataSnapshotsRequest, opts ...grpc.CallOption) (*SyncWorkoutDataSnapshotsResponse, error)
 }
 
 type exerciseSetRecordServiceClient struct {
@@ -155,6 +157,16 @@ func (c *exerciseSetRecordServiceClient) ListExerciseTrainingSessionEndMarkers(c
 	return out, nil
 }
 
+func (c *exerciseSetRecordServiceClient) SyncWorkoutDataSnapshots(ctx context.Context, in *SyncWorkoutDataSnapshotsRequest, opts ...grpc.CallOption) (*SyncWorkoutDataSnapshotsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SyncWorkoutDataSnapshotsResponse)
+	err := c.cc.Invoke(ctx, ExerciseSetRecordService_SyncWorkoutDataSnapshots_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ExerciseSetRecordServiceServer is the server API for ExerciseSetRecordService service.
 // All implementations must embed UnimplementedExerciseSetRecordServiceServer
 // for forward compatibility.
@@ -169,6 +181,7 @@ type ExerciseSetRecordServiceServer interface {
 	ListCustomExercises(context.Context, *ListCustomExercisesRequest) (*ListCustomExercisesResponse, error)
 	SaveExerciseTrainingSessionEndMarker(context.Context, *SaveExerciseTrainingSessionEndMarkerRequest) (*SaveExerciseTrainingSessionEndMarkerResponse, error)
 	ListExerciseTrainingSessionEndMarkers(context.Context, *ListExerciseTrainingSessionEndMarkersRequest) (*ListExerciseTrainingSessionEndMarkersResponse, error)
+	SyncWorkoutDataSnapshots(context.Context, *SyncWorkoutDataSnapshotsRequest) (*SyncWorkoutDataSnapshotsResponse, error)
 	mustEmbedUnimplementedExerciseSetRecordServiceServer()
 }
 
@@ -208,6 +221,9 @@ func (UnimplementedExerciseSetRecordServiceServer) SaveExerciseTrainingSessionEn
 }
 func (UnimplementedExerciseSetRecordServiceServer) ListExerciseTrainingSessionEndMarkers(context.Context, *ListExerciseTrainingSessionEndMarkersRequest) (*ListExerciseTrainingSessionEndMarkersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListExerciseTrainingSessionEndMarkers not implemented")
+}
+func (UnimplementedExerciseSetRecordServiceServer) SyncWorkoutDataSnapshots(context.Context, *SyncWorkoutDataSnapshotsRequest) (*SyncWorkoutDataSnapshotsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SyncWorkoutDataSnapshots not implemented")
 }
 func (UnimplementedExerciseSetRecordServiceServer) mustEmbedUnimplementedExerciseSetRecordServiceServer() {
 }
@@ -411,6 +427,24 @@ func _ExerciseSetRecordService_ListExerciseTrainingSessionEndMarkers_Handler(srv
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ExerciseSetRecordService_SyncWorkoutDataSnapshots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncWorkoutDataSnapshotsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExerciseSetRecordServiceServer).SyncWorkoutDataSnapshots(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExerciseSetRecordService_SyncWorkoutDataSnapshots_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExerciseSetRecordServiceServer).SyncWorkoutDataSnapshots(ctx, req.(*SyncWorkoutDataSnapshotsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ExerciseSetRecordService_ServiceDesc is the grpc.ServiceDesc for ExerciseSetRecordService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -457,6 +491,10 @@ var ExerciseSetRecordService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListExerciseTrainingSessionEndMarkers",
 			Handler:    _ExerciseSetRecordService_ListExerciseTrainingSessionEndMarkers_Handler,
+		},
+		{
+			MethodName: "SyncWorkoutDataSnapshots",
+			Handler:    _ExerciseSetRecordService_SyncWorkoutDataSnapshots_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
