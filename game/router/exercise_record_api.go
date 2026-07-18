@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
+	appconfig "spider-server/common/config"
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
 
+	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
 
@@ -311,6 +313,9 @@ func (a *ExerciseSetRecordApi) ListExerciseTrainingSessionEndMarkers(ctx context
 // 客户端以 client_snapshot_id 和 kind/entity_id 保证重试幂等。
 func (a *ExerciseSetRecordApi) SyncWorkoutDataSnapshots(ctx context.Context, req *pb.SyncWorkoutDataSnapshotsRequest) (*pb.SyncWorkoutDataSnapshotsResponse, error) {
 	uid := session.GetUser(ctx).UID()
+	if int64(proto.Size(req)) > maxWorkoutDataSyncRequestBytes {
+		return session.Error(ctx, gamecode.WorkoutDataSnapshotsRequestTooLarge, &pb.SyncWorkoutDataSnapshotsResponse{})
+	}
 	snapshots := req.GetSnapshots()
 	if len(snapshots) == 0 || len(snapshots) > 20 {
 		return session.Error(ctx, gamecode.WorkoutDataSnapshotsEmpty, &pb.SyncWorkoutDataSnapshotsResponse{})
@@ -334,17 +339,36 @@ func validWorkoutDataSnapshot(snapshot *pb.WorkoutDataSnapshot) bool {
 	if len(snapshot.GetClientSnapshotId()) > 64 || len(snapshot.GetEntityId()) > 64 {
 		return false
 	}
+	if snapshot.GetDeleted() {
+		return snapshot.GetKind() == pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN_FOLDER ||
+			snapshot.GetKind() == pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN
+	}
 	switch snapshot.GetKind() {
 	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_LIBRARY:
 		library := snapshot.GetLibrary()
-		return snapshot.Library != nil && len(library.GetFolders()) <= 100 && len(library.GetCustomExercises()) <= 500
+		return snapshot.Library != nil && validWorkoutLibrarySnapshot(library)
+	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_LIBRARY_METADATA:
+		library := snapshot.GetLibrary()
+		return snapshot.Library != nil && len(library.GetFolders()) == 0 && validCustomExerciseSnapshots(library.GetCustomExercises()) && validUniqueSnapshotIDs(library.GetFolderIds(), maxWorkoutPlanItemsPerLevel)
+	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN_FOLDER:
+		folder := snapshot.GetPlanFolder()
+		return snapshot.PlanFolder != nil && folder.GetId() == snapshot.GetEntityId() && validWorkoutPlanFolderEntitySnapshot(folder)
+	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN:
+		entity := snapshot.GetPlanEntity()
+		return snapshot.PlanEntity != nil && validWorkoutPlanEntitySnapshot(snapshot.GetEntityId(), entity)
 	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION:
 		training := snapshot.GetTrainingSession()
-		if snapshot.TrainingSession == nil || strings.TrimSpace(training.GetSessionId()) == "" || training.GetStartedAt() <= 0 || training.GetEndedAt() < training.GetStartedAt() || len(training.GetRecords()) > 1000 {
+		if snapshot.TrainingSession == nil || !validRequiredString(training.GetSessionId(), maxWorkoutSnapshotIDBytes) || training.GetSessionId() != snapshot.GetEntityId() || !validOptionalString(training.GetPlanId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(training.GetPlanTitle(), maxWorkoutSnapshotTitleBytes) || training.GetStartedAt() <= 0 || training.GetEndedAt() < training.GetStartedAt() || len(training.GetRecords()) > 1000 || len(training.GetRecordLinks()) > 1000 {
 			return false
 		}
+		recordCountsByExercise := make(map[string]int)
 		for _, record := range training.GetRecords() {
-			if record == nil || strings.TrimSpace(record.GetClientRecordId()) == "" || strings.TrimSpace(record.GetExerciseId()) == "" || record.GetWeightX10() < 0 || record.GetReps() <= 0 || !validExerciseWeightUnit(record.GetWeightUnit()) {
+			if record == nil || !validRequiredString(record.GetClientRecordId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(record.GetExerciseId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(record.GetExerciseNameKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(record.GetExerciseNameSnapshot(), maxWorkoutSnapshotNameBytes) || !validOptionalString(record.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(record.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || record.GetWeightX10() < 0 || record.GetReps() <= 0 || !validExerciseWeightUnit(record.GetWeightUnit()) {
+				return false
+			}
+			exerciseID := strings.TrimSpace(record.GetExerciseId())
+			recordCountsByExercise[exerciseID]++
+			if len(recordCountsByExercise) > maxWorkoutPlanItemsPerLevel || recordCountsByExercise[exerciseID] > maxWorkoutPlanItemsPerLevel {
 				return false
 			}
 		}
@@ -352,6 +376,109 @@ func validWorkoutDataSnapshot(snapshot *pb.WorkoutDataSnapshot) bool {
 	default:
 		return false
 	}
+}
+
+const (
+	maxWorkoutPlanItemsPerLevel    = 99
+	maxWorkoutSnapshotIDBytes      = 64
+	maxWorkoutSnapshotTitleBytes   = 160
+	maxWorkoutSnapshotKeyBytes     = 128
+	maxWorkoutSnapshotNameBytes    = 256
+	maxWorkoutSnapshotNoteBytes    = 2048
+	maxWorkoutSnapshotSetTextBytes = 32
+)
+
+var maxWorkoutDataSyncRequestBytes = appconfig.Default().WorkoutDataSync.SyncRPCMaxRequestBytes
+
+func ConfigureWorkoutDataSyncLimits(cfg appconfig.WorkoutDataSyncConfig) {
+	if cfg.SyncRPCMaxRequestBytes <= 0 {
+		cfg.SyncRPCMaxRequestBytes = appconfig.Default().WorkoutDataSync.SyncRPCMaxRequestBytes
+	}
+	maxWorkoutDataSyncRequestBytes = cfg.SyncRPCMaxRequestBytes
+	mysqlmodel.ConfigureWorkoutDataSnapshotLimits(cfg)
+}
+
+func validWorkoutLibrarySnapshot(library *pb.WorkoutLibrarySnapshot) bool {
+	if library == nil || len(library.GetFolders()) > maxWorkoutPlanItemsPerLevel || !validCustomExerciseSnapshots(library.GetCustomExercises()) || !validUniqueSnapshotIDs(library.GetFolderIds(), maxWorkoutPlanItemsPerLevel) {
+		return false
+	}
+	for _, folder := range library.GetFolders() {
+		if folder == nil || !validRequiredString(folder.GetId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(folder.GetTitle(), maxWorkoutSnapshotTitleBytes) || len(folder.GetPlans()) > maxWorkoutPlanItemsPerLevel {
+			return false
+		}
+		for _, plan := range folder.GetPlans() {
+			if !validWorkoutPlanSnapshot(plan) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func validWorkoutPlanFolderEntitySnapshot(folder *pb.WorkoutPlanFolderEntitySnapshot) bool {
+	if folder == nil || !validRequiredString(folder.GetId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(folder.GetTitle(), maxWorkoutSnapshotTitleBytes) || folder.GetSortIndex() < 0 || folder.GetSortIndex() >= maxWorkoutPlanItemsPerLevel || !validUniqueSnapshotIDs(folder.GetPlanIds(), maxWorkoutPlanItemsPerLevel) {
+		return false
+	}
+	return true
+}
+
+func validWorkoutPlanEntitySnapshot(entityID string, entity *pb.WorkoutPlanEntitySnapshot) bool {
+	return entity != nil && validRequiredString(entity.GetFolderId(), maxWorkoutSnapshotIDBytes) && entity.GetSortIndex() >= 0 && entity.GetSortIndex() < maxWorkoutPlanItemsPerLevel && entity.GetPlan() != nil && entity.GetPlan().GetId() == entityID && validWorkoutPlanSnapshot(entity.GetPlan())
+}
+
+func validWorkoutPlanSnapshot(plan *pb.WorkoutPlanSnapshot) bool {
+	if plan == nil || !validRequiredString(plan.GetId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(plan.GetTitle(), maxWorkoutSnapshotTitleBytes) || len(plan.GetExercises()) > maxWorkoutPlanItemsPerLevel {
+		return false
+	}
+	for _, exercise := range plan.GetExercises() {
+		if exercise == nil || !validRequiredString(exercise.GetId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(exercise.GetExerciseId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(exercise.GetNameKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetNameSnapshot(), maxWorkoutSnapshotNameBytes) || !validOptionalString(exercise.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetDisplayTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetCustomName(), maxWorkoutSnapshotNameBytes) || !validOptionalString(exercise.GetCustomSubcategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetNote(), maxWorkoutSnapshotNoteBytes) || !validOptionalString(exercise.GetWeightUnit(), 8) || exercise.GetSetCount() <= 0 || exercise.GetSetCount() > maxWorkoutPlanItemsPerLevel || len(exercise.GetSets()) > maxWorkoutPlanItemsPerLevel {
+			return false
+		}
+		for _, set := range exercise.GetSets() {
+			if set == nil || !validRequiredString(set.GetId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(set.GetWeightText(), maxWorkoutSnapshotSetTextBytes) || !validOptionalString(set.GetRepsText(), maxWorkoutSnapshotSetTextBytes) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func validCustomExerciseSnapshots(exercises []*pb.CustomExercise) bool {
+	if len(exercises) > 500 {
+		return false
+	}
+	for _, exercise := range exercises {
+		if exercise == nil || !validRequiredString(exercise.GetLocalId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(exercise.GetName(), maxWorkoutSnapshotNameBytes) || !validRequiredString(exercise.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validRequiredString(exercise.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetSubcategoryKey(), maxWorkoutSnapshotKeyBytes) {
+			return false
+		}
+	}
+	return true
+}
+
+func validRequiredString(value string, maxBytes int) bool {
+	trimmed := strings.TrimSpace(value)
+	return trimmed != "" && len(value) <= maxBytes
+}
+
+func validOptionalString(value string, maxBytes int) bool {
+	return len(value) <= maxBytes
+}
+
+func validUniqueSnapshotIDs(ids []string, maxCount int) bool {
+	if len(ids) > maxCount {
+		return false
+	}
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if !validRequiredString(id, maxWorkoutSnapshotIDBytes) {
+			return false
+		}
+		if _, exists := seen[id]; exists {
+			return false
+		}
+		seen[id] = struct{}{}
+	}
+	return true
 }
 
 func validExerciseWeightUnit(unit pb.ExerciseWeightUnit) bool {

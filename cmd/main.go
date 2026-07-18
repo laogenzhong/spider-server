@@ -49,6 +49,15 @@ func main() {
 		cfg.Sign.ReplayNonceCleanupDuration(),
 		cfg.Sign.LogMetadataPrefixOnly,
 	)
+	game.ConfigureWorkoutDataSync(cfg.WorkoutDataSync)
+	applogger.Printf(
+		"workout data sync limits gateway_request=%d rpc_request=%d snapshot_payload=%d restore_batch_snapshots=%d restore_batch_bytes=%d",
+		cfg.WorkoutDataSync.GatewayMaxRequestBytes,
+		cfg.WorkoutDataSync.SyncRPCMaxRequestBytes,
+		cfg.WorkoutDataSync.SnapshotMaxPayloadBytes,
+		cfg.WorkoutDataSync.RestoreBatchMaxSnapshots,
+		cfg.WorkoutDataSync.RestoreBatchTargetBytes,
+	)
 
 	mysqlconfig.InitWithConfig(cfg.MySQL)
 	analytics.StartDailyActivitySnapshotter(ctx, cfg.Admin.ActivitySnapshotAt)
@@ -85,7 +94,7 @@ func startGame(grpcAddr string) {
 }
 
 func startGateway(cfg appconfig.Config) {
-	router := gateway.NewGatewayServer(cfg.Server.GRPCTarget, cfg.Admin)
+	router := gateway.NewGatewayServerWithConfig(cfg.Server.GRPCTarget, cfg.Admin, cfg.WorkoutDataSync)
 
 	server := &http.Server{
 		Addr:              cfg.Server.GatewayAddr,

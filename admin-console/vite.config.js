@@ -1,4 +1,7 @@
 import crypto from 'node:crypto'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { resolve, sep } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { createLocalOfferReplyPlugin } from './local-offer-reply.js'
@@ -115,10 +118,59 @@ function adminAPIPlugin(env) {
   }
 }
 
+function localExerciseGIFPlugin(env) {
+  const root = resolve((env.EXERCISE_GIF_ROOT || '../../zlx/spider/spider/Resources/ExerciseGIFs').trim())
+
+  const attachMiddleware = (server) => {
+    server.middlewares.use(async (req, res, next) => {
+      const pathname = new URL(req.url || '/', 'http://127.0.0.1').pathname
+      if (!pathname.startsWith('/exercise-gifs/')) {
+        next()
+        return
+      }
+
+      let relativePath
+      try {
+        relativePath = decodeURIComponent(pathname.slice('/exercise-gifs/'.length))
+      } catch {
+        writeJSON(res, 400, '动图路径无效')
+        return
+      }
+      const filePath = resolve(root, relativePath)
+      if (!relativePath.toLocaleLowerCase().endsWith('.gif') || !filePath.startsWith(`${root}${sep}`)) {
+        writeJSON(res, 403, '禁止访问该文件')
+        return
+      }
+
+      try {
+        const info = await stat(filePath)
+        if (!info.isFile()) throw new Error('not a file')
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'image/gif')
+        res.setHeader('Content-Length', String(info.size))
+        res.setHeader('Cache-Control', 'public, max-age=3600')
+        if (req.method === 'HEAD') {
+          res.end()
+          return
+        }
+        createReadStream(filePath).pipe(res)
+      } catch {
+        writeJSON(res, 404, '未找到动作动图')
+      }
+    })
+  }
+
+  return {
+    name: 'spider-local-exercise-gifs',
+    configureServer: attachMiddleware,
+    configurePreviewServer: attachMiddleware,
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-    plugins: [vue(), createLocalOfferReplyPlugin(env), adminAPIPlugin(env)],
+    plugins: [vue(), createLocalOfferReplyPlugin(env), localExerciseGIFPlugin(env), adminAPIPlugin(env)],
     server: {
       host: '127.0.0.1',
       port: 4178,

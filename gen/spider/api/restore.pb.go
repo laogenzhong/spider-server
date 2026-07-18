@@ -117,8 +117,10 @@ type RestorePlanRequest struct {
 	PreferredBatchSize uint32 `protobuf:"varint,2,opt,name=preferred_batch_size,json=preferredBatchSize,proto3" json:"preferred_batch_size,omitempty"`
 	// 客户端系统语言，例如 zh-Hans-CN、en-US；旧版本客户端可不传。
 	SystemLanguage string `protobuf:"bytes,3,opt,name=system_language,json=systemLanguage,proto3" json:"system_language,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 当前客户端版本，例如 1.6.0；旧版本客户端可不传。
+	AppVersion    string `protobuf:"bytes,4,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RestorePlanRequest) Reset() {
@@ -172,6 +174,13 @@ func (x *RestorePlanRequest) GetSystemLanguage() string {
 	return ""
 }
 
+func (x *RestorePlanRequest) GetAppVersion() string {
+	if x != nil {
+		return x.AppVersion
+	}
+	return ""
+}
+
 // RestoreTask 表示一个需要客户端分批拉取的数据任务。
 type RestoreTask struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -191,8 +200,11 @@ type RestoreTask struct {
 	TotalBatches uint32 `protobuf:"varint,7,opt,name=total_batches,json=totalBatches,proto3" json:"total_batches,omitempty"`
 	// 建议客户端从哪个批次开始拉取，通常为 0。
 	StartBatchIndex uint32 `protobuf:"varint,8,opt,name=start_batch_index,json=startBatchIndex,proto3" json:"start_batch_index,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// true 表示该任务支持按响应字节数限制的游标分页。
+	// 客户端应使用 RestoreBatchRequest 的游标字段，并根据 has_more 连续拉取。
+	ByteCursorPagination bool `protobuf:"varint,9,opt,name=byte_cursor_pagination,json=byteCursorPagination,proto3" json:"byte_cursor_pagination,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *RestoreTask) Reset() {
@@ -279,6 +291,13 @@ func (x *RestoreTask) GetStartBatchIndex() uint32 {
 		return x.StartBatchIndex
 	}
 	return 0
+}
+
+func (x *RestoreTask) GetByteCursorPagination() bool {
+	if x != nil {
+		return x.ByteCursorPagination
+	}
+	return false
 }
 
 // RestorePlanResponse 表示服务端计算出的数据同步计划。
@@ -375,7 +394,13 @@ type RestoreBatchRequest struct {
 	// 要拉取的批次序号，从 0 开始。
 	BatchIndex uint32 `protobuf:"varint,4,opt,name=batch_index,json=batchIndex,proto3" json:"batch_index,omitempty"`
 	// RestoreTask.batch_size；客户端不传时服务端使用默认批大小。
-	BatchSize     uint32 `protobuf:"varint,5,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
+	BatchSize uint32 `protobuf:"varint,5,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
+	// true 表示本次请求使用按响应字节数限制的游标分页。
+	UseByteCursorPagination bool `protobuf:"varint,6,opt,name=use_byte_cursor_pagination,json=useByteCursorPagination,proto3" json:"use_byte_cursor_pagination,omitempty"`
+	// 上一批最后一条记录的服务端变更时间；首次请求传 0。
+	CursorServerChangedAt int64 `protobuf:"varint,7,opt,name=cursor_server_changed_at,json=cursorServerChangedAt,proto3" json:"cursor_server_changed_at,omitempty"`
+	// 上一批最后一条记录的服务端主键；首次请求传 0。
+	CursorId      uint64 `protobuf:"varint,8,opt,name=cursor_id,json=cursorId,proto3" json:"cursor_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -441,6 +466,27 @@ func (x *RestoreBatchRequest) GetBatchIndex() uint32 {
 func (x *RestoreBatchRequest) GetBatchSize() uint32 {
 	if x != nil {
 		return x.BatchSize
+	}
+	return 0
+}
+
+func (x *RestoreBatchRequest) GetUseByteCursorPagination() bool {
+	if x != nil {
+		return x.UseByteCursorPagination
+	}
+	return false
+}
+
+func (x *RestoreBatchRequest) GetCursorServerChangedAt() int64 {
+	if x != nil {
+		return x.CursorServerChangedAt
+	}
+	return 0
+}
+
+func (x *RestoreBatchRequest) GetCursorId() uint64 {
+	if x != nil {
+		return x.CursorId
 	}
 	return 0
 }
@@ -1649,6 +1695,10 @@ type RestoreBatchResponse struct {
 	StartSnapshotId int64 `protobuf:"varint,8,opt,name=start_snapshot_id,json=startSnapshotId,proto3" json:"start_snapshot_id,omitempty"`
 	// 本批次所属结束同步快照时间。
 	EndSnapshotId int64 `protobuf:"varint,9,opt,name=end_snapshot_id,json=endSnapshotId,proto3" json:"end_snapshot_id,omitempty"`
+	// 下一批游标的服务端变更时间；has_more = true 时有效。
+	NextCursorServerChangedAt int64 `protobuf:"varint,10,opt,name=next_cursor_server_changed_at,json=nextCursorServerChangedAt,proto3" json:"next_cursor_server_changed_at,omitempty"`
+	// 下一批游标的服务端主键；has_more = true 时有效。
+	NextCursorId uint64 `protobuf:"varint,11,opt,name=next_cursor_id,json=nextCursorId,proto3" json:"next_cursor_id,omitempty"`
 	// 当前批次数据。
 	//
 	// Types that are valid to be assigned to Payload:
@@ -1757,6 +1807,20 @@ func (x *RestoreBatchResponse) GetStartSnapshotId() int64 {
 func (x *RestoreBatchResponse) GetEndSnapshotId() int64 {
 	if x != nil {
 		return x.EndSnapshotId
+	}
+	return 0
+}
+
+func (x *RestoreBatchResponse) GetNextCursorServerChangedAt() int64 {
+	if x != nil {
+		return x.NextCursorServerChangedAt
+	}
+	return 0
+}
+
+func (x *RestoreBatchResponse) GetNextCursorId() uint64 {
+	if x != nil {
+		return x.NextCursorId
 	}
 	return 0
 }
@@ -1926,11 +1990,13 @@ var File_primary_restore_proto protoreflect.FileDescriptor
 
 const file_primary_restore_proto_rawDesc = "" +
 	"\n" +
-	"\x15primary/restore.proto\x12\x03api\x1a\x1aprimary/training_tag.proto\x1a\x14primary/weight.proto\x1a\x18primary/body_photo.proto\x1a\x1dprimary/exercise_record.proto\x1a\x1eprimary/user_preferences.proto\x1a\x19primary/weekly_goal.proto\"\x9b\x01\n" +
+	"\x15primary/restore.proto\x12\x03api\x1a\x1aprimary/training_tag.proto\x1a\x14primary/weight.proto\x1a\x18primary/body_photo.proto\x1a\x1dprimary/exercise_record.proto\x1a\x1eprimary/user_preferences.proto\x1a\x19primary/weekly_goal.proto\"\xbc\x01\n" +
 	"\x12RestorePlanRequest\x12*\n" +
 	"\x11start_snapshot_id\x18\x01 \x01(\x03R\x0fstartSnapshotId\x120\n" +
 	"\x14preferred_batch_size\x18\x02 \x01(\rR\x12preferredBatchSize\x12'\n" +
-	"\x0fsystem_language\x18\x03 \x01(\tR\x0esystemLanguage\"\xa4\x02\n" +
+	"\x0fsystem_language\x18\x03 \x01(\tR\x0esystemLanguage\x12\x1f\n" +
+	"\vapp_version\x18\x04 \x01(\tR\n" +
+	"appVersion\"\xda\x02\n" +
 	"\vRestoreTask\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x121\n" +
 	"\tdata_type\x18\x02 \x01(\x0e2\x14.api.RestoreDataTypeR\bdataType\x12\x1d\n" +
@@ -1942,14 +2008,15 @@ const file_primary_restore_proto_rawDesc = "" +
 	"\n" +
 	"batch_size\x18\x06 \x01(\rR\tbatchSize\x12#\n" +
 	"\rtotal_batches\x18\a \x01(\rR\ftotalBatches\x12*\n" +
-	"\x11start_batch_index\x18\b \x01(\rR\x0fstartBatchIndex\"\xcf\x01\n" +
+	"\x11start_batch_index\x18\b \x01(\rR\x0fstartBatchIndex\x124\n" +
+	"\x16byte_cursor_pagination\x18\t \x01(\bR\x14byteCursorPagination\"\xcf\x01\n" +
 	"\x13RestorePlanResponse\x12*\n" +
 	"\x11start_snapshot_id\x18\x01 \x01(\x03R\x0fstartSnapshotId\x12&\n" +
 	"\x0fend_snapshot_id\x18\x02 \x01(\x03R\rendSnapshotId\x12\x1b\n" +
 	"\tis_latest\x18\x03 \x01(\bR\bisLatest\x12&\n" +
 	"\x05tasks\x18\x04 \x03(\v2\x10.api.RestoreTaskR\x05tasks\x12\x1f\n" +
 	"\vtotal_count\x18\x05 \x01(\x04R\n" +
-	"totalCount\"\xc2\x01\n" +
+	"totalCount\"\xd5\x02\n" +
 	"\x13RestoreBatchRequest\x12*\n" +
 	"\x11start_snapshot_id\x18\x01 \x01(\x03R\x0fstartSnapshotId\x12&\n" +
 	"\x0fend_snapshot_id\x18\x02 \x01(\x03R\rendSnapshotId\x12\x17\n" +
@@ -1957,7 +2024,10 @@ const file_primary_restore_proto_rawDesc = "" +
 	"\vbatch_index\x18\x04 \x01(\rR\n" +
 	"batchIndex\x12\x1d\n" +
 	"\n" +
-	"batch_size\x18\x05 \x01(\rR\tbatchSize\"\x9c\x01\n" +
+	"batch_size\x18\x05 \x01(\rR\tbatchSize\x12;\n" +
+	"\x1ause_byte_cursor_pagination\x18\x06 \x01(\bR\x17useByteCursorPagination\x127\n" +
+	"\x18cursor_server_changed_at\x18\a \x01(\x03R\x15cursorServerChangedAt\x12\x1b\n" +
+	"\tcursor_id\x18\b \x01(\x04R\bcursorId\"\x9c\x01\n" +
 	"\x14WeightRecordSyncItem\x12,\n" +
 	"\x06record\x18\x01 \x01(\v2\x14.health.WeightRecordR\x06record\x12\x18\n" +
 	"\adeleted\x18\x02 \x01(\bR\adeleted\x12\x1d\n" +
@@ -2047,7 +2117,8 @@ const file_primary_restore_proto_rawDesc = "" +
 	"\x1eWeeklyTrainingGoalRestoreBatch\x125\n" +
 	"\x05items\x18\x01 \x03(\v2\x1f.api.WeeklyTrainingGoalSyncItemR\x05items\"Y\n" +
 	"\x1fWorkoutDataSnapshotRestoreBatch\x126\n" +
-	"\x05items\x18\x01 \x03(\v2 .api.WorkoutDataSnapshotSyncItemR\x05items\"\xcd\t\n" +
+	"\x05items\x18\x01 \x03(\v2 .api.WorkoutDataSnapshotSyncItemR\x05items\"\xb5\n" +
+	"\n" +
 	"\x14RestoreBatchResponse\x121\n" +
 	"\tdata_type\x18\x01 \x01(\x0e2\x14.api.RestoreDataTypeR\bdataType\x12\x1f\n" +
 	"\vbatch_index\x18\x02 \x01(\rR\n" +
@@ -2060,7 +2131,10 @@ const file_primary_restore_proto_rawDesc = "" +
 	"\bhas_more\x18\x06 \x01(\bR\ahasMore\x12(\n" +
 	"\x10next_batch_index\x18\a \x01(\rR\x0enextBatchIndex\x12*\n" +
 	"\x11start_snapshot_id\x18\b \x01(\x03R\x0fstartSnapshotId\x12&\n" +
-	"\x0fend_snapshot_id\x18\t \x01(\x03R\rendSnapshotId\x12F\n" +
+	"\x0fend_snapshot_id\x18\t \x01(\x03R\rendSnapshotId\x12@\n" +
+	"\x1dnext_cursor_server_changed_at\x18\n" +
+	" \x01(\x03R\x19nextCursorServerChangedAt\x12$\n" +
+	"\x0enext_cursor_id\x18\v \x01(\x04R\fnextCursorId\x12F\n" +
 	"\x0eweight_records\x18\x14 \x01(\v2\x1d.api.WeightRecordRestoreBatchH\x00R\rweightRecords\x12C\n" +
 	"\rtraining_tags\x18\x15 \x01(\v2\x1c.api.TrainingTagRestoreBatchH\x00R\ftrainingTags\x12V\n" +
 	"\x14workout_tag_bindings\x18\x16 \x01(\v2\".api.WorkoutTagBindingRestoreBatchH\x00R\x12workoutTagBindings\x12=\n" +

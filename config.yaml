@@ -5,6 +5,24 @@ server:
   endpoint_host: "127.0.0.1"
   read_header_timeout: "5s"
 
+workout_data_sync:
+  # 网关层单个 HTTP /rpc 请求体或 WebSocket 单消息的硬上限，单位：字节（默认 10 MiB）。
+  # 在完整读入请求前生效；HTTP 超限返回 413，用于限制网关内存占用。
+  gateway_max_request_bytes: 10485760
+  # 单次 SyncWorkoutDataSnapshots RPC 请求 protobuf 的总字节硬上限（默认 4 MiB）。
+  # 超限时整次同步被拒绝；它应小于 gateway_max_request_bytes，给外层协议留出余量。
+  sync_rpc_max_request_bytes: 4194304
+  # 单个动作、计划、文件夹或训练快照写入数据库时的 protobuf 字节硬上限（默认 2 MiB）。
+  # 限制的是一个增量实体，不是整个计划库；超限时该次写入按快照保存失败返回。
+  snapshot_max_payload_bytes: 2097152
+  # 客户端恢复分页时，每页最多返回的 workout_data_snapshots 条数硬上限（默认 1000 条）。
+  # 一页先达到条数上限或下面的目标字节数，都会结束当前页。
+  restore_batch_max_snapshots: 1000
+  # 客户端恢复分页时，每页快照 payload 总字节的目标值，单位：字节（默认 2 MiB）。
+  # 这是分页目标而非单条硬上限；单条超过目标值时仍会单独成页返回，避免永远无法恢复。
+  restore_batch_target_bytes: 2097152
+  # 五个参数的完整含义、超限行为和调优关系见 docs/workout-data-sync-limits.md。
+
 mysql:
   user: "root"
   password: "root"

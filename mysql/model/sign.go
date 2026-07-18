@@ -15,6 +15,7 @@ type User struct {
 	Password             string `gorm:"size:255;not null"`
 	LastAppEnterAt       *time.Time
 	LastSystemLanguage   string `gorm:"size:64"`
+	LastAppVersion       string `gorm:"size:32"`
 	RegisterDeviceModel  string `gorm:"size:64"`
 	RegisterIOSVersion   string `gorm:"size:32"`
 	LastLoginDeviceModel string `gorm:"size:64"`
@@ -133,7 +134,7 @@ func UpdateUserLastLoginDevice(id uint, deviceModel string, iosVersion string, l
 	return nil
 }
 
-func UpdateUserLastAppEnter(id uint, enteredAt time.Time, systemLanguage string) error {
+func UpdateUserLastAppEnter(id uint, enteredAt time.Time, systemLanguage string, appVersion string) error {
 	if id == 0 {
 		return fmt.Errorf("id is empty")
 	}
@@ -151,6 +152,9 @@ func UpdateUserLastAppEnter(id uint, enteredAt time.Time, systemLanguage string)
 	}
 	if systemLanguage != "" {
 		updates["last_system_language"] = systemLanguage
+	}
+	if appVersion != "" {
+		updates["last_app_version"] = trimDeviceField(appVersion, 32)
 	}
 
 	result := db.Model(&User{}).Where("id = ?", id).Updates(updates)

@@ -66,6 +66,8 @@ cp .env.example .env.local
 ```dotenv
 ADMIN_SERVER_URL=https://jjai.top
 ADMIN_CONSOLE_SECRET=与服务端相同的随机密钥
+# 可选；客户端目录不在默认相对位置时填写。
+EXERCISE_GIF_ROOT=/absolute/path/to/spider/Resources/ExerciseGIFs
 ```
 
 启动：
@@ -88,6 +90,7 @@ npm run dev
 - 通过独立“今日注册”页面直接查询当天 `users.created_at` 命中的 UID 用户列表。
 - 查询指定日期范围内的注册用户。
 - 拖拽导入本地 CSV，管理全部兑换码、使用状态、批量序号状态和 LiftTags Pro 回复。
+- 本地制作训练探索配置，按需读取客户端动作动图并导出 `*.workout-explore.json`。
 - 读取和修改 iOS 版本更新配置与多语言文案。
 
 ## 本地兑换码回复

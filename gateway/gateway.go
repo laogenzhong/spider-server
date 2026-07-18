@@ -17,9 +17,10 @@ import (
 )
 
 type GatewayServer struct {
-	host       string
-	wsUpgrader websocket.Upgrader
-	adminAuth  *adminConsoleAuth
+	host                string
+	wsUpgrader          websocket.Upgrader
+	adminAuth           *adminConsoleAuth
+	maxRequestBodyBytes int64
 }
 
 func NewGatewayServer(host string, adminConfigs ...appconfig.AdminConfig) *GatewayServer {
@@ -30,9 +31,22 @@ func NewGatewayServer(host string, adminConfigs ...appconfig.AdminConfig) *Gatew
 			adminConfig.ConsoleSecret = adminConfig.VIPGrantSecret
 		}
 	}
+	return newGatewayServer(host, adminConfig, appconfig.Default().WorkoutDataSync)
+}
+
+func NewGatewayServerWithConfig(host string, adminConfig appconfig.AdminConfig, syncConfig appconfig.WorkoutDataSyncConfig) *GatewayServer {
+	return newGatewayServer(host, adminConfig, syncConfig)
+}
+
+func newGatewayServer(host string, adminConfig appconfig.AdminConfig, syncConfig appconfig.WorkoutDataSyncConfig) *GatewayServer {
+	maxRequestBodyBytes := syncConfig.GatewayMaxRequestBytes
+	if maxRequestBodyBytes <= 0 {
+		maxRequestBodyBytes = appconfig.Default().WorkoutDataSync.GatewayMaxRequestBytes
+	}
 	return &GatewayServer{
-		host:      host,
-		adminAuth: newAdminConsoleAuth(adminConfig),
+		host:                host,
+		adminAuth:           newAdminConsoleAuth(adminConfig),
+		maxRequestBodyBytes: maxRequestBodyBytes,
 		wsUpgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -97,9 +111,15 @@ func (s *GatewayServer) pingHandler(c *gin.Context) {
 }
 
 func (s *GatewayServer) httpHandler(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, s.maxRequestBodyBytes)
 	requestBody, err := c.GetRawData()
 	if err != nil {
 		applogger.Printf("read rpc request body failed: %v", err)
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			c.Status(http.StatusRequestEntityTooLarge)
+			return
+		}
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -261,6 +281,7 @@ func (s *GatewayServer) wsHandler(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
+	conn.SetReadLimit(s.maxRequestBodyBytes)
 
 	applogger.Printf("websocket connected: %s", c.Request.RemoteAddr)
 

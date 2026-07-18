@@ -523,4 +523,7 @@ const (
 
 	// WorkoutDataSnapshotSaveFailed 保存动作与计划同步快照失败。
 	WorkoutDataSnapshotSaveFailed int = 80027
+
+	// WorkoutDataSnapshotsRequestTooLarge 动作与计划同步请求总字节数超过限制。
+	WorkoutDataSnapshotsRequestTooLarge int = 80028
 )

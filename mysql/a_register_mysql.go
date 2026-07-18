@@ -73,6 +73,10 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 		applogger.Fatal(err)
 		return
 	}
+	if err := mysqlmodel2.BackfillWorkoutDataSnapshotServerChangedAt(); err != nil {
+		applogger.Fatal(err)
+		return
+	}
 }
 
 func mysqlLogLevel(level string) logger.LogLevel {

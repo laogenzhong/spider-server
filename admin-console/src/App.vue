@@ -14,6 +14,7 @@ import {
   FileUp,
   Gift,
   LayoutDashboard,
+  Dumbbell,
   LoaderCircle,
   LogOut,
   MessageSquareReply,
@@ -30,6 +31,7 @@ import {
 } from 'lucide-vue-next'
 import { localOfferReplyRequest, queryString, request } from './api'
 import Pagination from './components/Pagination.vue'
+import WorkoutExploreEditor from './components/WorkoutExploreEditor.vue'
 
 const navItems = [
   { id: 'overview', label: '概览', icon: LayoutDashboard },
@@ -44,6 +46,7 @@ const navItems = [
   { id: 'friendProfiles', label: '好友资料', icon: UsersRound },
   { id: 'featureAdoption', label: '功能新增', icon: ChartNoAxesColumnIncreasing },
   { id: 'offerReply', label: '兑换码回复', icon: MessageSquareReply },
+  { id: 'workoutExplore', label: '探索配置', icon: Dumbbell },
   { id: 'update', label: '版本更新', icon: Settings2 },
 ]
 
@@ -1000,6 +1003,8 @@ onMounted(async () => {
         </div>
         <Pagination :data="offerCodes" :page-count="pageCount(offerCodes)" @change="loadOfferCodes" />
       </section>
+
+      <WorkoutExploreEditor v-else-if="current === 'workoutExplore'" />
 
       <section v-else-if="current === 'update'" class="page-section update-section">
         <div class="section-toolbar">

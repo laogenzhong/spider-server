@@ -16,17 +16,18 @@ const (
 )
 
 type Config struct {
-	Server      ServerConfig      `yaml:"server"`
-	MySQL       MySQLConfig       `yaml:"mysql"`
-	Session     SessionConfig     `yaml:"session"`
-	Auth        AuthConfig        `yaml:"auth"`
-	Sign        SignConfig        `yaml:"sign"`
-	AppleSignIn AppleSignInConfig `yaml:"apple_sign_in"`
-	AppStore    AppStoreConfig    `yaml:"app_store"`
-	AppUpdate   AppUpdateConfig   `yaml:"app_update"`
-	Admin       AdminConfig       `yaml:"admin"`
-	Logger      LoggerConfig      `yaml:"logger"`
-	Client      ClientConfig      `yaml:"client"`
+	Server          ServerConfig          `yaml:"server"`
+	MySQL           MySQLConfig           `yaml:"mysql"`
+	Session         SessionConfig         `yaml:"session"`
+	Auth            AuthConfig            `yaml:"auth"`
+	Sign            SignConfig            `yaml:"sign"`
+	AppleSignIn     AppleSignInConfig     `yaml:"apple_sign_in"`
+	AppStore        AppStoreConfig        `yaml:"app_store"`
+	AppUpdate       AppUpdateConfig       `yaml:"app_update"`
+	Admin           AdminConfig           `yaml:"admin"`
+	Logger          LoggerConfig          `yaml:"logger"`
+	Client          ClientConfig          `yaml:"client"`
+	WorkoutDataSync WorkoutDataSyncConfig `yaml:"workout_data_sync"`
 }
 
 type ServerConfig struct {
@@ -139,6 +140,14 @@ type ClientConfig struct {
 	SignSalt       string `yaml:"sign_salt"`
 }
 
+type WorkoutDataSyncConfig struct {
+	GatewayMaxRequestBytes   int64 `yaml:"gateway_max_request_bytes"`
+	SyncRPCMaxRequestBytes   int64 `yaml:"sync_rpc_max_request_bytes"`
+	SnapshotMaxPayloadBytes  int64 `yaml:"snapshot_max_payload_bytes"`
+	RestoreBatchMaxSnapshots int   `yaml:"restore_batch_max_snapshots"`
+	RestoreBatchTargetBytes  int64 `yaml:"restore_batch_target_bytes"`
+}
+
 func Default() Config {
 	return Config{
 		Server: ServerConfig{
@@ -227,6 +236,13 @@ func Default() Config {
 			GatewayBaseURL: "http://127.0.0.1:19080",
 			Timeout:        "10s",
 			SignSalt:       "",
+		},
+		WorkoutDataSync: WorkoutDataSyncConfig{
+			GatewayMaxRequestBytes:   10 * 1024 * 1024,
+			SyncRPCMaxRequestBytes:   4 * 1024 * 1024,
+			SnapshotMaxPayloadBytes:  2 * 1024 * 1024,
+			RestoreBatchMaxSnapshots: 1000,
+			RestoreBatchTargetBytes:  2 * 1024 * 1024,
 		},
 	}
 }
@@ -381,6 +397,22 @@ func (c *Config) Normalize() {
 	}
 	if c.Client.Timeout == "" {
 		c.Client.Timeout = Default().Client.Timeout
+	}
+	defaults := Default().WorkoutDataSync
+	if c.WorkoutDataSync.GatewayMaxRequestBytes <= 0 {
+		c.WorkoutDataSync.GatewayMaxRequestBytes = defaults.GatewayMaxRequestBytes
+	}
+	if c.WorkoutDataSync.SyncRPCMaxRequestBytes <= 0 {
+		c.WorkoutDataSync.SyncRPCMaxRequestBytes = defaults.SyncRPCMaxRequestBytes
+	}
+	if c.WorkoutDataSync.SnapshotMaxPayloadBytes <= 0 {
+		c.WorkoutDataSync.SnapshotMaxPayloadBytes = defaults.SnapshotMaxPayloadBytes
+	}
+	if c.WorkoutDataSync.RestoreBatchMaxSnapshots <= 0 {
+		c.WorkoutDataSync.RestoreBatchMaxSnapshots = defaults.RestoreBatchMaxSnapshots
+	}
+	if c.WorkoutDataSync.RestoreBatchTargetBytes <= 0 {
+		c.WorkoutDataSync.RestoreBatchTargetBytes = defaults.RestoreBatchTargetBytes
 	}
 }
 

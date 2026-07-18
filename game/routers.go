@@ -2,10 +2,15 @@ package game
 
 import (
 	"google.golang.org/grpc"
+	appconfig "spider-server/common/config"
 	applogger "spider-server/common/logger"
 	"spider-server/game/router"
 	pb "spider-server/gen/spider/api"
 )
+
+func ConfigureWorkoutDataSync(cfg appconfig.WorkoutDataSyncConfig) {
+	router.ConfigureWorkoutDataSyncLimits(cfg)
+}
 
 func (s *GRPCServer) Init() {
 	if err := s.Register(func(server *grpc.Server) {

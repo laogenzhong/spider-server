@@ -59,6 +59,9 @@ message RestorePlanRequest {
 
   // 客户端系统语言，例如 zh-Hans-CN、en-US；旧版本客户端可不传。
   string system_language = 3;
+
+  // 当前客户端版本，例如 1.6.0；旧版本客户端可不传。
+  string app_version = 4;
 }
 
 // RestoreTask 表示一个需要客户端分批拉取的数据任务。
@@ -86,6 +89,10 @@ message RestoreTask {
 
   // 建议客户端从哪个批次开始拉取，通常为 0。
   uint32 start_batch_index = 8;
+
+  // true 表示该任务支持按响应字节数限制的游标分页。
+  // 客户端应使用 RestoreBatchRequest 的游标字段，并根据 has_more 连续拉取。
+  bool byte_cursor_pagination = 9;
 }
 
 // RestorePlanResponse 表示服务端计算出的数据同步计划。
@@ -122,6 +129,15 @@ message RestoreBatchRequest {
 
   // RestoreTask.batch_size；客户端不传时服务端使用默认批大小。
   uint32 batch_size = 5;
+
+  // true 表示本次请求使用按响应字节数限制的游标分页。
+  bool use_byte_cursor_pagination = 6;
+
+  // 上一批最后一条记录的服务端变更时间；首次请求传 0。
+  int64 cursor_server_changed_at = 7;
+
+  // 上一批最后一条记录的服务端主键；首次请求传 0。
+  uint64 cursor_id = 8;
 }
 
 // WeightRecordSyncItem 表示一条体重记录的同步项。
@@ -352,6 +368,12 @@ message RestoreBatchResponse {
 
   // 本批次所属结束同步快照时间。
   int64 end_snapshot_id = 9;
+
+  // 下一批游标的服务端变更时间；has_more = true 时有效。
+  int64 next_cursor_server_changed_at = 10;
+
+  // 下一批游标的服务端主键；has_more = true 时有效。
+  uint64 next_cursor_id = 11;
 
   // 当前批次数据。
   oneof payload {

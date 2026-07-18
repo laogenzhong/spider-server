@@ -76,6 +76,7 @@ SPIDER_SERVER_CONFIG=config.server.yaml ./spider-server
 
 - `mysql.password`：服务器 MySQL 的 `spider` 用户密码。
 - `session.sign_secret`：换成一串足够长的随机字符串。
+- `workout_data_sync.*`：动作、计划和训练快照的上传容量与恢复分页限制；五个参数的含义、超限行为和调优关系见 [动作与计划同步容量限制](docs/workout-data-sync-limits.md)。
 - `admin.vip_grant_secret`：后台开通 VIP 的共享密钥；服务端和 `admin-vip-cli` 使用同一份配置时不需要额外传 `-secret`。
 - `apple_sign_in.private_key_path`：服务器上的 `AuthKey_5LFYA472TZ.p8` 路径。
 - `app_store.environment`：沙盒/TestFlight 联调用 `SANDBOX`，正式上架后改为 `PRODUCTION`。

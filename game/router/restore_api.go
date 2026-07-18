@@ -35,7 +35,7 @@ type ClientRestoreApi struct {
 // GetRestorePlan 获取客户端数据同步计划。
 func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePlanRequest) (*pb.RestorePlanResponse, error) {
 	uid := session.GetUser(ctx).UID()
-	updateUserAppEnterFromRestorePlan(uid, req.GetSystemLanguage())
+	updateUserAppEnterFromRestorePlan(uid, req.GetSystemLanguage(), req.GetAppVersion())
 
 	startSnapshotID := req.GetStartSnapshotId()
 	if startSnapshotID < 0 {
@@ -200,14 +200,16 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 		return session.Error(ctx, gamecode.RestoreCountWorkoutDataSnapshotsFailed, &pb.RestorePlanResponse{})
 	}
 	if workoutDataSnapshotCount > 0 {
-		tasks = append(tasks, buildRestoreTask(
+		workoutDataSnapshotTask := buildRestoreTask(
 			restoreTaskWorkoutDataSnapshots,
 			pb.RestoreDataType_RESTORE_DATA_TYPE_WORKOUT_DATA_SNAPSHOTS,
 			"",
 			"",
 			workoutDataSnapshotCount,
 			batchSize,
-		))
+		)
+		workoutDataSnapshotTask.ByteCursorPagination = true
+		tasks = append(tasks, workoutDataSnapshotTask)
 		totalCount += workoutDataSnapshotCount
 	}
 
@@ -220,17 +222,31 @@ func (a *ClientRestoreApi) GetRestorePlan(ctx context.Context, req *pb.RestorePl
 	}, nil
 }
 
-func updateUserAppEnterFromRestorePlan(uid uint64, systemLanguage string) {
+func updateUserAppEnterFromRestorePlan(uid uint64, systemLanguage string, appVersion string) {
 	if uid == 0 {
 		return
 	}
-	_ = mysqlmodel.UpdateUserLastAppEnter(uint(uid), time.Now(), normalizeRestoreSystemLanguage(systemLanguage))
+	_ = mysqlmodel.UpdateUserLastAppEnter(
+		uint(uid),
+		time.Now(),
+		normalizeRestoreSystemLanguage(systemLanguage),
+		normalizeRestoreAppVersion(appVersion),
+	)
 }
 
 func normalizeRestoreSystemLanguage(value string) string {
 	value = strings.TrimSpace(value)
 	if len(value) > 64 {
 		value = value[:64]
+	}
+	return value
+}
+
+func normalizeRestoreAppVersion(value string) string {
+	value = strings.TrimSpace(value)
+	runes := []rune(value)
+	if len(runes) > 32 {
+		value = string(runes[:32])
 	}
 	return value
 }
@@ -560,7 +576,19 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		if err != nil {
 			return session.Error(ctx, gamecode.RestoreCountWorkoutDataSnapshotsFailed, &pb.RestoreBatchResponse{})
 		}
-		records, err := mysqlmodel.ListWorkoutDataSnapshotChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
+		var records []*mysqlmodel.WorkoutDataSnapshot
+		var hasMore bool
+		if req.GetUseByteCursorPagination() {
+			records, hasMore, err = mysqlmodel.ListWorkoutDataSnapshotChangesByByteCursor(
+				uid,
+				startSnapshotID,
+				endSnapshotID,
+				req.GetCursorServerChangedAt(),
+				req.GetCursorId(),
+			)
+		} else {
+			records, err = mysqlmodel.ListWorkoutDataSnapshotChangesPage(uid, startSnapshotID, endSnapshotID, limit, offset)
+		}
 		if err != nil {
 			return session.Error(ctx, gamecode.RestoreFetchWorkoutDataSnapshotsFailed, &pb.RestoreBatchResponse{})
 		}
@@ -588,6 +616,16 @@ func (a *ClientRestoreApi) FetchRestoreBatch(ctx context.Context, req *pb.Restor
 		)
 		resp.Payload = &pb.RestoreBatchResponse_WorkoutDataSnapshots{
 			WorkoutDataSnapshots: &pb.WorkoutDataSnapshotRestoreBatch{Items: items},
+		}
+		if req.GetUseByteCursorPagination() {
+			resp.HasMore = hasMore
+			resp.NextBatchIndex = 0
+			if hasMore && len(records) > 0 {
+				lastRecord := records[len(records)-1]
+				resp.NextBatchIndex = req.GetBatchIndex() + 1
+				resp.NextCursorServerChangedAt = lastRecord.ServerChangedAt.UnixMilli()
+				resp.NextCursorId = lastRecord.ID
+			}
 		}
 		return resp, nil
 	}
