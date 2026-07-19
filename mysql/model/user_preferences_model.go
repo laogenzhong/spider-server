@@ -13,25 +13,27 @@ import (
 )
 
 const (
-	DefaultUserPreferencesTheme                 = "liftTags"
-	DefaultUserPreferencesThemeOpacity    int32 = 80
-	DefaultUserPreferencesCalendarPalette       = "classic"
-	DefaultUserPreferencesSchemaVersion   int32 = 1
+	DefaultUserPreferencesTheme                             = "liftTags"
+	DefaultUserPreferencesThemeOpacity                int32 = 80
+	DefaultUserPreferencesCalendarPalette                   = "classic"
+	DefaultUserPreferencesHistoryCalendarDayCardWidth int32 = 50
+	DefaultUserPreferencesSchemaVersion               int32 = 1
 )
 
 // UserPreferences stores user-level appearance and UI preferences.
 type UserPreferences struct {
-	ID                        uint64         `gorm:"primaryKey;autoIncrement"`
-	UID                       uint64         `gorm:"not null;uniqueIndex"`
-	Theme                     string         `gorm:"size:32;not null;default:'liftTags'"`
-	ThemeOpacity              int32          `gorm:"not null;default:80"`
-	CalendarLightPalette      string         `gorm:"size:32;not null;default:'classic'"`
-	CalendarDarkPalette       string         `gorm:"size:32;not null;default:'classic'"`
-	HidesNavigationTitleSpark bool           `gorm:"not null;default:false"`
-	SchemaVersion             int32          `gorm:"not null;default:1"`
-	CreatedAt                 time.Time      `gorm:"not null"`
-	UpdatedAt                 time.Time      `gorm:"not null"`
-	DeletedAt                 gorm.DeletedAt `gorm:"index"`
+	ID                          uint64         `gorm:"primaryKey;autoIncrement"`
+	UID                         uint64         `gorm:"not null;uniqueIndex"`
+	Theme                       string         `gorm:"size:32;not null;default:'liftTags'"`
+	ThemeOpacity                int32          `gorm:"not null;default:80"`
+	CalendarLightPalette        string         `gorm:"size:32;not null;default:'classic'"`
+	CalendarDarkPalette         string         `gorm:"size:32;not null;default:'classic'"`
+	HistoryCalendarDayCardWidth int32          `gorm:"not null;default:50"`
+	HidesNavigationTitleSpark   bool           `gorm:"not null;default:false"`
+	SchemaVersion               int32          `gorm:"not null;default:1"`
+	CreatedAt                   time.Time      `gorm:"not null"`
+	UpdatedAt                   time.Time      `gorm:"not null"`
+	DeletedAt                   gorm.DeletedAt `gorm:"index"`
 }
 
 func SaveUserPreferences(uid uint64, prefs *pb.UserPreferences) (*UserPreferences, error) {
@@ -53,14 +55,15 @@ func SaveUserPreferences(uid uint64, prefs *pb.UserPreferences) (*UserPreference
 	if err := db.Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "uid"}},
 		DoUpdates: clause.Assignments(map[string]any{
-			"theme":                        record.Theme,
-			"theme_opacity":                record.ThemeOpacity,
-			"calendar_light_palette":       record.CalendarLightPalette,
-			"calendar_dark_palette":        record.CalendarDarkPalette,
-			"hides_navigation_title_spark": record.HidesNavigationTitleSpark,
-			"schema_version":               record.SchemaVersion,
-			"deleted_at":                   nil,
-			"updated_at":                   now,
+			"theme":                           record.Theme,
+			"theme_opacity":                   record.ThemeOpacity,
+			"calendar_light_palette":          record.CalendarLightPalette,
+			"calendar_dark_palette":           record.CalendarDarkPalette,
+			"history_calendar_day_card_width": record.HistoryCalendarDayCardWidth,
+			"hides_navigation_title_spark":    record.HidesNavigationTitleSpark,
+			"schema_version":                  record.SchemaVersion,
+			"deleted_at":                      nil,
+			"updated_at":                      now,
 		}),
 	}).Create(record).Error; err != nil {
 		return nil, err
@@ -144,16 +147,17 @@ func UserPreferencesToPB(record *UserPreferences) *pb.UserPreferences {
 	}
 
 	return &pb.UserPreferences{
-		Id:                        record.ID,
-		Uid:                       record.UID,
-		Theme:                     record.Theme,
-		ThemeOpacity:              record.ThemeOpacity,
-		CalendarLightPalette:      record.CalendarLightPalette,
-		CalendarDarkPalette:       record.CalendarDarkPalette,
-		HidesNavigationTitleSpark: record.HidesNavigationTitleSpark,
-		SchemaVersion:             record.SchemaVersion,
-		CreatedAt:                 record.CreatedAt.UnixMilli(),
-		UpdatedAt:                 record.UpdatedAt.UnixMilli(),
+		Id:                          record.ID,
+		Uid:                         record.UID,
+		Theme:                       record.Theme,
+		ThemeOpacity:                record.ThemeOpacity,
+		CalendarLightPalette:        record.CalendarLightPalette,
+		CalendarDarkPalette:         record.CalendarDarkPalette,
+		HistoryCalendarDayCardWidth: record.HistoryCalendarDayCardWidth,
+		HidesNavigationTitleSpark:   record.HidesNavigationTitleSpark,
+		SchemaVersion:               record.SchemaVersion,
+		CreatedAt:                   record.CreatedAt.UnixMilli(),
+		UpdatedAt:                   record.UpdatedAt.UnixMilli(),
 	}
 }
 
@@ -181,19 +185,25 @@ func normalizeUserPreferences(uid uint64, prefs *pb.UserPreferences) *UserPrefer
 		darkPalette = DefaultUserPreferencesCalendarPalette
 	}
 
+	dayCardWidth := prefs.GetHistoryCalendarDayCardWidth()
+	if dayCardWidth < 36 || dayCardWidth > 60 {
+		dayCardWidth = DefaultUserPreferencesHistoryCalendarDayCardWidth
+	}
+
 	schemaVersion := prefs.GetSchemaVersion()
 	if schemaVersion <= 0 {
 		schemaVersion = DefaultUserPreferencesSchemaVersion
 	}
 
 	return &UserPreferences{
-		UID:                       uid,
-		Theme:                     theme,
-		ThemeOpacity:              opacity,
-		CalendarLightPalette:      lightPalette,
-		CalendarDarkPalette:       darkPalette,
-		HidesNavigationTitleSpark: prefs.GetHidesNavigationTitleSpark(),
-		SchemaVersion:             schemaVersion,
+		UID:                         uid,
+		Theme:                       theme,
+		ThemeOpacity:                opacity,
+		CalendarLightPalette:        lightPalette,
+		CalendarDarkPalette:         darkPalette,
+		HistoryCalendarDayCardWidth: dayCardWidth,
+		HidesNavigationTitleSpark:   prefs.GetHidesNavigationTitleSpark(),
+		SchemaVersion:               schemaVersion,
 	}
 }
 

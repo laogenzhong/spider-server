@@ -16,6 +16,7 @@ message UserPreferences {
   int32 schema_version = 8;
   int64 created_at = 9;
   int64 updated_at = 10;
+  int32 history_calendar_day_card_width = 11;
 }
 
 message SaveUserPreferencesRequest {

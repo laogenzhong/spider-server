@@ -76,8 +76,7 @@ func SaveWorkoutDataSnapshots(uid uint64, snapshots []*pb.WorkoutDataSnapshot) (
 			if clientSnapshotID == "" || entityID == "" {
 				return fmt.Errorf("snapshot identity is empty")
 			}
-			if snapshot.GetKind() != pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_LIBRARY &&
-				snapshot.GetKind() != pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION {
+			if !isSupportedWorkoutDataSnapshotKind(snapshot.GetKind()) {
 				return fmt.Errorf("snapshot kind is invalid")
 			}
 
@@ -152,6 +151,19 @@ func SaveWorkoutDataSnapshots(uid uint64, snapshots []*pb.WorkoutDataSnapshot) (
 		return nil, err
 	}
 	return accepted, nil
+}
+
+func isSupportedWorkoutDataSnapshotKind(kind pb.WorkoutDataSnapshotKind) bool {
+	switch kind {
+	case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_LIBRARY,
+		pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_LIBRARY_METADATA,
+		pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN_FOLDER,
+		pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN,
+		pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION:
+		return true
+	default:
+		return false
+	}
 }
 
 func CountWorkoutDataSnapshotChanges(uid uint64, startSnapshotID int64, endSnapshotID int64) (uint64, error) {

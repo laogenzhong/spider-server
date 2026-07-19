@@ -9,6 +9,9 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 2}, {Date: "2026-07-16", UserCount: 4}},
 		[]adminDailyUIDCount{{Date: "2026-07-16", UserCount: 3}},
 		[]adminDailyUIDCount{{Date: "2026-07-15", UserCount: 5}},
+		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 7}},
+		[]adminDailyRecordCount{{Date: "2026-07-15", RecordCount: 2}},
+		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 1}},
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 1}},
 	)
 	if err != nil {
@@ -23,6 +26,9 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 	if firstPage[0].WeightUsers != 4 || firstPage[0].TrainingTagUsers != 3 {
 		t.Fatalf("merged newest day = %#v", firstPage[0])
 	}
+	if firstPage[0].ExerciseSetCount != 7 || firstPage[0].UpdatedPlanCount != 1 || firstPage[1].CreatedPlanCount != 2 {
+		t.Fatalf("merged action and plan counts = %#v", firstPage)
+	}
 
 	query.Page = 2
 	secondPage, total, err := mergeAdminDailyFeatureRecords(
@@ -30,6 +36,9 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 2}, {Date: "2026-07-16", UserCount: 4}},
 		[]adminDailyUIDCount{{Date: "2026-07-16", UserCount: 3}},
 		[]adminDailyUIDCount{{Date: "2026-07-15", UserCount: 5}},
+		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 7}},
+		[]adminDailyRecordCount{{Date: "2026-07-15", RecordCount: 2}},
+		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 1}},
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 1}},
 	)
 	if err != nil {
@@ -44,7 +53,7 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 }
 
 func TestMergeAdminDailyFeatureRecordsReturnsEmptyArray(t *testing.T) {
-	items, total, err := mergeAdminDailyFeatureRecords(AdminPageQuery{Page: 1, PageSize: 30}, nil, nil, nil, nil)
+	items, total, err := mergeAdminDailyFeatureRecords(AdminPageQuery{Page: 1, PageSize: 30}, nil, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

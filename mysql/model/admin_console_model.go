@@ -37,6 +37,7 @@ type AdminUserDetail struct {
 	AppleEmail           string           `json:"apple_email"`
 	LastAppEnterAt       *time.Time       `json:"last_app_enter_at"`
 	LastSystemLanguage   string           `json:"last_system_language"`
+	LastAppVersion       string           `json:"last_app_version"`
 	RegisterDeviceModel  string           `json:"register_device_model"`
 	RegisterDeviceLabel  string           `json:"register_device_label"`
 	RegisterIOSVersion   string           `json:"register_ios_version"`
@@ -152,12 +153,20 @@ type AdminDailyFeatureRecord struct {
 	WeightUsers      int64  `json:"weight_users"`
 	TrainingTagUsers int64  `json:"training_tag_users"`
 	ExerciseSetUsers int64  `json:"exercise_set_users"`
+	ExerciseSetCount int64  `json:"exercise_set_count"`
+	CreatedPlanCount int64  `json:"created_plan_count"`
+	UpdatedPlanCount int64  `json:"updated_plan_count"`
 	BodyPhotoUsers   int64  `json:"body_photo_users"`
 }
 
 type adminDailyUIDCount struct {
 	Date      string `gorm:"column:activity_date"`
 	UserCount int64  `gorm:"column:user_count"`
+}
+
+type adminDailyRecordCount struct {
+	Date        string `gorm:"column:activity_date"`
+	RecordCount int64  `gorm:"column:record_count"`
 }
 
 func GetAdminUserDetail(identifier string, now time.Time) (*AdminUserDetail, error) {
@@ -174,6 +183,7 @@ func GetAdminUserDetail(identifier string, now time.Time) (*AdminUserDetail, err
 		Account:              user.Account,
 		LastAppEnterAt:       user.LastAppEnterAt,
 		LastSystemLanguage:   user.LastSystemLanguage,
+		LastAppVersion:       user.LastAppVersion,
 		RegisterDeviceModel:  user.RegisterDeviceModel,
 		RegisterDeviceLabel:  devicecatalog.DisplayLabel(user.RegisterDeviceModel),
 		RegisterIOSVersion:   user.RegisterIOSVersion,
@@ -608,12 +618,36 @@ func ListAdminDailyFeatureAdoption(query AdminPageQuery) ([]AdminDailyFeatureRec
 	if err != nil {
 		return nil, 0, err
 	}
+	exerciseSetCounts, err := listAdminDailyRecordCounts(db, "exercise_set_records", "", "created_at", query)
+	if err != nil {
+		return nil, 0, err
+	}
+	createdPlans, err := listAdminDailyRecordCounts(
+		db,
+		"workout_data_snapshots",
+		"kind = 4",
+		"created_at",
+		query,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	updatedPlans, err := listAdminDailyRecordCounts(
+		db,
+		"workout_data_snapshots",
+		"kind = 4 AND deleted_at IS NULL AND updated_at > created_at",
+		"updated_at",
+		query,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
 	bodyPhotos, err := listAdminDailyDistinctUIDs(db, "body_photo_records", "", query)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return mergeAdminDailyFeatureRecords(query, weight, tags, exerciseSets, bodyPhotos)
+	return mergeAdminDailyFeatureRecords(query, weight, tags, exerciseSets, exerciseSetCounts, createdPlans, updatedPlans, bodyPhotos)
 }
 
 func listAdminDailyDistinctUIDs(db *gorm.DB, table string, condition string, query AdminPageQuery) ([]adminDailyUIDCount, error) {
@@ -628,11 +662,26 @@ func listAdminDailyDistinctUIDs(db *gorm.DB, table string, condition string, que
 	return records, err
 }
 
+func listAdminDailyRecordCounts(db *gorm.DB, table string, condition string, timeColumn string, query AdminPageQuery) ([]adminDailyRecordCount, error) {
+	base := db.Table(table).
+		Select("DATE(" + timeColumn + ") AS activity_date, COUNT(*) AS record_count")
+	if condition != "" {
+		base = base.Where(condition)
+	}
+	base = applyAdminTimeRange(base, timeColumn, query.From, query.To)
+	records := make([]adminDailyRecordCount, 0)
+	err := base.Group("DATE(" + timeColumn + ")").Scan(&records).Error
+	return records, err
+}
+
 func mergeAdminDailyFeatureRecords(
 	query AdminPageQuery,
 	weight []adminDailyUIDCount,
 	tags []adminDailyUIDCount,
 	exerciseSets []adminDailyUIDCount,
+	exerciseSetCounts []adminDailyRecordCount,
+	createdPlans []adminDailyRecordCount,
+	updatedPlans []adminDailyRecordCount,
 	bodyPhotos []adminDailyUIDCount,
 ) ([]AdminDailyFeatureRecord, int64, error) {
 	byDate := make(map[string]*AdminDailyFeatureRecord)
@@ -650,6 +699,15 @@ func mergeAdminDailyFeatureRecords(
 	}
 	for _, item := range exerciseSets {
 		get(item.Date).ExerciseSetUsers = item.UserCount
+	}
+	for _, item := range exerciseSetCounts {
+		get(item.Date).ExerciseSetCount = item.RecordCount
+	}
+	for _, item := range createdPlans {
+		get(item.Date).CreatedPlanCount = item.RecordCount
+	}
+	for _, item := range updatedPlans {
+		get(item.Date).UpdatedPlanCount = item.RecordCount
 	}
 	for _, item := range bodyPhotos {
 		get(item.Date).BodyPhotoUsers = item.UserCount

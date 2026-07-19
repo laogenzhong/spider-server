@@ -36,6 +36,7 @@ import WorkoutExploreEditor from './components/WorkoutExploreEditor.vue'
 const navItems = [
   { id: 'overview', label: '概览', icon: LayoutDashboard },
   { id: 'vip', label: '用户与 Pro', icon: UserRoundCheck },
+  { id: 'userList', label: '用户列表', icon: UsersRound },
   { id: 'payments', label: '付费记录', icon: BadgeDollarSign },
   { id: 'refunds', label: '退款用户', icon: RotateCcw },
   { id: 'activity', label: '日活用户', icon: Activity },
@@ -87,6 +88,8 @@ const activities = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const activityFilters = reactive({ search: '', date: today })
 const todayRegistrations = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const todayRegistrationFilters = reactive({ search: '' })
+const userList = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const userListFilters = reactive({ search: '' })
 const registrations = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const registrationFilters = reactive({ search: '', from: today, to: today })
 const feedback = reactive({ items: [], total: 0, page: 1, page_size: 30 })
@@ -130,11 +133,13 @@ const currentTitle = computed(() => navItems.find((item) => item.id === current.
 const activeUserFilters = computed(() => {
   if (current.value === 'activity') return activityFilters
   if (current.value === 'todayRegistrations') return todayRegistrationFilters
+  if (current.value === 'userList') return userListFilters
   return registrationFilters
 })
 const visibleUserList = computed(() => {
   if (current.value === 'activity') return activities
   if (current.value === 'todayRegistrations') return todayRegistrations
+  if (current.value === 'userList') return userList
   return registrations
 })
 
@@ -184,6 +189,7 @@ async function selectSection(id) {
   if (id === 'refunds') await loadRefunds()
   if (id === 'activity') await loadActivities()
   if (id === 'todayRegistrations') await loadTodayRegistrations()
+  if (id === 'userList') await loadUserList()
   if (id === 'registrations') await loadRegistrations()
   if (id === 'feedback') await loadFeedback()
   if (id === 'onboarding') await loadOnboardingProfiles()
@@ -201,7 +207,10 @@ async function loadOverview() {
 
 async function searchUser() {
   const identifier = userIdentifier.value.trim()
-  if (!identifier) return
+  if (!identifier) {
+    await selectSection('userList')
+    return
+  }
   await withLoading('user', async () => {
     user.value = await request(`/users/${encodeURIComponent(identifier)}`)
   }).catch(() => {
@@ -271,6 +280,12 @@ async function loadTodayRegistrations(page = todayRegistrations.page) {
   }).catch(() => {})
 }
 
+async function loadUserList(page = userList.page) {
+  await withLoading('userList', async () => {
+    Object.assign(userList, await request(`/registrations${queryString({ search: userListFilters.search, page, page_size: userList.page_size })}`))
+  }).catch(() => {})
+}
+
 async function loadRegistrations(page = registrations.page) {
   await withLoading('registrations', async () => {
     Object.assign(registrations, await request(`/registrations${queryString({ ...registrationFilters, page, page_size: registrations.page_size })}`))
@@ -306,6 +321,7 @@ async function loadFeatureAdoption(page = featureAdoption.page) {
 function loadVisibleUserList(page = 1) {
   if (current.value === 'activity') return loadActivities(page)
   if (current.value === 'todayRegistrations') return loadTodayRegistrations(page)
+  if (current.value === 'userList') return loadUserList(page)
   return loadRegistrations(page)
 }
 
@@ -590,6 +606,7 @@ onMounted(async () => {
           <button type="button" @click="selectSection('payments')"><BadgeDollarSign :size="19" />付费记录</button>
           <button type="button" @click="selectSection('refunds')"><RotateCcw :size="19" />退款用户</button>
           <button type="button" @click="selectSection('todayRegistrations')"><UserRoundPlus :size="19" />今日注册</button>
+          <button type="button" @click="selectSection('userList')"><UsersRound :size="19" />用户列表</button>
           <button type="button" @click="selectSection('offerReply')"><MessageSquareReply :size="19" />兑换码回复</button>
           <button type="button" @click="selectSection('update')"><Settings2 :size="19" />版本更新</button>
         </div>
@@ -623,6 +640,7 @@ onMounted(async () => {
               <div><dt>到期时间</dt><dd>{{ formatDateTime(user.vip.expires_at) }}</dd></div>
               <div><dt>Apple 邮箱</dt><dd>{{ user.apple_email || '—' }}</dd></div>
               <div><dt>最后进入</dt><dd>{{ formatDateTime(user.last_app_enter_at) }}</dd></div>
+              <div><dt>当前客户端版本</dt><dd>{{ user.last_app_version || '—' }}</dd></div>
               <div><dt>注册设备</dt><dd>{{ user.register_device_label || '—' }}</dd></div>
               <div><dt>注册系统</dt><dd>{{ user.register_ios_version || '—' }}</dd></div>
               <div><dt>登录设备</dt><dd>{{ user.last_login_device_label || '—' }}</dd></div>
@@ -722,7 +740,7 @@ onMounted(async () => {
         <Pagination :data="refunds" :page-count="pageCount(refunds)" @change="loadRefunds" />
       </section>
 
-      <section v-else-if="current === 'activity' || current === 'todayRegistrations' || current === 'registrations'" class="page-section">
+      <section v-else-if="current === 'activity' || current === 'todayRegistrations' || current === 'userList' || current === 'registrations'" class="page-section">
         <div class="filter-toolbar">
           <template v-if="current === 'activity'">
             <input v-model="activityFilters.date" type="date" />
@@ -734,7 +752,11 @@ onMounted(async () => {
           <div class="compact-search"><Search :size="16" /><input v-model="activeUserFilters.search" placeholder="UID / 账号 / 昵称" /></div>
           <button class="primary-button" type="button" @click="loadVisibleUserList(1)">查询</button>
         </div>
-        <div class="result-meta">共 {{ visibleUserList.total }} 人<span v-if="current === 'todayRegistrations'"> · {{ today }}</span></div>
+        <div class="result-meta">
+          共 {{ visibleUserList.total }} 人
+          <span v-if="current === 'todayRegistrations'"> · {{ today }}</span>
+          <span v-else-if="current === 'userList'"> · 按注册时间倒序</span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>用户</th><th>账号</th><th>设备</th><th>iOS</th><th>{{ current === 'activity' ? '首次活跃' : '注册时间' }}</th><th>{{ current === 'activity' ? '最后活跃' : '最后进入' }}</th><th>语言</th></tr></thead>
@@ -869,16 +891,19 @@ onMounted(async () => {
         <div class="result-meta">共 {{ featureAdoption.total }} 个有新增记录的日期</div>
         <div class="table-wrap feature-adoption-table">
           <table>
-            <thead><tr><th>日期</th><th>体重用户</th><th>标签用户</th><th>动作组用户</th><th>照片用户</th></tr></thead>
+            <thead><tr><th>日期</th><th>体重用户</th><th>标签用户</th><th>动作组用户</th><th>新增动作组</th><th>新增计划</th><th>更新计划</th><th>照片用户</th></tr></thead>
             <tbody>
               <tr v-for="item in featureAdoption.items" :key="item.date">
                 <td><strong>{{ item.date }}</strong></td>
                 <td><strong class="daily-count">{{ item.weight_users }}</strong><small>UID 去重</small></td>
                 <td><strong class="daily-count">{{ item.training_tag_users }}</strong><small>UID 去重</small></td>
                 <td><strong class="daily-count">{{ item.exercise_set_users }}</strong><small>UID 去重</small></td>
+                <td><strong class="daily-count">{{ item.exercise_set_count }}</strong><small>记录数</small></td>
+                <td><strong class="daily-count">{{ item.created_plan_count }}</strong><small>首次同步</small></td>
+                <td><strong class="daily-count">{{ item.updated_plan_count }}</strong><small>最新更新</small></td>
                 <td><strong class="daily-count">{{ item.body_photo_users }}</strong><small>UID 去重</small></td>
               </tr>
-              <tr v-if="!featureAdoption.items?.length"><td colspan="5" class="empty-cell">暂无新增记录</td></tr>
+              <tr v-if="!featureAdoption.items?.length"><td colspan="8" class="empty-cell">暂无新增记录</td></tr>
             </tbody>
           </table>
         </div>

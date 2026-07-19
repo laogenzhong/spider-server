@@ -23,19 +23,20 @@ const (
 
 // UserPreferences 表示用户级外观和界面偏好。
 type UserPreferences struct {
-	state                     protoimpl.MessageState `protogen:"open.v1"`
-	Id                        uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Uid                       uint64                 `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
-	Theme                     string                 `protobuf:"bytes,3,opt,name=theme,proto3" json:"theme,omitempty"`
-	ThemeOpacity              int32                  `protobuf:"varint,4,opt,name=theme_opacity,json=themeOpacity,proto3" json:"theme_opacity,omitempty"`
-	CalendarLightPalette      string                 `protobuf:"bytes,5,opt,name=calendar_light_palette,json=calendarLightPalette,proto3" json:"calendar_light_palette,omitempty"`
-	CalendarDarkPalette       string                 `protobuf:"bytes,6,opt,name=calendar_dark_palette,json=calendarDarkPalette,proto3" json:"calendar_dark_palette,omitempty"`
-	HidesNavigationTitleSpark bool                   `protobuf:"varint,7,opt,name=hides_navigation_title_spark,json=hidesNavigationTitleSpark,proto3" json:"hides_navigation_title_spark,omitempty"`
-	SchemaVersion             int32                  `protobuf:"varint,8,opt,name=schema_version,json=schemaVersion,proto3" json:"schema_version,omitempty"`
-	CreatedAt                 int64                  `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt                 int64                  `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	state                       protoimpl.MessageState `protogen:"open.v1"`
+	Id                          uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Uid                         uint64                 `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
+	Theme                       string                 `protobuf:"bytes,3,opt,name=theme,proto3" json:"theme,omitempty"`
+	ThemeOpacity                int32                  `protobuf:"varint,4,opt,name=theme_opacity,json=themeOpacity,proto3" json:"theme_opacity,omitempty"`
+	CalendarLightPalette        string                 `protobuf:"bytes,5,opt,name=calendar_light_palette,json=calendarLightPalette,proto3" json:"calendar_light_palette,omitempty"`
+	CalendarDarkPalette         string                 `protobuf:"bytes,6,opt,name=calendar_dark_palette,json=calendarDarkPalette,proto3" json:"calendar_dark_palette,omitempty"`
+	HidesNavigationTitleSpark   bool                   `protobuf:"varint,7,opt,name=hides_navigation_title_spark,json=hidesNavigationTitleSpark,proto3" json:"hides_navigation_title_spark,omitempty"`
+	SchemaVersion               int32                  `protobuf:"varint,8,opt,name=schema_version,json=schemaVersion,proto3" json:"schema_version,omitempty"`
+	CreatedAt                   int64                  `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt                   int64                  `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	HistoryCalendarDayCardWidth int32                  `protobuf:"varint,11,opt,name=history_calendar_day_card_width,json=historyCalendarDayCardWidth,proto3" json:"history_calendar_day_card_width,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *UserPreferences) Reset() {
@@ -138,6 +139,13 @@ func (x *UserPreferences) GetUpdatedAt() int64 {
 	return 0
 }
 
+func (x *UserPreferences) GetHistoryCalendarDayCardWidth() int32 {
+	if x != nil {
+		return x.HistoryCalendarDayCardWidth
+	}
+	return 0
+}
+
 type SaveUserPreferencesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Preferences   *UserPreferences       `protobuf:"bytes,1,opt,name=preferences,proto3" json:"preferences,omitempty"`
@@ -230,7 +238,7 @@ var File_primary_user_preferences_proto protoreflect.FileDescriptor
 
 const file_primary_user_preferences_proto_rawDesc = "" +
 	"\n" +
-	"\x1eprimary/user_preferences.proto\x12\x03api\"\xfe\x02\n" +
+	"\x1eprimary/user_preferences.proto\x12\x03api\"\xc4\x03\n" +
 	"\x0fUserPreferences\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\x04R\x03uid\x12\x14\n" +
@@ -244,7 +252,8 @@ const file_primary_user_preferences_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\x03R\tupdatedAt\"T\n" +
+	" \x01(\x03R\tupdatedAt\x12D\n" +
+	"\x1fhistory_calendar_day_card_width\x18\v \x01(\x05R\x1bhistoryCalendarDayCardWidth\"T\n" +
 	"\x1aSaveUserPreferencesRequest\x126\n" +
 	"\vpreferences\x18\x01 \x01(\v2\x14.api.UserPreferencesR\vpreferences\"U\n" +
 	"\x1bSaveUserPreferencesResponse\x126\n" +

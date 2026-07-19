@@ -145,8 +145,12 @@ type ExerciseSetRecord struct {
 	CreatedAt            int64                  `protobuf:"varint,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt            int64                  `protobuf:"varint,13,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	ClientRecordId       string                 `protobuf:"bytes,14,opt,name=client_record_id,json=clientRecordId,proto3" json:"client_record_id,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// session_id makes a set belong to one completed training session. It lets
+	// clients restore or delete that session without inferring membership from
+	// a time range.
+	SessionId     string `protobuf:"bytes,15,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ExerciseSetRecord) Reset() {
@@ -273,6 +277,13 @@ func (x *ExerciseSetRecord) GetUpdatedAt() int64 {
 func (x *ExerciseSetRecord) GetClientRecordId() string {
 	if x != nil {
 		return x.ClientRecordId
+	}
+	return ""
+}
+
+func (x *ExerciseSetRecord) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
 	}
 	return ""
 }
@@ -2650,7 +2661,7 @@ var File_primary_exercise_record_proto protoreflect.FileDescriptor
 
 const file_primary_exercise_record_proto_rawDesc = "" +
 	"\n" +
-	"\x1dprimary/exercise_record.proto\x12\x03api\"\xec\x03\n" +
+	"\x1dprimary/exercise_record.proto\x12\x03api\"\x8b\x04\n" +
 	"\x11ExerciseSetRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\x04R\x03uid\x12\x1f\n" +
@@ -2672,7 +2683,9 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"created_at\x18\f \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\r \x01(\x03R\tupdatedAt\x12(\n" +
-	"\x10client_record_id\x18\x0e \x01(\tR\x0eclientRecordId\"n\n" +
+	"\x10client_record_id\x18\x0e \x01(\tR\x0eclientRecordId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x0f \x01(\tR\tsessionId\"n\n" +
 	"\x1eWorkoutPlanExerciseSetSnapshot\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vweight_text\x18\x02 \x01(\tR\n" +

@@ -132,6 +132,7 @@ func (s *GatewayServer) adminUserHandler(c *gin.Context) {
 		"apple_email":             detail.AppleEmail,
 		"last_app_enter_at":       detail.LastAppEnterAt,
 		"last_system_language":    detail.LastSystemLanguage,
+		"last_app_version":        detail.LastAppVersion,
 		"register_device_model":   detail.RegisterDeviceModel,
 		"register_device_label":   detail.RegisterDeviceLabel,
 		"register_ios_version":    detail.RegisterIOSVersion,

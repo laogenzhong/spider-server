@@ -363,7 +363,7 @@ func validWorkoutDataSnapshot(snapshot *pb.WorkoutDataSnapshot) bool {
 		}
 		recordCountsByExercise := make(map[string]int)
 		for _, record := range training.GetRecords() {
-			if record == nil || !validRequiredString(record.GetClientRecordId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(record.GetExerciseId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(record.GetExerciseNameKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(record.GetExerciseNameSnapshot(), maxWorkoutSnapshotNameBytes) || !validOptionalString(record.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(record.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || record.GetWeightX10() < 0 || record.GetReps() <= 0 || !validExerciseWeightUnit(record.GetWeightUnit()) {
+			if record == nil || !validRequiredString(record.GetClientRecordId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(record.GetExerciseId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(record.GetExerciseNameKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(record.GetExerciseNameSnapshot(), maxWorkoutSnapshotNameBytes) || !validOptionalString(record.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(record.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(record.GetSessionId(), maxWorkoutSnapshotIDBytes) || (record.GetSessionId() != "" && record.GetSessionId() != training.GetSessionId()) || record.GetWeightX10() < 0 || record.GetReps() <= 0 || !validExerciseWeightUnit(record.GetWeightUnit()) {
 				return false
 			}
 			exerciseID := strings.TrimSpace(record.GetExerciseId())

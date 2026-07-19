@@ -25,6 +25,10 @@ message ExerciseSetRecord {
   int64 created_at = 12;
   int64 updated_at = 13;
   string client_record_id = 14;
+  // session_id makes a set belong to one completed training session. It lets
+  // clients restore or delete that session without inferring membership from
+  // a time range.
+  string session_id = 15;
 }
 
 // WorkoutDataSnapshotKind 区分计划库快照和一次已结束训练快照。

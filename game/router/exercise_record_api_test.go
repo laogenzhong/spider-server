@@ -7,6 +7,8 @@ import (
 
 	appconfig "spider-server/common/config"
 	pb "spider-server/gen/spider/api"
+
+	"google.golang.org/protobuf/proto"
 )
 
 func TestConfigureWorkoutDataSyncLimits(t *testing.T) {
@@ -116,6 +118,36 @@ func TestValidWorkoutDataSnapshotIncrementalEntities(t *testing.T) {
 	}
 }
 
+func TestValidWorkoutTrainingSessionRecordSessionID(t *testing.T) {
+	base := &pb.WorkoutDataSnapshot{
+		ClientSnapshotId: "snapshot-id",
+		EntityId:         "session-id",
+		ChangedAt:        1,
+		Kind:             pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION,
+		TrainingSession: &pb.WorkoutTrainingSessionSnapshot{
+			SessionId: "session-id",
+			StartedAt: 1,
+			EndedAt:   1,
+			Records: []*pb.ExerciseSetRecord{{
+				ClientRecordId: "record-id",
+				SessionId:      "session-id",
+				ExerciseId:     "exercise-id",
+				Reps:           1,
+			}},
+		},
+	}
+	if !validWorkoutDataSnapshot(base) {
+		t.Fatal("matching record session id was rejected")
+	}
+
+	mismatched := protoCloneWorkoutSnapshot(base)
+	mismatched.TrainingSession = proto.Clone(base.TrainingSession).(*pb.WorkoutTrainingSessionSnapshot)
+	mismatched.TrainingSession.Records[0].SessionId = "another-session"
+	if validWorkoutDataSnapshot(mismatched) {
+		t.Fatal("mismatched record session id was accepted")
+	}
+}
+
 func TestValidWorkoutPlanFolderEntitySnapshotPlanIDs(t *testing.T) {
 	folder := &pb.WorkoutPlanFolderEntitySnapshot{Id: "folder-id", Title: "Folder", PlanIds: make([]string, 99)}
 	for index := range folder.PlanIds {
@@ -143,6 +175,10 @@ func protoCloneWorkoutSnapshot(source *pb.WorkoutDataSnapshot) *pb.WorkoutDataSn
 			plan := *source.PlanEntity.Plan
 			clone.PlanEntity.Plan = &plan
 		}
+	}
+	if source.TrainingSession != nil {
+		training := proto.Clone(source.TrainingSession).(*pb.WorkoutTrainingSessionSnapshot)
+		clone.TrainingSession = training
 	}
 	return &clone
 }
