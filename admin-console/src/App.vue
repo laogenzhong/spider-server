@@ -2,10 +2,12 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   Activity,
+  ArrowLeft,
   BadgeDollarSign,
   CalendarPlus,
   ChartNoAxesColumnIncreasing,
   CheckCheck,
+  ChevronDown,
   CircleUserRound,
   ClipboardList,
   ClipboardCopy,
@@ -30,28 +32,40 @@ import {
   UsersRound,
 } from 'lucide-vue-next'
 import { localOfferReplyRequest, queryString, request } from './api'
+import ExerciseLibraryImportTool from './components/ExerciseLibraryImportTool.vue'
 import Pagination from './components/Pagination.vue'
 import WorkoutExploreEditor from './components/WorkoutExploreEditor.vue'
 
-const navItems = [
-  { id: 'overview', label: '概览', icon: LayoutDashboard },
-  { id: 'vip', label: '用户与 Pro', icon: UserRoundCheck },
-  { id: 'userList', label: '用户列表', icon: UsersRound },
-  { id: 'payments', label: '付费记录', icon: BadgeDollarSign },
-  { id: 'refunds', label: '退款用户', icon: RotateCcw },
-  { id: 'activity', label: '日活用户', icon: Activity },
-  { id: 'todayRegistrations', label: '今日注册', icon: UserRoundPlus },
-  { id: 'registrations', label: '每日注册', icon: CalendarPlus },
-  { id: 'feedback', label: '用户反馈', icon: MessageSquareText },
-  { id: 'onboarding', label: 'Onboard 信息', icon: ClipboardList },
-  { id: 'friendProfiles', label: '好友资料', icon: UsersRound },
-  { id: 'featureAdoption', label: '功能新增', icon: ChartNoAxesColumnIncreasing },
-  { id: 'offerReply', label: '兑换码回复', icon: MessageSquareReply },
-  { id: 'workoutExplore', label: '探索配置', icon: Dumbbell },
-  { id: 'update', label: '版本更新', icon: Settings2 },
+const navGroups = [
+  { label: '总览', items: [{ id: 'overview', label: '概览', icon: LayoutDashboard }] },
+  { label: '用户运营', items: [
+    { id: 'vip', label: '用户与 Pro', icon: UserRoundCheck },
+    { id: 'userList', label: '用户列表', icon: UsersRound },
+    { id: 'activity', label: '日活用户', icon: Activity },
+    { id: 'todayRegistrations', label: '今日注册', icon: UserRoundPlus },
+    { id: 'registrations', label: '每日注册', icon: CalendarPlus },
+    { id: 'feedback', label: '用户反馈', icon: MessageSquareText },
+    { id: 'onboarding', label: 'Onboard 信息', icon: ClipboardList },
+    { id: 'friendProfiles', label: '好友资料', icon: UsersRound },
+    { id: 'featureAdoption', label: '功能新增', icon: ChartNoAxesColumnIncreasing },
+  ] },
+  { label: '训练数据', items: [
+    { id: 'planData', label: '用户训练计划', icon: ClipboardList },
+    { id: 'workoutData', label: '用户锻炼记录', icon: Dumbbell },
+    { id: 'workoutExplore', label: '探索配置', icon: Dumbbell },
+    { id: 'exerciseLibraryImport', label: '动作库配置', icon: FileUp },
+  ] },
+  { label: '商业与系统', items: [
+    { id: 'payments', label: '付费记录', icon: BadgeDollarSign },
+    { id: 'refunds', label: '退款用户', icon: RotateCcw },
+    { id: 'offerReply', label: '兑换码回复', icon: MessageSquareReply },
+    { id: 'update', label: '版本更新', icon: Settings2 },
+  ] },
 ]
+const navItems = navGroups.flatMap((group) => group.items)
 
 const current = ref('overview')
+const expandedNavGroup = ref('')
 const connected = ref(false)
 const loading = reactive({})
 const toast = reactive({ visible: false, type: 'success', message: '' })
@@ -63,8 +77,8 @@ const overview = reactive({
   daily_active: 0,
   registrations: 0,
   payments: 0,
-  refund_requests: 0,
-  refunded: 0,
+  feedback: 0,
+  latest_version: '',
 })
 
 const userIdentifier = ref('')
@@ -102,6 +116,14 @@ const friendProfileFilters = reactive({ search: '', from: thirtyDaysAgo, to: tod
 const expandedFriendProfileID = ref(0)
 const featureAdoption = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const featureAdoptionFilters = reactive({ from: thirtyDaysAgo, to: today })
+const planDataUsers = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const planDataFilters = reactive({ search: '' })
+const planDataSelectedUser = ref(null)
+const planDataDetail = ref([])
+const workoutDataUsers = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const workoutDataFilters = reactive({ search: '' })
+const workoutDataSelectedUser = ref(null)
+const workoutDataSessions = reactive({ items: [], total: 0, page: 1, page_size: 20 })
 
 const offerReplyStatus = reactive({ total_count: 0, used_count: 0, unused_count: 0, max_used_id: 0, next_id: 0 })
 const offerCodes = reactive({ items: [], total: 0, page: 1, page_size: 50 })
@@ -130,6 +152,7 @@ const appUpdate = reactive({
 })
 
 const currentTitle = computed(() => navItems.find((item) => item.id === current.value)?.label || '管理后台')
+const isRequesting = computed(() => Object.values(loading).some(Boolean))
 const activeUserFilters = computed(() => {
   if (current.value === 'activity') return activityFilters
   if (current.value === 'todayRegistrations') return todayRegistrationFilters
@@ -173,17 +196,22 @@ async function withLoading(key, action) {
 }
 
 async function checkConnection() {
+	loading.health = true
   try {
     await request('/health')
     connected.value = true
   } catch (error) {
     connected.value = false
     notify(error.message, 'error')
+	} finally {
+		loading.health = false
   }
 }
 
 async function selectSection(id) {
   current.value = id
+  const group = navGroups.find((candidate) => candidate.items.some((item) => item.id === id))
+  if (group) expandedNavGroup.value = group.label
   if (id === 'overview') await loadOverview()
   if (id === 'payments') await loadPayments()
   if (id === 'refunds') await loadRefunds()
@@ -195,8 +223,19 @@ async function selectSection(id) {
   if (id === 'onboarding') await loadOnboardingProfiles()
   if (id === 'friendProfiles') await loadFriendProfiles()
   if (id === 'featureAdoption') await loadFeatureAdoption()
+  if (id === 'planData') await loadPlanDataUsers()
+  if (id === 'workoutData') await loadWorkoutDataUsers()
   if (id === 'offerReply') await loadOfferReplyWorkspace()
   if (id === 'update') await loadAppUpdate()
+}
+
+function toggleNavGroup(label) {
+	if (label === '总览') return
+  expandedNavGroup.value = expandedNavGroup.value === label ? '' : label
+}
+
+function isNavGroupExpanded(label) {
+  return label === '总览' || expandedNavGroup.value === label
 }
 
 async function loadOverview() {
@@ -316,6 +355,47 @@ async function loadFeatureAdoption(page = featureAdoption.page) {
   await withLoading('featureAdoption', async () => {
     Object.assign(featureAdoption, await request(`/feature-adoption${queryString({ ...featureAdoptionFilters, page, page_size: featureAdoption.page_size })}`))
   }).catch(() => {})
+}
+
+async function loadPlanDataUsers(page = planDataUsers.page) {
+  await withLoading('planDataUsers', async () => {
+    Object.assign(planDataUsers, await request(`/plan-data-users${queryString({ ...planDataFilters, page, page_size: planDataUsers.page_size })}`))
+  }).catch(() => {})
+}
+
+async function openPlanDataDetail(item) {
+  const detail = await withLoading('planDataDetail', async () => request(`/plan-data-users/${item.uid}`)).catch(() => null)
+  if (!detail) return
+  planDataSelectedUser.value = item
+  planDataDetail.value = detail.folders || []
+}
+
+function closePlanDataDetail() {
+  planDataSelectedUser.value = null
+  planDataDetail.value = []
+}
+
+async function loadWorkoutDataUsers(page = workoutDataUsers.page) {
+  await withLoading('workoutDataUsers', async () => {
+    Object.assign(workoutDataUsers, await request(`/workout-data-users${queryString({ ...workoutDataFilters, page, page_size: workoutDataUsers.page_size })}`))
+  }).catch(() => {})
+}
+
+async function openWorkoutDataDetail(item) {
+  workoutDataSelectedUser.value = item
+  await loadWorkoutDataSessions(1)
+}
+
+async function loadWorkoutDataSessions(page = workoutDataSessions.page) {
+  if (!workoutDataSelectedUser.value) return
+  await withLoading('workoutDataSessions', async () => {
+    Object.assign(workoutDataSessions, await request(`/workout-data-users/${workoutDataSelectedUser.value.uid}/sessions${queryString({ page, page_size: workoutDataSessions.page_size })}`))
+  }).catch(() => {})
+}
+
+function closeWorkoutDataDetail() {
+  workoutDataSelectedUser.value = null
+  Object.assign(workoutDataSessions, { items: [], total: 0, page: 1 })
 }
 
 function loadVisibleUserList(page = 1) {
@@ -474,6 +554,26 @@ function formatDateTime(value) {
   }).format(date)
 }
 
+function formatEpochDateTime(value) {
+  if (!value) return '—'
+  const timestamp = Number(value)
+  return formatDateTime(new Date(timestamp < 100000000000 ? timestamp * 1000 : timestamp))
+}
+
+function exerciseName(item) {
+  return item.custom_name || item.name_snapshot || item.name_key || item.exercise_id || '未命名动作'
+}
+
+function weightUnitLabel(unit) {
+  if (unit === 1) return 'kg'
+  if (unit === 2) return 'lb'
+  return '斤'
+}
+
+function weightText(weightX10, unit) {
+  return `${Number(weightX10 || 0) / 10}${weightUnitLabel(unit)}`
+}
+
 function parseJSON(value) {
   if (!value) return null
   if (typeof value === 'object') return value
@@ -528,17 +628,24 @@ onMounted(async () => {
       </div>
 
       <nav class="nav-list" aria-label="后台导航">
-        <button
-          v-for="item in navItems"
-          :key="item.id"
-          class="nav-item"
-          :class="{ active: current === item.id }"
-          type="button"
-          @click="selectSection(item.id)"
-        >
-          <component :is="item.icon" :size="18" />
-          <span>{{ item.label }}</span>
-        </button>
+        <section v-for="group in navGroups" :key="group.label" class="nav-group" :class="{ expanded: isNavGroupExpanded(group.label) }">
+          <button class="nav-group-toggle" type="button" :aria-expanded="isNavGroupExpanded(group.label)" @click="toggleNavGroup(group.label)">
+            <span>{{ group.label }}</span><ChevronDown :size="15" />
+          </button>
+          <div class="nav-group-items">
+            <button
+              v-for="item in group.items"
+              :key="item.id"
+              class="nav-item"
+              :class="{ active: current === item.id }"
+              type="button"
+              @click="selectSection(item.id)"
+            >
+              <component :is="item.icon" :size="18" />
+              <span>{{ item.label }}</span>
+            </button>
+          </div>
+        </section>
       </nav>
 
       <div class="sidebar-footer">
@@ -589,26 +696,28 @@ onMounted(async () => {
             <span>Apple 交易</span>
             <strong>{{ overview.payments }}</strong>
           </article>
-          <article class="metric-card accent-amber">
-            <Clock3 :size="20" />
-            <span>退款申请</span>
-            <strong>{{ overview.refund_requests }}</strong>
-          </article>
-          <article class="metric-card accent-red">
-            <RotateCcw :size="20" />
-            <span>退款完成</span>
-            <strong>{{ overview.refunded }}</strong>
-          </article>
+          <button class="metric-card accent-amber overview-metric-action" type="button" @click="selectSection('feedback')">
+            <MessageSquareText :size="20" />
+            <span>历史用户反馈</span>
+            <strong>{{ overview.feedback }}</strong>
+          </button>
+          <button class="metric-card accent-red overview-metric-action" type="button" @click="selectSection('update')">
+            <Settings2 :size="20" />
+            <span>版本更新</span>
+            <strong>{{ overview.latest_version ? `v${overview.latest_version}` : '未配置' }}</strong>
+          </button>
         </div>
 
-        <div class="quick-actions">
-          <button type="button" @click="selectSection('vip')"><CircleUserRound :size="19" />用户与 Pro</button>
-          <button type="button" @click="selectSection('payments')"><BadgeDollarSign :size="19" />付费记录</button>
-          <button type="button" @click="selectSection('refunds')"><RotateCcw :size="19" />退款用户</button>
-          <button type="button" @click="selectSection('todayRegistrations')"><UserRoundPlus :size="19" />今日注册</button>
-          <button type="button" @click="selectSection('userList')"><UsersRound :size="19" />用户列表</button>
-          <button type="button" @click="selectSection('offerReply')"><MessageSquareReply :size="19" />兑换码回复</button>
-          <button type="button" @click="selectSection('update')"><Settings2 :size="19" />版本更新</button>
+        <div class="overview-functions">
+          <div class="overview-functions-heading"><h2>全部功能</h2><p>按分类快速进入管理模块</p></div>
+          <section v-for="group in navGroups" :key="group.label" class="overview-function-group">
+            <h3>{{ group.label }}</h3>
+            <div class="quick-actions">
+              <button v-for="item in group.items" :key="item.id" type="button" @click="selectSection(item.id)">
+                <component :is="item.icon" :size="18" />{{ item.label }}
+              </button>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -910,6 +1019,81 @@ onMounted(async () => {
         <Pagination :data="featureAdoption" :page-count="pageCount(featureAdoption)" @change="loadFeatureAdoption" />
       </section>
 
+      <section v-else-if="current === 'planData'" class="page-section">
+        <template v-if="planDataSelectedUser">
+          <div class="section-toolbar">
+            <div>
+              <button class="back-button" type="button" @click="closePlanDataDetail"><ArrowLeft :size="16" />返回用户列表</button>
+              <h2>{{ planDataSelectedUser.nickname || planDataSelectedUser.account || `UID ${planDataSelectedUser.uid}` }} 的训练计划</h2>
+              <p>UID {{ planDataSelectedUser.uid }} · 当前保存的计划文件夹与动作配置</p>
+            </div>
+            <button class="icon-button bordered" type="button" title="刷新" @click="openPlanDataDetail(planDataSelectedUser)"><RefreshCw :size="17" :class="{ spin: loading.planDataDetail }" /></button>
+          </div>
+          <div v-if="planDataDetail.length" class="plan-folder-list">
+            <article v-for="folder in planDataDetail" :key="folder.id" class="data-detail-card">
+              <div class="data-detail-heading">
+                <div><span>计划文件夹</span><h3>{{ folder.title || '未命名文件夹' }}</h3></div>
+                <small>更新 {{ formatEpochDateTime(folder.updated_at) }}</small>
+              </div>
+              <div v-if="folder.plans?.length" class="plan-list">
+                <article v-for="plan in folder.plans" :key="plan.id" class="plan-card">
+                  <div class="plan-card-heading"><div><strong>{{ plan.title || '未命名计划' }}</strong><small>更新 {{ formatEpochDateTime(plan.updated_at) }}</small></div><span>{{ plan.exercises?.length || 0 }} 个动作</span></div>
+                  <div class="exercise-plan-list">
+                    <div v-for="exercise in plan.exercises" :key="exercise.id" class="exercise-plan-row">
+                      <div><strong>{{ exerciseName(exercise) }}</strong><small>{{ exercise.exercise_id }}</small></div>
+                      <div><span>计划组数</span><strong>{{ exercise.set_count }} 组</strong></div>
+                      <div><span>重量 × 次数</span><strong>{{ exercise.sets?.length ? exercise.sets.map((set) => `${set.weight_text || '—'} × ${set.reps_text || '—'}`).join(' · ') : '未填写' }}</strong></div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+              <p v-else class="empty-detail">此文件夹暂无计划。</p>
+            </article>
+          </div>
+          <div v-else class="empty-state">暂无可展示的计划内容。</div>
+        </template>
+        <template v-else>
+          <div class="section-toolbar">
+            <div><h2>用户训练计划</h2><p>仅显示保存了计划文件夹或计划的用户，最近变更在前。</p></div>
+            <button class="icon-button bordered" type="button" title="刷新" @click="loadPlanDataUsers"><RefreshCw :size="17" :class="{ spin: loading.planDataUsers }" /></button>
+          </div>
+          <div class="filter-toolbar"><div class="compact-search"><Search :size="16" /><input v-model="planDataFilters.search" placeholder="UID / 账号 / 昵称" @keyup.enter="loadPlanDataUsers(1)" /></div><button class="primary-button" type="button" @click="loadPlanDataUsers(1)">查询</button></div>
+          <div class="result-meta">共 {{ planDataUsers.total }} 位有训练计划数据的用户 · 按最近变更时间倒序</div>
+          <div class="table-wrap"><table><thead><tr><th>用户</th><th>最近变更</th><th>操作</th></tr></thead><tbody>
+            <tr v-for="item in planDataUsers.items" :key="item.uid"><td><strong>{{ item.nickname || item.account || `UID ${item.uid}` }}</strong><small>UID {{ item.uid }}</small></td><td>{{ formatDateTime(item.latest_data_at) }}</td><td><button class="secondary-button" type="button" @click="openPlanDataDetail(item)">查看计划详情</button></td></tr>
+            <tr v-if="!planDataUsers.items?.length"><td colspan="3" class="empty-cell">暂无训练计划数据</td></tr>
+          </tbody></table></div>
+          <Pagination :data="planDataUsers" :page-count="pageCount(planDataUsers)" @change="loadPlanDataUsers" />
+        </template>
+      </section>
+
+      <section v-else-if="current === 'workoutData'" class="page-section">
+        <template v-if="workoutDataSelectedUser">
+          <div class="section-toolbar">
+            <div><button class="back-button" type="button" @click="closeWorkoutDataDetail"><ArrowLeft :size="16" />返回用户列表</button><h2>{{ workoutDataSelectedUser.nickname || workoutDataSelectedUser.account || `UID ${workoutDataSelectedUser.uid}` }} 的锻炼记录</h2><p>每次训练按结束时间倒序，展示动作、组数、重量和次数。</p></div>
+            <button class="icon-button bordered" type="button" title="刷新" @click="loadWorkoutDataSessions(1)"><RefreshCw :size="17" :class="{ spin: loading.workoutDataSessions }" /></button>
+          </div>
+          <div v-if="workoutDataSessions.items?.length" class="workout-session-list">
+            <article v-for="session in workoutDataSessions.items" :key="session.id" class="data-detail-card">
+              <div class="data-detail-heading"><div><span>{{ session.standalone ? '自由训练' : (session.plan_title || '计划训练') }}</span><h3>{{ formatEpochDateTime(session.ended_at) }}</h3></div><small>{{ session.actions?.length || 0 }} 个动作 · {{ session.actions?.reduce((total, action) => total + action.set_count, 0) || 0 }} 组</small></div>
+              <div class="workout-action-list"><div v-for="action in session.actions" :key="`${session.id}-${action.exercise_id}`" class="workout-action-row"><div><strong>{{ exerciseName(action) }}</strong><small>{{ action.exercise_id }} · {{ action.set_count }} 组</small></div><div class="workout-set-values"><span v-for="(set, index) in action.sets" :key="index">{{ weightText(set.weight_x10, set.weight_unit) }} × {{ set.reps }} 次</span></div></div></div>
+            </article>
+          </div>
+          <div v-else class="empty-state">暂无可展示的锻炼记录。</div>
+          <Pagination :data="workoutDataSessions" :page-count="pageCount(workoutDataSessions)" @change="loadWorkoutDataSessions" />
+        </template>
+        <template v-else>
+          <div class="section-toolbar"><div><h2>用户锻炼记录</h2><p>仅显示有已完成锻炼记录的用户，最近一次锻炼在前。</p></div><button class="icon-button bordered" type="button" title="刷新" @click="loadWorkoutDataUsers"><RefreshCw :size="17" :class="{ spin: loading.workoutDataUsers }" /></button></div>
+          <div class="filter-toolbar"><div class="compact-search"><Search :size="16" /><input v-model="workoutDataFilters.search" placeholder="UID / 账号 / 昵称" @keyup.enter="loadWorkoutDataUsers(1)" /></div><button class="primary-button" type="button" @click="loadWorkoutDataUsers(1)">查询</button></div>
+          <div class="result-meta">共 {{ workoutDataUsers.total }} 位有锻炼记录的用户 · 按最近锻炼时间倒序</div>
+          <div class="table-wrap"><table><thead><tr><th>用户</th><th>最近锻炼</th><th>操作</th></tr></thead><tbody>
+            <tr v-for="item in workoutDataUsers.items" :key="item.uid"><td><strong>{{ item.nickname || item.account || `UID ${item.uid}` }}</strong><small>UID {{ item.uid }}</small></td><td>{{ formatDateTime(item.latest_data_at) }}</td><td><button class="secondary-button" type="button" @click="openWorkoutDataDetail(item)">查看锻炼详情</button></td></tr>
+            <tr v-if="!workoutDataUsers.items?.length"><td colspan="3" class="empty-cell">暂无锻炼记录数据</td></tr>
+          </tbody></table></div>
+          <Pagination :data="workoutDataUsers" :page-count="pageCount(workoutDataUsers)" @change="loadWorkoutDataUsers" />
+        </template>
+      </section>
+
       <section v-else-if="current === 'offerReply'" class="page-section offer-reply-section">
         <div class="section-toolbar">
           <div>
@@ -1031,6 +1215,8 @@ onMounted(async () => {
 
       <WorkoutExploreEditor v-else-if="current === 'workoutExplore'" />
 
+      <ExerciseLibraryImportTool v-else-if="current === 'exerciseLibraryImport'" @notify="notify" />
+
       <section v-else-if="current === 'update'" class="page-section update-section">
         <div class="section-toolbar">
           <div><h2>iOS 版本配置</h2><p>数据库实时配置</p></div>
@@ -1052,6 +1238,16 @@ onMounted(async () => {
         </div>
       </section>
     </main>
+
+    <transition name="request-loading">
+      <div v-if="isRequesting" class="request-loading-mask" role="status" aria-live="polite" aria-label="正在等待服务器返回">
+        <div class="request-loading-card">
+          <LoaderCircle :size="28" class="spin" />
+          <strong>正在同步数据</strong>
+          <span>请等待服务器返回…</span>
+        </div>
+      </div>
+    </transition>
 
     <transition name="toast">
       <div v-if="toast.visible" class="toast" :class="toast.type">{{ toast.message }}</div>

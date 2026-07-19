@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"spider-server/common/devicecatalog"
+	pb "spider-server/gen/spider/api"
 	"spider-server/mysql/config"
 
+	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
 
@@ -157,6 +159,78 @@ type AdminDailyFeatureRecord struct {
 	CreatedPlanCount int64  `json:"created_plan_count"`
 	UpdatedPlanCount int64  `json:"updated_plan_count"`
 	BodyPhotoUsers   int64  `json:"body_photo_users"`
+}
+
+// AdminTrainingDataUserRecord is the intentionally small default row shown by
+// the training-data Admin pages. The latest timestamp is the latest snapshot
+// accepted by the server for that data type.
+type AdminTrainingDataUserRecord struct {
+	UID           uint64    `json:"uid"`
+	Account       string    `json:"account"`
+	Nickname      string    `json:"nickname"`
+	LatestDataAt  time.Time `json:"latest_data_at"`
+	SnapshotCount int64     `json:"snapshot_count"`
+}
+
+type AdminPlanExerciseSetDetail struct {
+	ID         string `json:"id"`
+	WeightText string `json:"weight_text"`
+	RepsText   string `json:"reps_text"`
+}
+
+type AdminPlanExerciseDetail struct {
+	ID           string                       `json:"id"`
+	ExerciseID   string                       `json:"exercise_id"`
+	NameKey      string                       `json:"name_key"`
+	NameSnapshot string                       `json:"name_snapshot"`
+	CustomName   string                       `json:"custom_name"`
+	SetCount     int32                        `json:"set_count"`
+	WeightUnit   string                       `json:"weight_unit"`
+	Note         string                       `json:"note"`
+	Sets         []AdminPlanExerciseSetDetail `json:"sets"`
+}
+
+type AdminPlanDetail struct {
+	ID        string                    `json:"id"`
+	Title     string                    `json:"title"`
+	CreatedAt int64                     `json:"created_at"`
+	UpdatedAt int64                     `json:"updated_at"`
+	Exercises []AdminPlanExerciseDetail `json:"exercises"`
+}
+
+type AdminPlanFolderDetail struct {
+	ID        string            `json:"id"`
+	Title     string            `json:"title"`
+	CreatedAt int64             `json:"created_at"`
+	UpdatedAt int64             `json:"updated_at"`
+	SortIndex int32             `json:"sort_index"`
+	Plans     []AdminPlanDetail `json:"plans"`
+}
+
+type AdminWorkoutSetDetail struct {
+	WeightX10  int32 `json:"weight_x10"`
+	WeightUnit int32 `json:"weight_unit"`
+	Reps       int32 `json:"reps"`
+	RecordedAt int64 `json:"recorded_at"`
+}
+
+type AdminWorkoutActionDetail struct {
+	ExerciseID   string                  `json:"exercise_id"`
+	NameKey      string                  `json:"name_key"`
+	NameSnapshot string                  `json:"name_snapshot"`
+	SetCount     int                     `json:"set_count"`
+	Sets         []AdminWorkoutSetDetail `json:"sets"`
+}
+
+type AdminWorkoutSessionDetail struct {
+	ID         uint64                     `json:"id"`
+	SessionID  string                     `json:"session_id"`
+	PlanID     string                     `json:"plan_id"`
+	PlanTitle  string                     `json:"plan_title"`
+	Standalone bool                       `json:"standalone"`
+	StartedAt  int64                      `json:"started_at"`
+	EndedAt    int64                      `json:"ended_at"`
+	Actions    []AdminWorkoutActionDetail `json:"actions"`
 }
 
 type adminDailyUIDCount struct {
@@ -597,6 +671,214 @@ func ListAdminFriendProfiles(query AdminPageQuery) ([]AdminFriendProfileRecord, 
 		Offset((query.Page - 1) * query.PageSize).
 		Scan(&records).Error
 	return records, total, err
+}
+
+// ListAdminPlanDataUsers returns only users that have plan-folder or plan
+// snapshots. The source timestamp is ordered in SQL before pagination so page
+// one is always the most recently changed plan data.
+func ListAdminPlanDataUsers(query AdminPageQuery) ([]AdminTrainingDataUserRecord, int64, error) {
+	return listAdminTrainingDataUsers(query, []int32{
+		int32(pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN_FOLDER),
+		int32(pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN),
+	})
+}
+
+// ListAdminWorkoutDataUsers returns only users with completed training-session
+// snapshots. It deliberately does not fall back to individual action records:
+// this page represents one completed workout at a time.
+func ListAdminWorkoutDataUsers(query AdminPageQuery) ([]AdminTrainingDataUserRecord, int64, error) {
+	return listAdminTrainingDataUsers(query, []int32{
+		int32(pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION),
+	})
+}
+
+func listAdminTrainingDataUsers(query AdminPageQuery, kinds []int32) ([]AdminTrainingDataUserRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Table("workout_data_snapshots AS w").
+		Joins("LEFT JOIN users AS u ON u.id = w.uid AND u.deleted_at IS NULL").
+		Joins("LEFT JOIN friend_profile_records AS fp ON fp.uid = w.uid AND fp.deleted_at IS NULL").
+		Where("w.deleted_at IS NULL AND w.kind IN ?", kinds)
+	base = applyAdminUserSearch(base, query.Search)
+	base = applyAdminTimeRange(base, "COALESCE(w.server_changed_at, w.updated_at, w.created_at)", query.From, query.To)
+
+	summary := base.Select(`
+		w.uid AS uid,
+		MAX(COALESCE(u.account, '')) AS account,
+		MAX(COALESCE(fp.nickname, '')) AS nickname,
+		MAX(COALESCE(w.server_changed_at, w.updated_at, w.created_at)) AS latest_data_at,
+		COUNT(*) AS snapshot_count`).
+		Group("w.uid")
+
+	var total int64
+	if err := db.Table("(?) AS training_data_users", summary).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	records := make([]AdminTrainingDataUserRecord, 0)
+	err = summary.Order("latest_data_at DESC, w.uid DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize).
+		Scan(&records).Error
+	return records, total, err
+}
+
+// GetAdminPlanDataDetail decodes the current plan-folder and plan entities for
+// one user. A snapshot tombstone removes that entity from the Admin view.
+func GetAdminPlanDataDetail(uid uint64) ([]AdminPlanFolderDetail, error) {
+	if uid == 0 {
+		return nil, fmt.Errorf("uid is empty")
+	}
+	db, err := config.DB()
+	if err != nil {
+		return nil, err
+	}
+	var snapshots []WorkoutDataSnapshot
+	if err := db.Where("uid = ? AND kind IN ? AND deleted_at IS NULL", uid, []int32{
+		int32(pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN_FOLDER),
+		int32(pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN),
+	}).Find(&snapshots).Error; err != nil {
+		return nil, err
+	}
+
+	folders := make(map[string]*AdminPlanFolderDetail)
+	plansByFolder := make(map[string][]AdminPlanDetail)
+	for _, record := range snapshots {
+		snapshot, ok := adminDecodeWorkoutSnapshot(record.Payload)
+		if !ok || snapshot.GetDeleted() {
+			continue
+		}
+		switch snapshot.GetKind() {
+		case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN_FOLDER:
+			folder := snapshot.GetPlanFolder()
+			if folder == nil {
+				continue
+			}
+			folders[folder.GetId()] = &AdminPlanFolderDetail{
+				ID: folder.GetId(), Title: folder.GetTitle(), CreatedAt: folder.GetCreatedAt(), UpdatedAt: folder.GetUpdatedAt(), SortIndex: folder.GetSortIndex(), Plans: make([]AdminPlanDetail, 0),
+			}
+		case pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_PLAN:
+			entity := snapshot.GetPlanEntity()
+			if entity == nil || entity.GetPlan() == nil {
+				continue
+			}
+			plansByFolder[entity.GetFolderId()] = append(plansByFolder[entity.GetFolderId()], adminPlanDetailFromPB(entity.GetPlan()))
+		}
+	}
+
+	result := make([]AdminPlanFolderDetail, 0, len(folders)+1)
+	for folderID, folder := range folders {
+		folder.Plans = plansByFolder[folderID]
+		sort.Slice(folder.Plans, func(i, j int) bool {
+			if folder.Plans[i].UpdatedAt != folder.Plans[j].UpdatedAt {
+				return folder.Plans[i].UpdatedAt > folder.Plans[j].UpdatedAt
+			}
+			return folder.Plans[i].ID > folder.Plans[j].ID
+		})
+		result = append(result, *folder)
+		delete(plansByFolder, folderID)
+	}
+	orphanedPlans := make([]AdminPlanDetail, 0)
+	for _, plans := range plansByFolder {
+		orphanedPlans = append(orphanedPlans, plans...)
+	}
+	if len(orphanedPlans) > 0 {
+		sort.Slice(orphanedPlans, func(i, j int) bool { return orphanedPlans[i].UpdatedAt > orphanedPlans[j].UpdatedAt })
+		result = append(result, AdminPlanFolderDetail{ID: "unfiled", Title: "未归类计划", Plans: orphanedPlans})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].UpdatedAt != result[j].UpdatedAt {
+			return result[i].UpdatedAt > result[j].UpdatedAt
+		}
+		return result[i].ID > result[j].ID
+	})
+	return result, nil
+}
+
+// ListAdminWorkoutSessionDetails decodes completed workouts in newest-first
+// order. It is paginated because one snapshot can contain many action sets.
+func ListAdminWorkoutSessionDetails(uid uint64, query AdminPageQuery) ([]AdminWorkoutSessionDetail, int64, error) {
+	if uid == 0 {
+		return nil, 0, fmt.Errorf("uid is empty")
+	}
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Model(&WorkoutDataSnapshot{}).
+		Where("uid = ? AND kind = ? AND deleted_at IS NULL", uid, int32(pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION))
+	base = applyAdminTimeRange(base, "COALESCE(server_changed_at, updated_at, created_at)", query.From, query.To)
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var snapshots []WorkoutDataSnapshot
+	if err := base.Order("COALESCE(server_changed_at, updated_at, created_at) DESC, id DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize).
+		Find(&snapshots).Error; err != nil {
+		return nil, 0, err
+	}
+	result := make([]AdminWorkoutSessionDetail, 0, len(snapshots))
+	for _, record := range snapshots {
+		snapshot, ok := adminDecodeWorkoutSnapshot(record.Payload)
+		if !ok || snapshot.GetDeleted() || snapshot.GetTrainingSession() == nil {
+			continue
+		}
+		result = append(result, adminWorkoutSessionDetailFromPB(record.ID, snapshot.GetTrainingSession()))
+	}
+	return result, total, nil
+}
+
+func adminDecodeWorkoutSnapshot(payload []byte) (*pb.WorkoutDataSnapshot, bool) {
+	if len(payload) == 0 {
+		return nil, false
+	}
+	snapshot := &pb.WorkoutDataSnapshot{}
+	if err := proto.Unmarshal(payload, snapshot); err != nil {
+		return nil, false
+	}
+	return snapshot, true
+}
+
+func adminPlanDetailFromPB(plan *pb.WorkoutPlanSnapshot) AdminPlanDetail {
+	detail := AdminPlanDetail{ID: plan.GetId(), Title: plan.GetTitle(), CreatedAt: plan.GetCreatedAt(), UpdatedAt: plan.GetUpdatedAt(), Exercises: make([]AdminPlanExerciseDetail, 0, len(plan.GetExercises()))}
+	for _, exercise := range plan.GetExercises() {
+		if exercise == nil {
+			continue
+		}
+		item := AdminPlanExerciseDetail{ID: exercise.GetId(), ExerciseID: exercise.GetExerciseId(), NameKey: exercise.GetNameKey(), NameSnapshot: exercise.GetNameSnapshot(), CustomName: exercise.GetCustomName(), SetCount: exercise.GetSetCount(), WeightUnit: exercise.GetWeightUnit(), Note: exercise.GetNote(), Sets: make([]AdminPlanExerciseSetDetail, 0, len(exercise.GetSets()))}
+		for _, set := range exercise.GetSets() {
+			if set != nil {
+				item.Sets = append(item.Sets, AdminPlanExerciseSetDetail{ID: set.GetId(), WeightText: set.GetWeightText(), RepsText: set.GetRepsText()})
+			}
+		}
+		detail.Exercises = append(detail.Exercises, item)
+	}
+	return detail
+}
+
+func adminWorkoutSessionDetailFromPB(id uint64, session *pb.WorkoutTrainingSessionSnapshot) AdminWorkoutSessionDetail {
+	detail := AdminWorkoutSessionDetail{ID: id, SessionID: session.GetSessionId(), PlanID: session.GetPlanId(), PlanTitle: session.GetPlanTitle(), Standalone: session.GetStandalone(), StartedAt: session.GetStartedAt(), EndedAt: session.GetEndedAt(), Actions: make([]AdminWorkoutActionDetail, 0)}
+	byExercise := make(map[string]int)
+	for _, record := range session.GetRecords() {
+		if record == nil {
+			continue
+		}
+		key := record.GetExerciseId() + "\x00" + record.GetExerciseNameSnapshot() + "\x00" + record.GetExerciseNameKey()
+		index, exists := byExercise[key]
+		if !exists {
+			index = len(detail.Actions)
+			byExercise[key] = index
+			detail.Actions = append(detail.Actions, AdminWorkoutActionDetail{ExerciseID: record.GetExerciseId(), NameKey: record.GetExerciseNameKey(), NameSnapshot: record.GetExerciseNameSnapshot(), Sets: make([]AdminWorkoutSetDetail, 0)})
+		}
+		detail.Actions[index].Sets = append(detail.Actions[index].Sets, AdminWorkoutSetDetail{WeightX10: record.GetWeightX10(), WeightUnit: int32(record.GetWeightUnit()), Reps: record.GetReps(), RecordedAt: record.GetRecordedAt()})
+		detail.Actions[index].SetCount = len(detail.Actions[index].Sets)
+	}
+	return detail
 }
 
 func ListAdminDailyFeatureAdoption(query AdminPageQuery) ([]AdminDailyFeatureRecord, int64, error) {

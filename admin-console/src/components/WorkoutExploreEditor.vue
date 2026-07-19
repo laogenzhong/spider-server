@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Download, FileUp, Plus, Search, Trash2, X } from 'lucide-vue-next'
+import { Download, FileUp, Plus, Search, Trash2, UploadCloud, X } from 'lucide-vue-next'
 
 const locales = [
   { id: 'zh-Hans', label: '简体中文' },
@@ -45,6 +45,7 @@ const catalogType = ref('all')
 const status = reactive({ type: '', message: '' })
 const configInput = ref(null)
 const catalogInput = ref(null)
+const syncingClient = ref(false)
 
 const selectedScheme = computed(() => documentModel.schemes[selectedSchemeIndex.value] || null)
 const selectedCategory = computed(() => documentModel.categories.find(item => item.id === selectedCategoryID.value) || null)
@@ -105,6 +106,20 @@ function normalizeCatalog(value) {
   const fallbackByID = new Map(catalog.value.map(item => [item.id, item]))
   const normalize = item => normalizeAction(item, fallbackByID.get(String(item?.id || item?.projectId || '').trim()))
   if (Array.isArray(value)) return value.map(normalize).filter(Boolean)
+  if (value?.schemaVersion === 1 && value?.mode === 'full' && Array.isArray(value.actions)) {
+    const displayTypeBySource = new Map((value.taxonomy?.sourceTypes || []).map(item => [item.key, item.displayKey || item.key]))
+    return value.actions.map(item => normalize({
+      id: item.gifName,
+      nameKey: item.nameKey,
+      category: item.categoryKey,
+      sourceType: item.sourceType || item.typeKey,
+      displayTypeKey: item.displayTypeKey || displayTypeBySource.get(item.sourceType || item.typeKey),
+      categoryNames: item.categoryNames,
+      typeNames: item.typeNames,
+      gifPath: item.gifRelativePath,
+      names: item.names || { en: item.fallbackName },
+    })).filter(Boolean)
+  }
   if (Array.isArray(value?.items)) return value.items.map(normalize).filter(Boolean)
   if (value?.projectActions && typeof value.projectActions === 'object') {
     return Object.entries(value.projectActions).map(([id, item]) => normalizeAction({
@@ -132,19 +147,11 @@ function normalizeAction(item, fallback) {
     subcategoryNames: normalizeLocalizedNames(item.subcategoryNames || fallback?.subcategoryNames),
     subcategoryRank: Number.isInteger(Number(item.subcategoryRank)) ? Number(item.subcategoryRank) : Number(fallback?.subcategoryRank ?? -1),
     sourceType,
-    type: displayTypeKey(sourceType),
+    type: String(item.displayTypeKey || fallback?.type || sourceType),
     typeNames: normalizeLocalizedNames(item.typeNames || fallback?.typeNames),
     gifPath: String(item.gifPath || fallback?.gifPath || ''),
     names: normalizeLocalizedNames(names),
   }
-}
-
-function displayTypeKey(typeKey) {
-  if (typeKey === 'exercise_type_ez_bar') return 'exercise_type_barbell'
-  if (typeKey === 'exercise_type_cable') return 'exercise_type_rope'
-  if (['exercise_type_sled', 'exercise_type_stationary_bike', 'exercise_type_stair_climber', 'exercise_type_elliptical'].includes(typeKey)) return 'exercise_type_machine'
-  if (['exercise_type_assisted', 'exercise_type_bosu_ball', 'exercise_type_medicine_ball', 'exercise_type_stability_ball', 'exercise_type_roller'].includes(typeKey)) return 'exercise_type_other'
-  return typeKey
 }
 
 function normalizeLocalizedNames(value) {
@@ -326,17 +333,42 @@ function exportConfig() {
   URL.revokeObjectURL(url)
   flash('配置已导出')
 }
+
+async function syncToClient() {
+  const errors = validateDocument()
+  if (errors.length) return flash(`更新前请修复：${errors.slice(0, 3).join('；')}`, 'error')
+  if (!window.confirm(`确定用当前完整配置更新客户端探索配置“${documentModel.configID}”？`)) return
+  syncingClient.value = true
+  try {
+    const response = await fetch('/local-client-sync/workout-explore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(documentModel),
+    })
+    const text = await response.text()
+    let result
+    try { result = JSON.parse(text) } catch { throw new Error('本地客户端同步服务不可用，请通过 npm run dev 或 npm run preview 打开后台') }
+    if (!response.ok || result.code !== 0) throw new Error(result.message || '客户端探索配置更新失败')
+    localStorage.setItem('spider-workout-explore-draft-v1', JSON.stringify(documentModel))
+    flash('客户端探索配置已更新，重新构建客户端后生效')
+  } catch (error) {
+    flash(error.message || '客户端探索配置更新失败', 'error')
+  } finally {
+    syncingClient.value = false
+  }
+}
 </script>
 
 <template>
   <section class="explore-editor">
     <div class="section-toolbar">
-      <div><h2>训练计划探索配置</h2><p>本地制作、预览并导出 *.workout-explore.json；不写入服务端数据库</p></div>
+      <div><h2>训练计划探索配置</h2><p>本地制作、预览并更新客户端的 *.workout-explore.json；不写入服务端数据库</p></div>
       <div class="explore-actions">
         <input ref="configInput" hidden type="file" accept=".json,.workout-explore.json" @change="importJSON($event, 'config')" />
         <button class="secondary-button" type="button" @click="configInput.click()"><FileUp :size="16" />导入配置</button>
         <button class="secondary-button" type="button" @click="validateAndReport">验证</button>
         <button class="primary-button" type="button" @click="exportConfig"><Download :size="16" />导出配置</button>
+        <button class="primary-button" type="button" :disabled="syncingClient" @click="syncToClient"><UploadCloud :size="16" />{{ syncingClient ? '正在更新…' : '更新客户端' }}</button>
       </div>
     </div>
 

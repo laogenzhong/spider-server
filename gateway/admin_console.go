@@ -68,6 +68,10 @@ func (s *GatewayServer) registerAdminConsoleRoutes(router *gin.Engine) {
 	group.GET("/onboarding-profiles", s.adminOnboardingProfilesHandler)
 	group.GET("/friend-profiles", s.adminFriendProfilesHandler)
 	group.GET("/feature-adoption", s.adminFeatureAdoptionHandler)
+	group.GET("/plan-data-users", s.adminPlanDataUsersHandler)
+	group.GET("/plan-data-users/:uid", s.adminPlanDataDetailHandler)
+	group.GET("/workout-data-users", s.adminWorkoutDataUsersHandler)
+	group.GET("/workout-data-users/:uid/sessions", s.adminWorkoutDataSessionsHandler)
 }
 
 func (s *GatewayServer) adminHealthHandler(c *gin.Context) {
@@ -96,22 +100,25 @@ func (s *GatewayServer) adminOverviewHandler(c *gin.Context) {
 		adminError(c, http.StatusInternalServerError, "查询付费数据失败")
 		return
 	}
-	_, refundRequestCount, err := mysqlmodel.ListAdminRefunds(query, mysqlmodel.AdminRefundStatusRequested, mysqlmodel.AdminPaymentSourceAll)
+	feedbackQuery := query
+	feedbackQuery.From = nil
+	feedbackQuery.To = nil
+	_, feedbackCount, err := mysqlmodel.ListAdminFeedback(feedbackQuery)
 	if err != nil {
-		adminError(c, http.StatusInternalServerError, "查询退款申请失败")
+		adminError(c, http.StatusInternalServerError, "查询用户反馈失败")
 		return
 	}
-	_, refundedCount, err := mysqlmodel.ListAdminRefunds(query, mysqlmodel.AdminRefundStatusCompleted, mysqlmodel.AdminPaymentSourceAll)
+	appUpdate, err := mysqlmodel.GetAppUpdateConfig(mysqlmodel.AppUpdatePlatformIOS)
 	if err != nil {
-		adminError(c, http.StatusInternalServerError, "查询退款数据失败")
+		adminError(c, http.StatusInternalServerError, "查询版本更新配置失败")
 		return
 	}
 	adminOK(c, gin.H{
-		"daily_active":    activeCount,
-		"registrations":   registrationCount,
-		"payments":        paymentCount,
-		"refund_requests": refundRequestCount,
-		"refunded":        refundedCount,
+		"daily_active":   activeCount,
+		"registrations":  registrationCount,
+		"payments":       paymentCount,
+		"feedback":       feedbackCount,
+		"latest_version": appUpdate.LatestVersion,
 	})
 }
 
@@ -343,6 +350,74 @@ func (s *GatewayServer) adminFeatureAdoptionHandler(c *gin.Context) {
 		return
 	}
 	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminPlanDataUsersHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminPlanDataUsers(query)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询计划用户失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminPlanDataDetailHandler(c *gin.Context) {
+	uid, ok := adminUIDFromParam(c)
+	if !ok {
+		return
+	}
+	folders, err := mysqlmodel.GetAdminPlanDataDetail(uid)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询计划详情失败")
+		return
+	}
+	adminOK(c, gin.H{"uid": uid, "folders": folders})
+}
+
+func (s *GatewayServer) adminWorkoutDataUsersHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminWorkoutDataUsers(query)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询训练用户失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminWorkoutDataSessionsHandler(c *gin.Context) {
+	uid, ok := adminUIDFromParam(c)
+	if !ok {
+		return
+	}
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminWorkoutSessionDetails(uid, query)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询训练详情失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func adminUIDFromParam(c *gin.Context) (uint64, bool) {
+	uid, err := strconv.ParseUint(c.Param("uid"), 10, 64)
+	if err != nil || uid == 0 {
+		adminError(c, http.StatusBadRequest, "用户 ID 无效")
+		return 0, false
+	}
+	return uid, true
 }
 
 func adminPageQueryFromContext(c *gin.Context, defaultToday bool) (mysqlmodel.AdminPageQuery, error) {

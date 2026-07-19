@@ -1,6 +1,11 @@
 package mysqlmodel
 
-import "testing"
+import (
+	"testing"
+
+	"google.golang.org/protobuf/proto"
+	pb "spider-server/gen/spider/api"
+)
 
 func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T) {
 	query := AdminPageQuery{Page: 1, PageSize: 2}
@@ -59,5 +64,44 @@ func TestMergeAdminDailyFeatureRecordsReturnsEmptyArray(t *testing.T) {
 	}
 	if total != 0 || items == nil || len(items) != 0 {
 		t.Fatalf("items = %#v, total = %d, want non-nil empty list", items, total)
+	}
+}
+
+func TestAdminPlanAndWorkoutSnapshotDetailsKeepSets(t *testing.T) {
+	plan := adminPlanDetailFromPB(&pb.WorkoutPlanSnapshot{
+		Id: "plan-1", Title: "推举", UpdatedAt: 200,
+		Exercises: []*pb.WorkoutPlanExerciseSnapshot{{
+			Id: "exercise-1", ExerciseId: "bench_press", NameSnapshot: "杠铃卧推", SetCount: 3,
+			Sets: []*pb.WorkoutPlanExerciseSetSnapshot{{WeightText: "60kg", RepsText: "8"}, {WeightText: "65kg", RepsText: "6"}},
+		}},
+	})
+	if len(plan.Exercises) != 1 || plan.Exercises[0].SetCount != 3 || len(plan.Exercises[0].Sets) != 2 || plan.Exercises[0].Sets[1].WeightText != "65kg" {
+		t.Fatalf("plan detail = %#v", plan)
+	}
+
+	session := adminWorkoutSessionDetailFromPB(9, &pb.WorkoutTrainingSessionSnapshot{
+		SessionId: "session-1", EndedAt: 300,
+		Records: []*pb.ExerciseSetRecord{
+			{ExerciseId: "bench_press", ExerciseNameSnapshot: "杠铃卧推", WeightX10: 600, WeightUnit: pb.ExerciseWeightUnit_EXERCISE_WEIGHT_UNIT_KG, Reps: 8},
+			{ExerciseId: "bench_press", ExerciseNameSnapshot: "杠铃卧推", WeightX10: 650, WeightUnit: pb.ExerciseWeightUnit_EXERCISE_WEIGHT_UNIT_KG, Reps: 6},
+			{ExerciseId: "row", ExerciseNameSnapshot: "划船", WeightX10: 500, Reps: 10},
+		},
+	})
+	if len(session.Actions) != 2 || session.Actions[0].SetCount != 2 || session.Actions[0].Sets[1].Reps != 6 || session.Actions[1].SetCount != 1 {
+		t.Fatalf("workout detail = %#v", session)
+	}
+}
+
+func TestAdminDecodeWorkoutSnapshotRejectsInvalidPayload(t *testing.T) {
+	if _, ok := adminDecodeWorkoutSnapshot([]byte("not a protobuf snapshot")); ok {
+		t.Fatal("invalid payload decoded successfully")
+	}
+	payload, err := proto.Marshal(&pb.WorkoutDataSnapshot{Kind: pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION})
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, ok := adminDecodeWorkoutSnapshot(payload)
+	if !ok || decoded.GetKind() != pb.WorkoutDataSnapshotKind_WORKOUT_DATA_SNAPSHOT_KIND_TRAINING_SESSION {
+		t.Fatalf("decoded = %#v, ok = %v", decoded, ok)
 	}
 }

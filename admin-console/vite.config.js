@@ -1,9 +1,10 @@
 import crypto from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
-import { resolve, sep } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { createLocalClientSyncPlugin } from './local-client-sync.js'
 import { createLocalOfferReplyPlugin } from './local-offer-reply.js'
 
 const MAX_BODY_BYTES = 1024 * 1024
@@ -119,7 +120,9 @@ function adminAPIPlugin(env) {
 }
 
 function localExerciseGIFPlugin(env) {
-  const root = resolve((env.EXERCISE_GIF_ROOT || '../../zlx/spider/spider/Resources/ExerciseGIFs').trim())
+  const clientRoot = (env.SPIDER_CLIENT_ROOT || '').trim()
+  const configuredRoot = (env.EXERCISE_GIF_ROOT || '').trim()
+  const root = resolve(configuredRoot || join(clientRoot, 'spider/Resources/ExerciseGIFs'))
 
   const attachMiddleware = (server) => {
     server.middlewares.use(async (req, res, next) => {
@@ -170,7 +173,7 @@ function localExerciseGIFPlugin(env) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-    plugins: [vue(), createLocalOfferReplyPlugin(env), localExerciseGIFPlugin(env), adminAPIPlugin(env)],
+    plugins: [vue(), createLocalOfferReplyPlugin(env), localExerciseGIFPlugin(env), createLocalClientSyncPlugin(env), adminAPIPlugin(env)],
     server: {
       host: '127.0.0.1',
       port: 4178,
