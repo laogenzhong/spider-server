@@ -402,14 +402,7 @@ func ListAdminPaywallSessions(query AdminPageQuery, status string, entryPoint st
 	if entryPoint = strings.TrimSpace(entryPoint); entryPoint != "" && entryPoint != "all" {
 		base = base.Where("p.entry_point = ?", entryPoint)
 	}
-	if search := strings.TrimSpace(query.Search); search != "" {
-		like := "%" + search + "%"
-		if uid, parseErr := strconv.ParseUint(search, 10, 64); parseErr == nil {
-			base = base.Where("(p.uid = ? OR u.account LIKE ? OR p.presentation_id LIKE ? OR p.anonymous_id LIKE ? OR p.device_unique_id LIKE ? OR p.product_id LIKE ?)", uid, like, like, like, like, like)
-		} else {
-			base = base.Where("(u.account LIKE ? OR p.presentation_id LIKE ? OR p.anonymous_id LIKE ? OR p.device_unique_id LIKE ? OR p.product_id LIKE ?)", like, like, like, like, like)
-		}
-	}
+	base = applyAdminPaywallSessionSearch(base, query.Search)
 	base = applyAdminTimeRange(base, "p.presented_at", query.From, query.To)
 
 	var total int64
@@ -438,6 +431,18 @@ func ListAdminPaywallSessions(query AdminPageQuery, status string, entryPoint st
 		return nil, 0, err
 	}
 	return records, total, nil
+}
+
+func applyAdminPaywallSessionSearch(db *gorm.DB, search string) *gorm.DB {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return db
+	}
+	like := "%" + search + "%"
+	if uid, err := strconv.ParseUint(search, 10, 64); err == nil {
+		return db.Where("(p.uid = ? OR u.account LIKE ? OR p.presentation_id LIKE ? OR p.anonymous_id LIKE ? OR p.device_unique_id LIKE ? OR p.product_id LIKE ?)", uid, like, like, like, like, like)
+	}
+	return db.Where("(u.account LIKE ? OR p.presentation_id LIKE ? OR p.anonymous_id LIKE ? OR p.device_unique_id LIKE ? OR p.product_id LIKE ?)", like, like, like, like, like)
 }
 
 func applyAdminPaywallSessionOrderingAndPage(db *gorm.DB, query AdminPageQuery) *gorm.DB {

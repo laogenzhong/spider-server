@@ -72,6 +72,26 @@ func TestAdminPaywallSessionPaginationUsesStableNewestFirstOrder(t *testing.T) {
 	}
 }
 
+func TestAdminPaywallSessionSearchIncludesDeviceUniqueID(t *testing.T) {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN:                       "gorm:gorm@tcp(localhost:9910)/gorm?charset=utf8&parseTime=True&loc=Local",
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{DryRun: true, DisableAutomaticPing: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return applyAdminPaywallSessionSearch(
+			tx.Table("paywall_session_records AS p").Joins("LEFT JOIN users AS u ON u.id = p.uid"),
+			"device-uuid",
+		).Find(&[]AdminPaywallSessionRecord{})
+	})
+	if !strings.Contains(sql, "p.device_unique_id LIKE") {
+		t.Fatalf("paywall session search must include device id: %q", sql)
+	}
+}
+
 func TestAdminSharedContentScorePaginationOrdersBeforeStablePage(t *testing.T) {
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       "gorm:gorm@tcp(localhost:9910)/gorm?charset=utf8&parseTime=True&loc=Local",
