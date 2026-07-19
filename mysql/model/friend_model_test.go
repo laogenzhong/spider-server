@@ -55,3 +55,34 @@ func TestNormalizeFriendAvatarSymbol(t *testing.T) {
 		}
 	}
 }
+
+func TestParseFriendSharedPlanPreservesExerciseSets(t *testing.T) {
+	plan, err := ParseFriendSharedPlan(`{"title":"上肢训练","source_plan_id":"plan-1","exercises":[{"exercise_id":"bench_press","name_snapshot":"杠铃卧推","custom_introduction":"保持肩胛骨稳定","set_count":1,"sets":[{"weight_text":"80","reps_text":"8"}]}]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Title != "上肢训练" || plan.SourcePlanID != "plan-1" || len(plan.Exercises) != 1 || len(plan.Exercises[0].Sets) != 1 || plan.Exercises[0].CustomIntroduction != "保持肩胛骨稳定" {
+		t.Fatalf("plan = %#v", plan)
+	}
+}
+
+func TestFriendTrainingScoreTitleUsesCustomName(t *testing.T) {
+	title := friendTrainingScoreTitle(FriendActionTrainingSessionRecord{
+		Exercises: []FriendActionExerciseSummaryRecord{{CustomName: "自定义推举"}, {NameSnapshot: "划船"}},
+	})
+	if title != "自定义推举 等 2 个动作" {
+		t.Fatalf("title = %q", title)
+	}
+}
+
+func TestFriendPlanShareDeleteReason(t *testing.T) {
+	if reason, ok := friendPlanShareDeleteReason(FriendPlanShareDispositionUsed); !ok || reason != "used" {
+		t.Fatalf("used reason = %q, ok = %v", reason, ok)
+	}
+	if reason, ok := friendPlanShareDeleteReason(FriendPlanShareDispositionIgnored); !ok || reason != "ignored" {
+		t.Fatalf("ignored reason = %q, ok = %v", reason, ok)
+	}
+	if _, ok := friendPlanShareDeleteReason(0); ok {
+		t.Fatal("unknown disposition unexpectedly accepted")
+	}
+}

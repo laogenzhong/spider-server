@@ -72,8 +72,27 @@ type AdminPaymentRecord struct {
 	RevocationReason      int32      `json:"revocation_reason"`
 	OfferType             int32      `json:"offer_type"`
 	OfferIdentifier       string     `json:"offer_identifier"`
+	PaywallEntryPoint     string     `json:"paywall_entry_point"`
+	PaywallPresentationID string     `json:"paywall_presentation_id"`
+	PurchasedBeforeLogin  bool       `json:"purchased_before_login"`
 	Source                string     `json:"source" gorm:"-"`
 	CreatedAt             time.Time  `json:"created_at"`
+}
+
+type AdminPaywallSessionRecord struct {
+	ID              uint64    `json:"id"`
+	PresentationID  string    `json:"presentation_id"`
+	UID             uint64    `json:"uid"`
+	Account         string    `json:"account"`
+	Nickname        string    `json:"nickname"`
+	AnonymousID     string    `json:"anonymous_id"`
+	DeviceUniqueID  string    `json:"device_unique_id"`
+	EntryPoint      string    `json:"entry_point"`
+	PresentedAt     time.Time `json:"presented_at"`
+	Status          string    `json:"status"`
+	StatusChangedAt time.Time `json:"status_changed_at"`
+	ProductID       string    `json:"product_id"`
+	AppVersion      string    `json:"app_version"`
 }
 
 type AdminRefundRecord struct {
@@ -177,6 +196,18 @@ type AdminFriendProfileRecord struct {
 	UpdatedAt           time.Time `json:"updated_at"`
 }
 
+type AdminSharedContentScoreRecord struct {
+	ID          uint64    `json:"id"`
+	ContentKind int32     `json:"content_kind"`
+	SourceUID   uint64    `json:"source_uid"`
+	SourceID    string    `json:"source_id"`
+	Title       string    `json:"title"`
+	Score       int64     `json:"score"`
+	LastUsedAt  time.Time `json:"last_used_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
 type AdminDailyFeatureRecord struct {
 	Date             string `json:"date"`
 	WeightUsers      int64  `json:"weight_users"`
@@ -265,11 +296,6 @@ type adminDailyUIDCount struct {
 	UserCount int64  `gorm:"column:user_count"`
 }
 
-type adminDailyRecordCount struct {
-	Date        string `gorm:"column:activity_date"`
-	RecordCount int64  `gorm:"column:record_count"`
-}
-
 func GetAdminUserDetail(identifier string, now time.Time) (*AdminUserDetail, error) {
 	user, err := GetUserByAdminVIPIdentifier(identifier)
 	if err != nil {
@@ -305,7 +331,7 @@ func GetAdminUserDetail(identifier string, now time.Time) (*AdminUserDetail, err
 	return detail, nil
 }
 
-func ListAdminPayments(query AdminPageQuery, source string) ([]AdminPaymentRecord, int64, error) {
+func ListAdminPayments(query AdminPageQuery, source string, paywallEntryPoint string) ([]AdminPaymentRecord, int64, error) {
 	db, err := config.DB()
 	if err != nil {
 		return nil, 0, err
@@ -317,6 +343,9 @@ func ListAdminPayments(query AdminPageQuery, source string) ([]AdminPaymentRecor
 		Joins("LEFT JOIN friend_profile_records AS fp ON fp.uid = t.uid AND fp.deleted_at IS NULL").
 		Where("t.deleted_at IS NULL")
 	base = applyAdminPaymentSource(base, source, "t")
+	if paywallEntryPoint = strings.TrimSpace(paywallEntryPoint); paywallEntryPoint != "" && paywallEntryPoint != "all" {
+		base = base.Where("t.paywall_entry_point = ?", paywallEntryPoint)
+	}
 	base = applyAdminSearch(base, query.Search, "t", "u")
 	base = applyAdminTimeRange(base, "t.purchase_at", query.From, query.To)
 
@@ -341,6 +370,9 @@ func ListAdminPayments(query AdminPageQuery, source string) ([]AdminPaymentRecor
 		t.revocation_reason,
 		t.offer_type,
 		t.offer_identifier,
+		t.paywall_entry_point,
+		t.paywall_presentation_id,
+		t.purchased_before_login,
 		t.created_at`).
 		Order("t.purchase_at DESC, t.id DESC").
 		Limit(query.PageSize).
@@ -353,6 +385,65 @@ func ListAdminPayments(query AdminPageQuery, source string) ([]AdminPaymentRecor
 		records[i].Source = adminPaymentSourceForOfferType(records[i].OfferType)
 	}
 	return records, total, nil
+}
+
+func ListAdminPaywallSessions(query AdminPageQuery, status string, entryPoint string) ([]AdminPaywallSessionRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Table("paywall_session_records AS p").
+		Joins("LEFT JOIN users AS u ON u.id = p.uid AND u.deleted_at IS NULL").
+		Joins("LEFT JOIN friend_profile_records AS fp ON fp.uid = p.uid AND fp.deleted_at IS NULL")
+	if status = strings.TrimSpace(status); status != "" && status != "all" {
+		base = base.Where("p.status = ?", normalizePaywallSessionStatus(status))
+	}
+	if entryPoint = strings.TrimSpace(entryPoint); entryPoint != "" && entryPoint != "all" {
+		base = base.Where("p.entry_point = ?", entryPoint)
+	}
+	if search := strings.TrimSpace(query.Search); search != "" {
+		like := "%" + search + "%"
+		if uid, parseErr := strconv.ParseUint(search, 10, 64); parseErr == nil {
+			base = base.Where("(p.uid = ? OR u.account LIKE ? OR p.presentation_id LIKE ? OR p.anonymous_id LIKE ? OR p.device_unique_id LIKE ? OR p.product_id LIKE ?)", uid, like, like, like, like, like)
+		} else {
+			base = base.Where("(u.account LIKE ? OR p.presentation_id LIKE ? OR p.anonymous_id LIKE ? OR p.device_unique_id LIKE ? OR p.product_id LIKE ?)", like, like, like, like, like)
+		}
+	}
+	base = applyAdminTimeRange(base, "p.presented_at", query.From, query.To)
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	records := make([]AdminPaywallSessionRecord, 0)
+	err = applyAdminPaywallSessionOrderingAndPage(
+		base.Select(`
+			p.id,
+			p.presentation_id,
+			p.uid,
+			COALESCE(u.account, '') AS account,
+			COALESCE(fp.nickname, '') AS nickname,
+			p.anonymous_id,
+			p.device_unique_id,
+			p.entry_point,
+			p.presented_at,
+			p.status,
+			p.status_changed_at,
+			p.product_id,
+			p.app_version`),
+		query,
+	).Scan(&records).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return records, total, nil
+}
+
+func applyAdminPaywallSessionOrderingAndPage(db *gorm.DB, query AdminPageQuery) *gorm.DB {
+	return db.Order("p.presented_at DESC, p.id DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize)
 }
 
 func ListAdminRefunds(query AdminPageQuery, status string, source string) ([]AdminRefundRecord, int64, error) {
@@ -742,6 +833,51 @@ func ListAdminFriendProfiles(query AdminPageQuery) ([]AdminFriendProfileRecord, 
 	return records, total, err
 }
 
+// ListAdminSharedContentScores returns plan or action-training sources ordered
+// by accumulated use points. Ordering happens before pagination and includes a
+// stable id tie-breaker so page boundaries remain deterministic.
+func ListAdminSharedContentScores(query AdminPageQuery, contentKind int32) ([]AdminSharedContentScoreRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Table("friend_shared_content_score_records AS s")
+	if contentKind == FriendSharedContentKindPlan || contentKind == FriendSharedContentKindTraining {
+		base = base.Where("s.content_kind = ?", contentKind)
+	}
+	base = applyAdminSharedContentScoreSearch(base, query.Search)
+	base = applyAdminTimeRange(base, "s.last_used_at", query.From, query.To)
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	records := make([]AdminSharedContentScoreRecord, 0)
+	err = applyAdminSharedContentScoreOrderingAndPage(base.Select(`
+		s.id,
+		s.content_kind,
+		s.source_uid,
+		s.source_id,
+		s.title,
+		s.score,
+		s.last_used_at,
+		s.created_at,
+		s.updated_at`), query).
+		Scan(&records).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return records, total, nil
+}
+
+func applyAdminSharedContentScoreOrderingAndPage(db *gorm.DB, query AdminPageQuery) *gorm.DB {
+	query = normalizeAdminPageQuery(query)
+	return db.Order("s.score DESC, s.last_used_at DESC, s.id DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize)
+}
+
 // ListAdminPlanDataUsers returns only users that have plan-folder or plan
 // snapshots. The source timestamp is ordered in SQL before pagination so page
 // one is always the most recently changed plan data.
@@ -969,11 +1105,7 @@ func ListAdminDailyFeatureAdoption(query AdminPageQuery) ([]AdminDailyFeatureRec
 	if err != nil {
 		return nil, 0, err
 	}
-	exerciseSetCounts, err := listAdminDailyRecordCounts(db, "exercise_set_records", "", "created_at", query)
-	if err != nil {
-		return nil, 0, err
-	}
-	createdPlans, err := listAdminDailyRecordCounts(
+	createdPlans, err := listAdminDailyDistinctUIDsByTime(
 		db,
 		"workout_data_snapshots",
 		"kind = 4",
@@ -983,7 +1115,7 @@ func ListAdminDailyFeatureAdoption(query AdminPageQuery) ([]AdminDailyFeatureRec
 	if err != nil {
 		return nil, 0, err
 	}
-	updatedPlans, err := listAdminDailyRecordCounts(
+	updatedPlans, err := listAdminDailyDistinctUIDsByTime(
 		db,
 		"workout_data_snapshots",
 		"kind = 4 AND deleted_at IS NULL AND updated_at > created_at",
@@ -998,31 +1130,27 @@ func ListAdminDailyFeatureAdoption(query AdminPageQuery) ([]AdminDailyFeatureRec
 		return nil, 0, err
 	}
 
-	return mergeAdminDailyFeatureRecords(query, weight, tags, exerciseSets, exerciseSetCounts, createdPlans, updatedPlans, bodyPhotos)
+	return mergeAdminDailyFeatureRecords(query, weight, tags, exerciseSets, createdPlans, updatedPlans, bodyPhotos)
 }
 
 func listAdminDailyDistinctUIDs(db *gorm.DB, table string, condition string, query AdminPageQuery) ([]adminDailyUIDCount, error) {
-	base := db.Table(table).
-		Select("DATE(created_at) AS activity_date, COUNT(DISTINCT uid) AS user_count")
-	if condition != "" {
-		base = base.Where(condition)
-	}
-	base = applyAdminTimeRange(base, "created_at", query.From, query.To)
+	return listAdminDailyDistinctUIDsByTime(db, table, condition, "created_at", query)
+}
+
+func listAdminDailyDistinctUIDsByTime(db *gorm.DB, table string, condition string, timeColumn string, query AdminPageQuery) ([]adminDailyUIDCount, error) {
 	records := make([]adminDailyUIDCount, 0)
-	err := base.Group("DATE(created_at)").Scan(&records).Error
+	err := adminDailyDistinctUIDQuery(db, table, condition, timeColumn, query).Scan(&records).Error
 	return records, err
 }
 
-func listAdminDailyRecordCounts(db *gorm.DB, table string, condition string, timeColumn string, query AdminPageQuery) ([]adminDailyRecordCount, error) {
+func adminDailyDistinctUIDQuery(db *gorm.DB, table string, condition string, timeColumn string, query AdminPageQuery) *gorm.DB {
 	base := db.Table(table).
-		Select("DATE(" + timeColumn + ") AS activity_date, COUNT(*) AS record_count")
+		Select("DATE(" + timeColumn + ") AS activity_date, COUNT(DISTINCT uid) AS user_count")
 	if condition != "" {
 		base = base.Where(condition)
 	}
 	base = applyAdminTimeRange(base, timeColumn, query.From, query.To)
-	records := make([]adminDailyRecordCount, 0)
-	err := base.Group("DATE(" + timeColumn + ")").Scan(&records).Error
-	return records, err
+	return base.Group("DATE(" + timeColumn + ")")
 }
 
 func mergeAdminDailyFeatureRecords(
@@ -1030,9 +1158,8 @@ func mergeAdminDailyFeatureRecords(
 	weight []adminDailyUIDCount,
 	tags []adminDailyUIDCount,
 	exerciseSets []adminDailyUIDCount,
-	exerciseSetCounts []adminDailyRecordCount,
-	createdPlans []adminDailyRecordCount,
-	updatedPlans []adminDailyRecordCount,
+	createdPlans []adminDailyUIDCount,
+	updatedPlans []adminDailyUIDCount,
 	bodyPhotos []adminDailyUIDCount,
 ) ([]AdminDailyFeatureRecord, int64, error) {
 	byDate := make(map[string]*AdminDailyFeatureRecord)
@@ -1050,15 +1177,13 @@ func mergeAdminDailyFeatureRecords(
 	}
 	for _, item := range exerciseSets {
 		get(item.Date).ExerciseSetUsers = item.UserCount
-	}
-	for _, item := range exerciseSetCounts {
-		get(item.Date).ExerciseSetCount = item.RecordCount
+		get(item.Date).ExerciseSetCount = item.UserCount
 	}
 	for _, item := range createdPlans {
-		get(item.Date).CreatedPlanCount = item.RecordCount
+		get(item.Date).CreatedPlanCount = item.UserCount
 	}
 	for _, item := range updatedPlans {
-		get(item.Date).UpdatedPlanCount = item.RecordCount
+		get(item.Date).UpdatedPlanCount = item.UserCount
 	}
 	for _, item := range bodyPhotos {
 		get(item.Date).BodyPhotoUsers = item.UserCount
@@ -1124,9 +1249,9 @@ func applyAdminSearch(db *gorm.DB, search string, transactionAlias string, userA
 	}
 	like := "%" + search + "%"
 	if uid, err := strconv.ParseUint(search, 10, 64); err == nil && uid > 0 {
-		return db.Where("("+transactionAlias+".uid = ? OR "+userAlias+".account LIKE ? OR "+transactionAlias+".transaction_id LIKE ? OR "+transactionAlias+".original_transaction_id LIKE ?)", uid, like, like, like)
+		return db.Where("("+transactionAlias+".uid = ? OR "+userAlias+".account LIKE ? OR "+transactionAlias+".transaction_id LIKE ? OR "+transactionAlias+".original_transaction_id LIKE ? OR "+transactionAlias+".paywall_entry_point LIKE ?)", uid, like, like, like, like)
 	}
-	return db.Where("("+userAlias+".account LIKE ? OR "+transactionAlias+".transaction_id LIKE ? OR "+transactionAlias+".original_transaction_id LIKE ?)", like, like, like)
+	return db.Where("("+userAlias+".account LIKE ? OR "+transactionAlias+".transaction_id LIKE ? OR "+transactionAlias+".original_transaction_id LIKE ? OR "+transactionAlias+".paywall_entry_point LIKE ?)", like, like, like, like)
 }
 
 func applyAdminUserSearch(db *gorm.DB, search string) *gorm.DB {
@@ -1163,6 +1288,18 @@ func applyAdminFriendProfileSearch(db *gorm.DB, search string) *gorm.DB {
 		return db.Where("(fp.uid = ? OR u.account LIKE ? OR fp.user_id LIKE ? OR fp.nickname LIKE ? OR fp.bio LIKE ?)", uid, like, like, like, like)
 	}
 	return db.Where("(u.account LIKE ? OR fp.user_id LIKE ? OR fp.nickname LIKE ? OR fp.bio LIKE ?)", like, like, like, like)
+}
+
+func applyAdminSharedContentScoreSearch(db *gorm.DB, search string) *gorm.DB {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return db
+	}
+	like := "%" + search + "%"
+	if uid, err := strconv.ParseUint(search, 10, 64); err == nil && uid > 0 {
+		return db.Where("(s.source_uid = ? OR s.source_id LIKE ? OR s.title LIKE ?)", uid, like, like)
+	}
+	return db.Where("(s.source_id LIKE ? OR s.title LIKE ?)", like, like)
 }
 
 func normalizeAdminClientSyncFailureStatus(status string) string {

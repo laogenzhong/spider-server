@@ -28,6 +28,7 @@ import {
   Search,
   Settings2,
   ShieldCheck,
+  Trophy,
   UserRoundPlus,
   UserRoundCheck,
   UsersRound,
@@ -51,6 +52,7 @@ const navGroups = [
     { id: 'featureAdoption', label: '功能新增', icon: ChartNoAxesColumnIncreasing },
   ] },
   { label: '训练数据', items: [
+    { id: 'shareScores', label: '分享积分', icon: Trophy },
     { id: 'planData', label: '用户训练计划', icon: ClipboardList },
     { id: 'workoutData', label: '用户锻炼记录', icon: Dumbbell },
     { id: 'workoutExplore', label: '探索配置', icon: Dumbbell },
@@ -58,6 +60,7 @@ const navGroups = [
   ] },
   { label: '商业与系统', items: [
     { id: 'payments', label: '付费记录', icon: BadgeDollarSign },
+    { id: 'paywallSessions', label: '付费墙会话', icon: ClipboardList },
     { id: 'refunds', label: '退款用户', icon: RotateCcw },
     { id: 'syncFailures', label: '丢弃任务', icon: CircleAlert },
     { id: 'offerReply', label: '兑换码回复', icon: MessageSquareReply },
@@ -98,7 +101,9 @@ const grantOptions = [
 ]
 
 const payments = reactive({ items: [], total: 0, page: 1, page_size: 30 })
-const paymentFilters = reactive({ search: '', source: 'all', from: '', to: '' })
+const paymentFilters = reactive({ search: '', source: 'all', entry_point: 'all', from: '', to: '' })
+const paywallSessions = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const paywallSessionFilters = reactive({ search: '', status: 'all', entry_point: 'all', from: thirtyDaysAgo, to: today })
 const refunds = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const refundFilters = reactive({ search: '', source: 'all', status: 'requested', from: '', to: '' })
 const activities = reactive({ items: [], total: 0, page: 1, page_size: 30 })
@@ -122,6 +127,8 @@ const friendProfileFilters = reactive({ search: '', from: thirtyDaysAgo, to: tod
 const expandedFriendProfileID = ref(0)
 const featureAdoption = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const featureAdoptionFilters = reactive({ from: thirtyDaysAgo, to: today })
+const sharedContentScores = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const sharedContentScoreFilters = reactive({ kind: 'plan', search: '' })
 const planDataUsers = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const planDataFilters = reactive({ search: '' })
 const planDataSelectedUser = ref(null)
@@ -240,6 +247,7 @@ async function selectSection(id) {
   if (group) expandedNavGroup.value = group.label
   if (id === 'overview') await loadOverview()
   if (id === 'payments') await loadPayments()
+  if (id === 'paywallSessions') await loadPaywallSessions()
   if (id === 'refunds') await loadRefunds()
   if (id === 'activity') await loadActivities()
   if (id === 'todayRegistrations') await loadTodayRegistrations()
@@ -250,6 +258,7 @@ async function selectSection(id) {
   if (id === 'onboarding') await loadOnboardingProfiles()
   if (id === 'friendProfiles') await loadFriendProfiles()
   if (id === 'featureAdoption') await loadFeatureAdoption()
+  if (id === 'shareScores') await loadSharedContentScores()
   if (id === 'planData') await loadPlanDataUsers()
   if (id === 'workoutData') await loadWorkoutDataUsers()
   if (id === 'offerReply') await loadOfferReplyWorkspace()
@@ -325,6 +334,12 @@ async function revokeVIP() {
 async function loadPayments(page = payments.page) {
   await withLoading('payments', async () => {
     Object.assign(payments, await request(`/payments${queryString({ ...paymentFilters, page, page_size: payments.page_size })}`))
+  }).catch(() => {})
+}
+
+async function loadPaywallSessions(page = paywallSessions.page) {
+  await withLoading('paywallSessions', async () => {
+    Object.assign(paywallSessions, await request(`/paywall-sessions${queryString({ ...paywallSessionFilters, page, page_size: paywallSessions.page_size })}`))
   }).catch(() => {})
 }
 
@@ -409,6 +424,12 @@ async function loadFriendProfiles(page = friendProfiles.page) {
 async function loadFeatureAdoption(page = featureAdoption.page) {
   await withLoading('featureAdoption', async () => {
     Object.assign(featureAdoption, await request(`/feature-adoption${queryString({ ...featureAdoptionFilters, page, page_size: featureAdoption.page_size })}`))
+  }).catch(() => {})
+}
+
+async function loadSharedContentScores(page = sharedContentScores.page) {
+  await withLoading('sharedContentScores', async () => {
+    Object.assign(sharedContentScores, await request(`/shared-content-scores${queryString({ ...sharedContentScoreFilters, page, page_size: sharedContentScores.page_size })}`))
   }).catch(() => {})
 }
 
@@ -655,6 +676,49 @@ function sourceLabel(source, offerType) {
   return offerType === 0 ? '购买 / 历史未知' : 'Apple 购买'
 }
 
+const paywallEntryLabels = {
+  onboarding: 'Onboard 页面',
+  profile_membership: '我的 · Pro 会员卡',
+  profile_theme: '我的 · Pro 主题',
+  profile_training_tag_palette: '我的 · 训练标签配色',
+  history_pro_button: '历史 · 右上角 Pro',
+  history_date_navigation: '历史 · 日期范围',
+  history_year_overview: '历史 · 年度总览',
+  history_chart: '历史 · Pro 图表',
+  today_date_navigation: '今日 · 日期范围',
+  health_date_navigation: '健康 · 日期范围',
+  health_metric_range: '健康 · 指标时间范围',
+  health_analysis: '健康分析 · 时间范围',
+  friend_radar_range: '好友 · 雷达范围',
+  friend_training_history: '好友 · 历史训练',
+  plan_library_limit: '计划数量不足',
+  share_plan: '分享计划',
+  share_training: '分享训练',
+  save_friend_training_as_plan: '好友动作训练存为计划',
+  create_custom_exercise: '创建自定义动作',
+  custom_exercise_introduction: '自定义动作介绍',
+  custom_training_tag: '自定义训练标签',
+  workout_note: '训练备注',
+  body_media: '身体照片动态媒体',
+}
+
+function paywallEntryLabel(entry) {
+  if (!entry) return '历史版本 / 未记录'
+  return paywallEntryLabels[entry] || entry
+}
+
+function paywallSessionStatusLabel(status) {
+  if (status === 'purchased') return '已购买'
+  if (status === 'cancelled') return '已取消'
+  return '默认（含杀进程）'
+}
+
+function paywallSessionStatusClass(status) {
+  if (status === 'purchased') return 'positive'
+  if (status === 'cancelled') return 'negative'
+  return 'warning'
+}
+
 function vipKindLabel(kind) {
   if (kind === 'lifetime') return '永久'
   if (kind === 'monthly') return '限时'
@@ -862,30 +926,82 @@ onUnmounted(() => unsubscribeAdminRoute())
             <button type="button" :class="{ selected: paymentFilters.source === 'purchase' }" @click="paymentFilters.source = 'purchase'; loadPayments(1)">Apple 购买</button>
             <button type="button" :class="{ selected: paymentFilters.source === 'offer_code' }" @click="paymentFilters.source = 'offer_code'; loadPayments(1)">兑换码</button>
           </div>
+          <select v-model="paymentFilters.entry_point" @change="loadPayments(1)">
+            <option value="all">全部付费墙入口</option>
+            <option v-for="(label, value) in paywallEntryLabels" :key="value" :value="value">{{ label }}</option>
+          </select>
           <input v-model="paymentFilters.from" type="date" />
           <input v-model="paymentFilters.to" type="date" />
-          <div class="compact-search"><Search :size="16" /><input v-model="paymentFilters.search" placeholder="UID / 账号 / 交易号" @keyup.enter="loadPayments(1)" /></div>
+          <div class="compact-search"><Search :size="16" /><input v-model="paymentFilters.search" placeholder="UID / 账号 / 交易号 / 入口" @keyup.enter="loadPayments(1)" /></div>
           <button class="primary-button" type="button" @click="loadPayments(1)">查询</button>
         </div>
         <div class="result-meta">共 {{ payments.total }} 条</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>用户</th><th>来源</th><th>商品</th><th>购买时间</th><th>到期时间</th><th>状态</th><th>交易号</th></tr></thead>
+            <thead><tr><th>用户</th><th>来源</th><th>付费墙入口</th><th>商品</th><th>购买时间</th><th>到期时间</th><th>状态</th><th>交易号</th></tr></thead>
             <tbody>
               <tr v-for="item in payments.items" :key="item.id">
                 <td><strong>{{ item.nickname || item.account || `UID ${item.uid}` }}</strong><small>UID {{ item.uid }}</small></td>
                 <td><span class="source-tag" :class="item.source">{{ sourceLabel(item.source, item.offer_type) }}</span></td>
+                <td>
+                  <strong>{{ paywallEntryLabel(item.paywall_entry_point) }}</strong>
+                  <small v-if="item.purchased_before_login">先购买、后登录补绑 UID</small>
+                  <small v-if="item.paywall_presentation_id" class="mono">{{ item.paywall_presentation_id }}</small>
+                </td>
                 <td>{{ item.product_id }}<small v-if="item.offer_identifier">{{ item.offer_identifier }}</small></td>
                 <td>{{ formatDateTime(item.purchase_at) }}</td>
                 <td>{{ formatDateTime(item.expires_at) }}</td>
                 <td><span class="status-pill" :class="item.revocation_at ? 'negative' : 'positive'">{{ item.revocation_at ? '已退款' : '有效记录' }}</span></td>
                 <td class="mono">{{ item.transaction_id }}</td>
               </tr>
-              <tr v-if="!payments.items?.length"><td colspan="7" class="empty-cell">暂无记录</td></tr>
+              <tr v-if="!payments.items?.length"><td colspan="8" class="empty-cell">暂无记录</td></tr>
             </tbody>
           </table>
         </div>
         <Pagination :data="payments" :page-count="pageCount(payments)" @change="loadPayments" />
+      </section>
+
+      <section v-else-if="current === 'paywallSessions'" class="page-section">
+        <div class="filter-toolbar">
+          <div class="segmented">
+            <button type="button" :class="{ selected: paywallSessionFilters.status === 'all' }" @click="paywallSessionFilters.status = 'all'; loadPaywallSessions(1)">全部</button>
+            <button type="button" :class="{ selected: paywallSessionFilters.status === 'default' }" @click="paywallSessionFilters.status = 'default'; loadPaywallSessions(1)">默认 / 杀进程</button>
+            <button type="button" :class="{ selected: paywallSessionFilters.status === 'cancelled' }" @click="paywallSessionFilters.status = 'cancelled'; loadPaywallSessions(1)">已取消</button>
+            <button type="button" :class="{ selected: paywallSessionFilters.status === 'purchased' }" @click="paywallSessionFilters.status = 'purchased'; loadPaywallSessions(1)">已购买</button>
+          </div>
+          <select v-model="paywallSessionFilters.entry_point" @change="loadPaywallSessions(1)">
+            <option value="all">全部弹出原因</option>
+            <option v-for="(label, value) in paywallEntryLabels" :key="value" :value="value">{{ label }}</option>
+          </select>
+          <input v-model="paywallSessionFilters.from" type="date" />
+          <input v-model="paywallSessionFilters.to" type="date" />
+          <div class="compact-search"><Search :size="16" /><input v-model="paywallSessionFilters.search" placeholder="UID / 账号 / 设备 ID / 会话 / 商品" @keyup.enter="loadPaywallSessions(1)" /></div>
+          <button class="primary-button" type="button" @click="loadPaywallSessions(1)">查询</button>
+        </div>
+        <div class="result-meta">共 {{ paywallSessions.total }} 次付费墙展示；默认状态表示尚未收到取消或购买更新，其中包含杀进程场景。</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用户</th><th>设备 ID</th><th>弹出原因</th><th>当前状态</th><th>弹出时间</th><th>状态时间</th><th>商品</th><th>版本</th><th>会话标识</th></tr></thead>
+            <tbody>
+              <tr v-for="item in paywallSessions.items" :key="item.id">
+                <td>
+                  <strong>{{ item.uid ? (item.nickname || item.account || `UID ${item.uid}`) : '未登录用户' }}</strong>
+                  <small>UID {{ item.uid }}</small>
+                </td>
+                <td class="mono">{{ item.device_unique_id || '历史版本未记录' }}</td>
+                <td><strong>{{ paywallEntryLabel(item.entry_point) }}</strong><small class="mono">{{ item.entry_point }}</small></td>
+                <td><span class="status-pill" :class="paywallSessionStatusClass(item.status)">{{ paywallSessionStatusLabel(item.status) }}</span></td>
+                <td>{{ formatDateTime(item.presented_at) }}</td>
+                <td>{{ formatDateTime(item.status_changed_at) }}</td>
+                <td>{{ item.product_id || '—' }}</td>
+                <td>{{ item.app_version || '—' }}</td>
+                <td class="mono">{{ item.presentation_id }}<small>{{ item.anonymous_id }}</small></td>
+              </tr>
+              <tr v-if="!paywallSessions.items?.length"><td colspan="9" class="empty-cell">暂无付费墙会话</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination :data="paywallSessions" :page-count="pageCount(paywallSessions)" @change="loadPaywallSessions" />
       </section>
 
       <section v-else-if="current === 'refunds'" class="page-section">
@@ -1133,9 +1249,9 @@ onUnmounted(() => unsubscribeAdminRoute())
                 <td><strong class="daily-count">{{ item.weight_users }}</strong><small>UID 去重</small></td>
                 <td><strong class="daily-count">{{ item.training_tag_users }}</strong><small>UID 去重</small></td>
                 <td><strong class="daily-count">{{ item.exercise_set_users }}</strong><small>UID 去重</small></td>
-                <td><strong class="daily-count">{{ item.exercise_set_count }}</strong><small>记录数</small></td>
-                <td><strong class="daily-count">{{ item.created_plan_count }}</strong><small>首次同步</small></td>
-                <td><strong class="daily-count">{{ item.updated_plan_count }}</strong><small>最新更新</small></td>
+                <td><strong class="daily-count">{{ item.exercise_set_count }}</strong><small>UID 去重</small></td>
+                <td><strong class="daily-count">{{ item.created_plan_count }}</strong><small>UID 去重</small></td>
+                <td><strong class="daily-count">{{ item.updated_plan_count }}</strong><small>UID 去重</small></td>
                 <td><strong class="daily-count">{{ item.body_photo_users }}</strong><small>UID 去重</small></td>
               </tr>
               <tr v-if="!featureAdoption.items?.length"><td colspan="8" class="empty-cell">暂无新增记录</td></tr>
@@ -1143,6 +1259,38 @@ onUnmounted(() => unsubscribeAdminRoute())
           </table>
         </div>
         <Pagination :data="featureAdoption" :page-count="pageCount(featureAdoption)" @change="loadFeatureAdoption" />
+      </section>
+
+      <section v-else-if="current === 'shareScores'" class="page-section">
+        <div class="section-toolbar">
+          <div><h2>分享使用积分</h2><p>好友真正保存计划或训练后计 1 分；相同用户重复确认使用也会继续计分。</p></div>
+          <button class="icon-button bordered" type="button" title="刷新" @click="loadSharedContentScores"><RefreshCw :size="17" :class="{ spin: loading.sharedContentScores }" /></button>
+        </div>
+        <div class="filter-toolbar">
+          <div class="segmented">
+            <button type="button" :class="{ selected: sharedContentScoreFilters.kind === 'plan' }" @click="sharedContentScoreFilters.kind = 'plan'; loadSharedContentScores(1)">计划</button>
+            <button type="button" :class="{ selected: sharedContentScoreFilters.kind === 'training' }" @click="sharedContentScoreFilters.kind = 'training'; loadSharedContentScores(1)">动作训练</button>
+          </div>
+          <div class="compact-search"><Search :size="16" /><input v-model="sharedContentScoreFilters.search" placeholder="来源 UID / 来源 ID / 标题" @keyup.enter="loadSharedContentScores(1)" /></div>
+          <button class="primary-button" type="button" @click="loadSharedContentScores(1)">查询</button>
+        </div>
+        <div class="result-meta">共 {{ sharedContentScores.total }} 条 · 服务端按积分、最近使用时间和记录 ID 依次倒序</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>排名</th><th>内容</th><th>来源用户</th><th>积分</th><th>最近使用</th></tr></thead>
+            <tbody>
+              <tr v-for="(item, index) in sharedContentScores.items" :key="item.id">
+                <td><strong>{{ (sharedContentScores.page - 1) * sharedContentScores.page_size + index + 1 }}</strong></td>
+                <td><strong>{{ item.title || (sharedContentScoreFilters.kind === 'plan' ? '未命名计划' : '动作训练') }}</strong><small>{{ item.source_id }}</small></td>
+                <td><strong>UID {{ item.source_uid }}</strong></td>
+                <td><strong class="daily-count">{{ item.score }}</strong><small>使用积分</small></td>
+                <td>{{ formatDateTime(item.last_used_at) }}</td>
+              </tr>
+              <tr v-if="!sharedContentScores.items?.length"><td colspan="5" class="empty-cell">暂无分享使用积分</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination :data="sharedContentScores" :page-count="pageCount(sharedContentScores)" @change="loadSharedContentScores" />
       </section>
 
       <section v-else-if="current === 'planData'" class="page-section">

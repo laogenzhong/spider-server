@@ -40,6 +40,10 @@ message VIPStatusResponse {
 
 message CreateApplePurchaseOrderRequest {
   string product_id = 1;
+  string paywall_entry_point = 2;
+  string paywall_presentation_id = 3;
+  string anonymous_id = 4;
+  bool presented_while_logged_out = 5;
 }
 
 message CreateApplePurchaseOrderResponse {
@@ -56,4 +60,5 @@ message ConfirmAppleTransactionRequest {
   string original_transaction_id = 3;
   string signed_transaction_jws = 4;
   string order_id = 5;
+  string anonymous_id = 6;
 }

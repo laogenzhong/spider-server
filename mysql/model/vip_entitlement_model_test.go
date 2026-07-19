@@ -80,6 +80,32 @@ func TestApplePurchaseOrderConfirmationSourcePostLoginBind(t *testing.T) {
 	}
 }
 
+func TestApplePurchaseOrderConfirmationSourceAllowsDelayedAnonymousBind(t *testing.T) {
+	createdAt := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+	order := &ApplePurchaseOrder{
+		OrderID:   "11111111-2222-4333-8444-555555555555",
+		ProductID: "hh.spider.vip.monthly",
+		Status:    ApplePurchaseOrderStatusCreated,
+		CreatedAt: createdAt,
+		ExpiresAt: createdAt.Add(30 * time.Minute),
+	}
+	record := &AppleTransaction{
+		TransactionID:         "tx-delayed",
+		OriginalTransactionID: "original-delayed",
+		ProductID:             order.ProductID,
+		PurchaseAt:            timePtr(createdAt.Add(2 * time.Minute)),
+		AppAccountToken:       order.OrderID,
+	}
+
+	source, err := applePurchaseOrderConfirmationSource(order, record, createdAt.Add(48*time.Hour))
+	if err != nil {
+		t.Fatalf("delayed anonymous confirmation returned error: %v", err)
+	}
+	if source != ApplePurchaseOrderSourcePrePurchase {
+		t.Fatalf("source = %q, want %q", source, ApplePurchaseOrderSourcePrePurchase)
+	}
+}
+
 func TestApplePurchaseOrderConfirmationSourceExpiredOrder(t *testing.T) {
 	now := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
 	order := &ApplePurchaseOrder{

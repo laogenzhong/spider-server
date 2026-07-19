@@ -237,10 +237,14 @@ func (x *VIPStatusResponse) GetStatus() *VIPStatus {
 }
 
 type CreateApplePurchaseOrderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProductId     string                 `protobuf:"bytes,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	ProductId               string                 `protobuf:"bytes,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	PaywallEntryPoint       string                 `protobuf:"bytes,2,opt,name=paywall_entry_point,json=paywallEntryPoint,proto3" json:"paywall_entry_point,omitempty"`
+	PaywallPresentationId   string                 `protobuf:"bytes,3,opt,name=paywall_presentation_id,json=paywallPresentationId,proto3" json:"paywall_presentation_id,omitempty"`
+	AnonymousId             string                 `protobuf:"bytes,4,opt,name=anonymous_id,json=anonymousId,proto3" json:"anonymous_id,omitempty"`
+	PresentedWhileLoggedOut bool                   `protobuf:"varint,5,opt,name=presented_while_logged_out,json=presentedWhileLoggedOut,proto3" json:"presented_while_logged_out,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *CreateApplePurchaseOrderRequest) Reset() {
@@ -278,6 +282,34 @@ func (x *CreateApplePurchaseOrderRequest) GetProductId() string {
 		return x.ProductId
 	}
 	return ""
+}
+
+func (x *CreateApplePurchaseOrderRequest) GetPaywallEntryPoint() string {
+	if x != nil {
+		return x.PaywallEntryPoint
+	}
+	return ""
+}
+
+func (x *CreateApplePurchaseOrderRequest) GetPaywallPresentationId() string {
+	if x != nil {
+		return x.PaywallPresentationId
+	}
+	return ""
+}
+
+func (x *CreateApplePurchaseOrderRequest) GetAnonymousId() string {
+	if x != nil {
+		return x.AnonymousId
+	}
+	return ""
+}
+
+func (x *CreateApplePurchaseOrderRequest) GetPresentedWhileLoggedOut() bool {
+	if x != nil {
+		return x.PresentedWhileLoggedOut
+	}
+	return false
 }
 
 type CreateApplePurchaseOrderResponse struct {
@@ -356,6 +388,7 @@ type ConfirmAppleTransactionRequest struct {
 	OriginalTransactionId string                 `protobuf:"bytes,3,opt,name=original_transaction_id,json=originalTransactionId,proto3" json:"original_transaction_id,omitempty"`
 	SignedTransactionJws  string                 `protobuf:"bytes,4,opt,name=signed_transaction_jws,json=signedTransactionJws,proto3" json:"signed_transaction_jws,omitempty"`
 	OrderId               string                 `protobuf:"bytes,5,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	AnonymousId           string                 `protobuf:"bytes,6,opt,name=anonymous_id,json=anonymousId,proto3" json:"anonymous_id,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -425,6 +458,13 @@ func (x *ConfirmAppleTransactionRequest) GetOrderId() string {
 	return ""
 }
 
+func (x *ConfirmAppleTransactionRequest) GetAnonymousId() string {
+	if x != nil {
+		return x.AnonymousId
+	}
+	return ""
+}
+
 var File_primary_purchase_proto protoreflect.FileDescriptor
 
 const file_primary_purchase_proto_rawDesc = "" +
@@ -442,10 +482,14 @@ const file_primary_purchase_proto_rawDesc = "" +
 	"\vserver_time\x18\x06 \x01(\x03R\n" +
 	"serverTime\";\n" +
 	"\x11VIPStatusResponse\x12&\n" +
-	"\x06status\x18\x01 \x01(\v2\x0e.api.VIPStatusR\x06status\"@\n" +
+	"\x06status\x18\x01 \x01(\v2\x0e.api.VIPStatusR\x06status\"\x88\x02\n" +
 	"\x1fCreateApplePurchaseOrderRequest\x12\x1d\n" +
 	"\n" +
-	"product_id\x18\x01 \x01(\tR\tproductId\"\x9c\x01\n" +
+	"product_id\x18\x01 \x01(\tR\tproductId\x12.\n" +
+	"\x13paywall_entry_point\x18\x02 \x01(\tR\x11paywallEntryPoint\x126\n" +
+	"\x17paywall_presentation_id\x18\x03 \x01(\tR\x15paywallPresentationId\x12!\n" +
+	"\fanonymous_id\x18\x04 \x01(\tR\vanonymousId\x12;\n" +
+	"\x1apresented_while_logged_out\x18\x05 \x01(\bR\x17presentedWhileLoggedOut\"\x9c\x01\n" +
 	" CreateApplePurchaseOrderResponse\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x1d\n" +
 	"\n" +
@@ -453,14 +497,15 @@ const file_primary_purchase_proto_rawDesc = "" +
 	"\n" +
 	"expires_at\x18\x03 \x01(\x03R\texpiresAt\x12\x1f\n" +
 	"\vserver_time\x18\x04 \x01(\x03R\n" +
-	"serverTime\"\xef\x01\n" +
+	"serverTime\"\x92\x02\n" +
 	"\x1eConfirmAppleTransactionRequest\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12%\n" +
 	"\x0etransaction_id\x18\x02 \x01(\tR\rtransactionId\x126\n" +
 	"\x17original_transaction_id\x18\x03 \x01(\tR\x15originalTransactionId\x124\n" +
 	"\x16signed_transaction_jws\x18\x04 \x01(\tR\x14signedTransactionJws\x12\x19\n" +
-	"\border_id\x18\x05 \x01(\tR\aorderId*I\n" +
+	"\border_id\x18\x05 \x01(\tR\aorderId\x12!\n" +
+	"\fanonymous_id\x18\x06 \x01(\tR\vanonymousId*I\n" +
 	"\aVIPKind\x12\x11\n" +
 	"\rVIP_KIND_NONE\x10\x00\x12\x15\n" +
 	"\x11VIP_KIND_LIFETIME\x10\x01\x12\x14\n" +

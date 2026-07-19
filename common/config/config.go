@@ -177,7 +177,7 @@ func Default() Config {
 			DefaultTTL: "8760h",
 		},
 		Auth: AuthConfig{
-			PublicGRPCMethodPrefixes: []string{"/uc.", "/api.AdminVIPApi/", "/api.AppUpdateService/"},
+			PublicGRPCMethodPrefixes: []string{"/uc.", "/api.AdminVIPApi/", "/api.AppUpdateService/", "/api.PaywallAnalyticsService/"},
 		},
 		Sign: SignConfig{
 			Enabled:               true,

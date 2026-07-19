@@ -95,6 +95,12 @@ const (
 	// ClientSyncFailureArchiveFailed 客户端失败队列任务归档失败。
 	ClientSyncFailureArchiveFailed int = 91003
 
+	// PaywallSessionInvalid 付费墙会话参数无效。
+	PaywallSessionInvalid int = 92001
+
+	// PaywallSessionSaveFailed 保存付费墙会话失败。
+	PaywallSessionSaveFailed int = 92002
+
 	// WeightRecordDateEmpty 体重记录日期为空。
 	WeightRecordDateEmpty int = 20001
 
@@ -361,6 +367,63 @@ const (
 
 	// FriendProfileUpdateFailed 更新朋友资料失败。
 	FriendProfileUpdateFailed int = 50019
+
+	// FriendTrainingSnapshotTooLarge 好友训练公开快照超过体积限制。
+	FriendTrainingSnapshotTooLarge int = 50020
+
+	// FriendTrainingSnapshotInvalid 好友训练公开快照的数据结构不合法。
+	FriendTrainingSnapshotInvalid int = 50021
+
+	// FriendPlanShareRecipientEmpty 计划分享接收方为空。
+	FriendPlanShareRecipientEmpty int = 50022
+
+	// FriendPlanShareInvalid 计划分享内容不合法。
+	FriendPlanShareInvalid int = 50023
+
+	// FriendPlanShareTooLarge 计划分享内容超过体积限制。
+	FriendPlanShareTooLarge int = 50024
+
+	// FriendPlanShareNotFriend 计划分享接收方不是当前用户好友。
+	FriendPlanShareNotFriend int = 50025
+
+	// FriendPlanSharePendingLimit 接收方待处理计划分享已达上限。
+	FriendPlanSharePendingLimit int = 50026
+
+	// FriendPlanShareSendFailed 发送计划分享失败。
+	FriendPlanShareSendFailed int = 50027
+
+	// FriendPlanShareListFailed 获取计划分享通知失败。
+	FriendPlanShareListFailed int = 50028
+
+	// FriendPlanShareIDEmpty 计划分享通知 id 为空。
+	FriendPlanShareIDEmpty int = 50029
+
+	// FriendPlanShareDispositionInvalid 计划分享处理原因不合法。
+	FriendPlanShareDispositionInvalid int = 50030
+
+	// FriendPlanShareNotFound 计划分享通知不存在。
+	FriendPlanShareNotFound int = 50031
+
+	// FriendPlanShareHandleFailed 处理计划分享通知失败。
+	FriendPlanShareHandleFailed int = 50032
+
+	// FriendTrainingUseEventInvalid 好友训练使用事件 id 不合法。
+	FriendTrainingUseEventInvalid int = 50033
+
+	// FriendTrainingUseSourceEmpty 好友训练来源 uid 为空。
+	FriendTrainingUseSourceEmpty int = 50034
+
+	// FriendTrainingUseSessionInvalid 好友训练会话 id 不合法。
+	FriendTrainingUseSessionInvalid int = 50035
+
+	// FriendTrainingUseNotFriend 好友训练来源已不是当前用户好友。
+	FriendTrainingUseNotFriend int = 50036
+
+	// FriendTrainingUseUnavailable 好友训练已不可用或不再公开。
+	FriendTrainingUseUnavailable int = 50037
+
+	// FriendTrainingUseRecordFailed 记录好友训练使用积分失败。
+	FriendTrainingUseRecordFailed int = 50038
 
 	// BodyPhotoRecordEmpty 照片索引记录为空。
 	BodyPhotoRecordEmpty int = 60001

@@ -96,6 +96,10 @@ type AppleTransaction struct {
 	AppAccountToken       string `gorm:"size:64;index"`
 	OfferIdentifier       string `gorm:"size:128;index"`
 	OfferType             int32  `gorm:"index;not null;default:0"`
+	PaywallEntryPoint     string `gorm:"size:64;index"`
+	PaywallPresentationID string `gorm:"size:64;index"`
+	AnonymousID           string `gorm:"size:64;index"`
+	PurchasedBeforeLogin  bool   `gorm:"index;not null;default:false"`
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             gorm.DeletedAt `gorm:"index"`
@@ -111,19 +115,23 @@ type AppleTransactionOwnership struct {
 }
 
 type ApplePurchaseOrder struct {
-	ID                    uint   `gorm:"primaryKey;autoIncrement"`
-	UID                   uint64 `gorm:"index;not null"`
-	OrderID               string `gorm:"size:64;uniqueIndex;not null"`
-	ProductID             string `gorm:"size:128;index;not null"`
-	Status                string `gorm:"size:32;index;not null"`
-	Source                string `gorm:"size:32;index;not null;default:pre_purchase"`
-	TransactionID         string `gorm:"size:128;index"`
-	OriginalTransactionID string `gorm:"size:128;index"`
-	ExpiresAt             time.Time
-	ConfirmedAt           *time.Time
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
-	DeletedAt             gorm.DeletedAt `gorm:"index"`
+	ID                      uint   `gorm:"primaryKey;autoIncrement"`
+	UID                     uint64 `gorm:"index;not null"`
+	OrderID                 string `gorm:"size:64;uniqueIndex;not null"`
+	ProductID               string `gorm:"size:128;index;not null"`
+	Status                  string `gorm:"size:32;index;not null"`
+	Source                  string `gorm:"size:32;index;not null;default:pre_purchase"`
+	TransactionID           string `gorm:"size:128;index"`
+	OriginalTransactionID   string `gorm:"size:128;index"`
+	PaywallEntryPoint       string `gorm:"size:64;index"`
+	PaywallPresentationID   string `gorm:"size:64;index"`
+	AnonymousID             string `gorm:"size:64;index"`
+	PresentedWhileLoggedOut bool   `gorm:"index;not null;default:false"`
+	ExpiresAt               time.Time
+	ConfirmedAt             *time.Time
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+	DeletedAt               gorm.DeletedAt `gorm:"index"`
 }
 
 type AppStoreServerNotification struct {
@@ -189,6 +197,7 @@ type AppleTransactionReconcileRef struct {
 func SaveAppleTransactionAndGrantVIP(
 	uid uint64,
 	orderID string,
+	anonymousID string,
 	tx appstore.Transaction,
 	signedTransactionJWS string,
 	monthlyProductID string,
@@ -217,7 +226,7 @@ func SaveAppleTransactionAndGrantVIP(
 	record := appleTransactionFromVerifiedPayload(uid, tx, signedTransactionJWS)
 	record.OrderID = orderID
 	return config.WithTx(func(db *gorm.DB) error {
-		order, err := lockApplePurchaseOrder(db, uid, orderID)
+		order, err := lockApplePurchaseOrder(db, uid, orderID, anonymousID)
 		if err != nil {
 			return err
 		}
@@ -234,6 +243,13 @@ func SaveAppleTransactionAndGrantVIP(
 			return err
 		}
 		record.OrderID = order.OrderID
+		record.PaywallEntryPoint = order.PaywallEntryPoint
+		record.PaywallPresentationID = order.PaywallPresentationID
+		record.AnonymousID = order.AnonymousID
+		record.PurchasedBeforeLogin = order.PresentedWhileLoggedOut || order.UID == 0
+		if order.UID == 0 {
+			order.UID = uid
+		}
 
 		if err := upsertAppleTransaction(db, record, true); err != nil {
 			return err
@@ -242,6 +258,16 @@ func SaveAppleTransactionAndGrantVIP(
 		if err := markApplePurchaseOrderPaid(db, order, record.TransactionID, record.OriginalTransactionID, confirmationSource, now); err != nil {
 			return err
 		}
+		purchasedAt := now
+		if record.PurchaseAt != nil {
+			purchasedAt = *record.PurchaseAt
+		}
+		_ = markExistingPaywallSessionPurchased(
+			db,
+			record.PaywallPresentationID,
+			record.ProductID,
+			purchasedAt,
+		)
 
 		active := record.RevocationAt == nil && isVIPEntitlementCurrentlyActive(kind, record.ExpiresAt, now)
 		if !active {
@@ -258,9 +284,20 @@ func SaveAppleTransactionAndGrantVIP(
 	})
 }
 
-func CreateApplePurchaseOrder(uid uint64, productID string, monthlyProductID string, lifetimeProductID string, now time.Time) (*ApplePurchaseOrder, error) {
-	if uid == 0 {
-		return nil, fmt.Errorf("uid is empty")
+func CreateApplePurchaseOrder(
+	uid uint64,
+	productID string,
+	paywallEntryPoint string,
+	paywallPresentationID string,
+	anonymousID string,
+	presentedWhileLoggedOut bool,
+	monthlyProductID string,
+	lifetimeProductID string,
+	now time.Time,
+) (*ApplePurchaseOrder, error) {
+	anonymousID = truncateString(strings.TrimSpace(anonymousID), 64)
+	if uid == 0 && anonymousID == "" {
+		return nil, fmt.Errorf("anonymous id is empty")
 	}
 	productID = strings.TrimSpace(productID)
 	if productID == "" {
@@ -278,12 +315,16 @@ func CreateApplePurchaseOrder(uid uint64, productID string, monthlyProductID str
 		return nil, err
 	}
 	order := &ApplePurchaseOrder{
-		UID:       uid,
-		OrderID:   orderID,
-		ProductID: productID,
-		Status:    ApplePurchaseOrderStatusCreated,
-		Source:    ApplePurchaseOrderSourcePrePurchase,
-		ExpiresAt: now.Add(30 * time.Minute),
+		UID:                     uid,
+		OrderID:                 orderID,
+		ProductID:               productID,
+		Status:                  ApplePurchaseOrderStatusCreated,
+		Source:                  ApplePurchaseOrderSourcePrePurchase,
+		PaywallEntryPoint:       truncateString(strings.TrimSpace(paywallEntryPoint), 64),
+		PaywallPresentationID:   truncateString(strings.TrimSpace(paywallPresentationID), 64),
+		AnonymousID:             anonymousID,
+		PresentedWhileLoggedOut: presentedWhileLoggedOut || uid == 0,
+		ExpiresAt:               now.Add(30 * time.Minute),
 	}
 	return order, config.Create(order)
 }
@@ -1072,7 +1113,14 @@ func upsertAppleTransaction(db *gorm.DB, record *AppleTransaction, updateOrderID
 		"updated_at",
 	}
 	if updateOrderID {
-		columns = append(columns, "order_id")
+		columns = append(
+			columns,
+			"order_id",
+			"paywall_entry_point",
+			"paywall_presentation_id",
+			"anonymous_id",
+			"purchased_before_login",
+		)
 	}
 
 	return db.Clauses(clause.OnConflict{
@@ -1500,10 +1548,10 @@ func uniqueNonEmptyStrings(values []string) []string {
 	return result
 }
 
-func lockApplePurchaseOrder(db *gorm.DB, uid uint64, orderID string) (*ApplePurchaseOrder, error) {
+func lockApplePurchaseOrder(db *gorm.DB, uid uint64, orderID string, anonymousID string) (*ApplePurchaseOrder, error) {
 	order := &ApplePurchaseOrder{}
 	err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("uid = ? AND order_id = ?", uid, orderID).
+		Where("order_id = ?", orderID).
 		First(order).Error
 	if err != nil {
 		if isRecordNotFound(err) {
@@ -1511,7 +1559,14 @@ func lockApplePurchaseOrder(db *gorm.DB, uid uint64, orderID string) (*ApplePurc
 		}
 		return nil, err
 	}
-	return order, nil
+	if order.UID == uid && uid > 0 {
+		return order, nil
+	}
+	if order.UID == 0 && strings.TrimSpace(order.AnonymousID) != "" &&
+		strings.TrimSpace(order.AnonymousID) == strings.TrimSpace(anonymousID) {
+		return order, nil
+	}
+	return nil, ErrApplePurchaseOrderNotFound
 }
 
 func markApplePurchaseOrderExpired(db *gorm.DB, order *ApplePurchaseOrder) error {
@@ -1535,12 +1590,12 @@ func applePurchaseOrderConfirmationSource(order *ApplePurchaseOrder, record *App
 	if order == nil || record == nil || record.PurchaseAt == nil {
 		return "", ErrApplePurchaseOrderTransactionMismatch
 	}
-	if order.Status != ApplePurchaseOrderStatusPaid && order.ExpiresAt.Before(now) {
-		return "", ErrApplePurchaseOrderExpired
-	}
-
 	if validateApplePurchaseOrderTransactionWindow(order, record) == nil {
 		return ApplePurchaseOrderSourcePrePurchase, nil
+	}
+
+	if order.Status != ApplePurchaseOrderStatusPaid && order.ExpiresAt.Before(now) {
+		return "", ErrApplePurchaseOrderExpired
 	}
 
 	if isPostLoginBindApplePurchaseOrder(order, record) {

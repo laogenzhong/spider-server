@@ -77,6 +77,159 @@ func (FriendRequestStatus) EnumDescriptor() ([]byte, []int) {
 	return file_primary_friend_proto_rawDescGZIP(), []int{0}
 }
 
+// FriendActionWeightUnit 表示好友动作组中公开的重量单位。
+type FriendActionWeightUnit int32
+
+const (
+	FriendActionWeightUnit_FRIEND_ACTION_WEIGHT_UNIT_UNKNOWN FriendActionWeightUnit = 0
+	FriendActionWeightUnit_FRIEND_ACTION_WEIGHT_UNIT_KG      FriendActionWeightUnit = 1
+	FriendActionWeightUnit_FRIEND_ACTION_WEIGHT_UNIT_LB      FriendActionWeightUnit = 2
+)
+
+// Enum value maps for FriendActionWeightUnit.
+var (
+	FriendActionWeightUnit_name = map[int32]string{
+		0: "FRIEND_ACTION_WEIGHT_UNIT_UNKNOWN",
+		1: "FRIEND_ACTION_WEIGHT_UNIT_KG",
+		2: "FRIEND_ACTION_WEIGHT_UNIT_LB",
+	}
+	FriendActionWeightUnit_value = map[string]int32{
+		"FRIEND_ACTION_WEIGHT_UNIT_UNKNOWN": 0,
+		"FRIEND_ACTION_WEIGHT_UNIT_KG":      1,
+		"FRIEND_ACTION_WEIGHT_UNIT_LB":      2,
+	}
+)
+
+func (x FriendActionWeightUnit) Enum() *FriendActionWeightUnit {
+	p := new(FriendActionWeightUnit)
+	*p = x
+	return p
+}
+
+func (x FriendActionWeightUnit) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FriendActionWeightUnit) Descriptor() protoreflect.EnumDescriptor {
+	return file_primary_friend_proto_enumTypes[1].Descriptor()
+}
+
+func (FriendActionWeightUnit) Type() protoreflect.EnumType {
+	return &file_primary_friend_proto_enumTypes[1]
+}
+
+func (x FriendActionWeightUnit) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FriendActionWeightUnit.Descriptor instead.
+func (FriendActionWeightUnit) EnumDescriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{1}
+}
+
+type FriendActionTrainingKind int32
+
+const (
+	FriendActionTrainingKind_FRIEND_ACTION_TRAINING_KIND_UNKNOWN  FriendActionTrainingKind = 0
+	FriendActionTrainingKind_FRIEND_ACTION_TRAINING_KIND_STRENGTH FriendActionTrainingKind = 1
+	FriendActionTrainingKind_FRIEND_ACTION_TRAINING_KIND_CARDIO   FriendActionTrainingKind = 2
+	FriendActionTrainingKind_FRIEND_ACTION_TRAINING_KIND_MIXED    FriendActionTrainingKind = 3
+)
+
+// Enum value maps for FriendActionTrainingKind.
+var (
+	FriendActionTrainingKind_name = map[int32]string{
+		0: "FRIEND_ACTION_TRAINING_KIND_UNKNOWN",
+		1: "FRIEND_ACTION_TRAINING_KIND_STRENGTH",
+		2: "FRIEND_ACTION_TRAINING_KIND_CARDIO",
+		3: "FRIEND_ACTION_TRAINING_KIND_MIXED",
+	}
+	FriendActionTrainingKind_value = map[string]int32{
+		"FRIEND_ACTION_TRAINING_KIND_UNKNOWN":  0,
+		"FRIEND_ACTION_TRAINING_KIND_STRENGTH": 1,
+		"FRIEND_ACTION_TRAINING_KIND_CARDIO":   2,
+		"FRIEND_ACTION_TRAINING_KIND_MIXED":    3,
+	}
+)
+
+func (x FriendActionTrainingKind) Enum() *FriendActionTrainingKind {
+	p := new(FriendActionTrainingKind)
+	*p = x
+	return p
+}
+
+func (x FriendActionTrainingKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FriendActionTrainingKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_primary_friend_proto_enumTypes[2].Descriptor()
+}
+
+func (FriendActionTrainingKind) Type() protoreflect.EnumType {
+	return &file_primary_friend_proto_enumTypes[2]
+}
+
+func (x FriendActionTrainingKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FriendActionTrainingKind.Descriptor instead.
+func (FriendActionTrainingKind) EnumDescriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{2}
+}
+
+type FriendPlanShareDisposition int32
+
+const (
+	FriendPlanShareDisposition_FRIEND_PLAN_SHARE_DISPOSITION_UNKNOWN FriendPlanShareDisposition = 0
+	// 已确认复制到自己的计划文件夹。
+	FriendPlanShareDisposition_FRIEND_PLAN_SHARE_DISPOSITION_USED FriendPlanShareDisposition = 1
+	// 未使用并忽略。
+	FriendPlanShareDisposition_FRIEND_PLAN_SHARE_DISPOSITION_IGNORED FriendPlanShareDisposition = 2
+)
+
+// Enum value maps for FriendPlanShareDisposition.
+var (
+	FriendPlanShareDisposition_name = map[int32]string{
+		0: "FRIEND_PLAN_SHARE_DISPOSITION_UNKNOWN",
+		1: "FRIEND_PLAN_SHARE_DISPOSITION_USED",
+		2: "FRIEND_PLAN_SHARE_DISPOSITION_IGNORED",
+	}
+	FriendPlanShareDisposition_value = map[string]int32{
+		"FRIEND_PLAN_SHARE_DISPOSITION_UNKNOWN": 0,
+		"FRIEND_PLAN_SHARE_DISPOSITION_USED":    1,
+		"FRIEND_PLAN_SHARE_DISPOSITION_IGNORED": 2,
+	}
+)
+
+func (x FriendPlanShareDisposition) Enum() *FriendPlanShareDisposition {
+	p := new(FriendPlanShareDisposition)
+	*p = x
+	return p
+}
+
+func (x FriendPlanShareDisposition) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FriendPlanShareDisposition) Descriptor() protoreflect.EnumDescriptor {
+	return file_primary_friend_proto_enumTypes[3].Descriptor()
+}
+
+func (FriendPlanShareDisposition) Type() protoreflect.EnumType {
+	return &file_primary_friend_proto_enumTypes[3]
+}
+
+func (x FriendPlanShareDisposition) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FriendPlanShareDisposition.Descriptor instead.
+func (FriendPlanShareDisposition) EnumDescriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{3}
+}
+
 // FriendListItem 表示好友列表中的轻量好友信息。
 // 仅用于好友列表展示，不包含详细训练数据。
 type FriendListItem struct {
@@ -505,9 +658,11 @@ type FriendTrainingDaySummary struct {
 	// 当天训练标签/默认训练名称的热量拆分。
 	Tags []*FriendTrainingTagStat `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
 	// 当天总消耗热量，单位 kcal。
-	Calories      string `protobuf:"bytes,3,opt,name=calories,proto3" json:"calories,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Calories string `protobuf:"bytes,3,opt,name=calories,proto3" json:"calories,omitempty"`
+	// 当天可下钻的动作训练；仅最近 7 个训练日携带，服务端会限制数量与快照体积。
+	ActionTrainingSessions []*FriendActionTrainingSession `protobuf:"bytes,4,rep,name=action_training_sessions,json=actionTrainingSessions,proto3" json:"action_training_sessions,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *FriendTrainingDaySummary) Reset() {
@@ -561,6 +716,723 @@ func (x *FriendTrainingDaySummary) GetCalories() string {
 	return ""
 }
 
+func (x *FriendTrainingDaySummary) GetActionTrainingSessions() []*FriendActionTrainingSession {
+	if x != nil {
+		return x.ActionTrainingSessions
+	}
+	return nil
+}
+
+// FriendActionSetSummary 表示一个公开动作组的基础数据。
+type FriendActionSetSummary struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 用户录入重量乘 10；有氧器械动作可为 0。
+	WeightX10  int32                  `protobuf:"varint,1,opt,name=weight_x10,json=weightX10,proto3" json:"weight_x10,omitempty"`
+	WeightUnit FriendActionWeightUnit `protobuf:"varint,2,opt,name=weight_unit,json=weightUnit,proto3,enum=api.FriendActionWeightUnit" json:"weight_unit,omitempty"`
+	// 力量动作为次数，有氧器械动作为分钟数。
+	Reps          int32 `protobuf:"varint,3,opt,name=reps,proto3" json:"reps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FriendActionSetSummary) Reset() {
+	*x = FriendActionSetSummary{}
+	mi := &file_primary_friend_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendActionSetSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendActionSetSummary) ProtoMessage() {}
+
+func (x *FriendActionSetSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendActionSetSummary.ProtoReflect.Descriptor instead.
+func (*FriendActionSetSummary) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *FriendActionSetSummary) GetWeightX10() int32 {
+	if x != nil {
+		return x.WeightX10
+	}
+	return 0
+}
+
+func (x *FriendActionSetSummary) GetWeightUnit() FriendActionWeightUnit {
+	if x != nil {
+		return x.WeightUnit
+	}
+	return FriendActionWeightUnit_FRIEND_ACTION_WEIGHT_UNIT_UNKNOWN
+}
+
+func (x *FriendActionSetSummary) GetReps() int32 {
+	if x != nil {
+		return x.Reps
+	}
+	return 0
+}
+
+// FriendActionExerciseSummary 表示一次动作训练中的一个动作及其组数。
+type FriendActionExerciseSummary struct {
+	state                protoimpl.MessageState    `protogen:"open.v1"`
+	ExerciseId           string                    `protobuf:"bytes,1,opt,name=exercise_id,json=exerciseId,proto3" json:"exercise_id,omitempty"`
+	NameKey              string                    `protobuf:"bytes,2,opt,name=name_key,json=nameKey,proto3" json:"name_key,omitempty"`
+	NameSnapshot         string                    `protobuf:"bytes,3,opt,name=name_snapshot,json=nameSnapshot,proto3" json:"name_snapshot,omitempty"`
+	CategoryKey          string                    `protobuf:"bytes,4,opt,name=category_key,json=categoryKey,proto3" json:"category_key,omitempty"`
+	TypeKey              string                    `protobuf:"bytes,5,opt,name=type_key,json=typeKey,proto3" json:"type_key,omitempty"`
+	Sets                 []*FriendActionSetSummary `protobuf:"bytes,6,rep,name=sets,proto3" json:"sets,omitempty"`
+	CustomName           string                    `protobuf:"bytes,7,opt,name=custom_name,json=customName,proto3" json:"custom_name,omitempty"`
+	CustomSubcategoryKey string                    `protobuf:"bytes,8,opt,name=custom_subcategory_key,json=customSubcategoryKey,proto3" json:"custom_subcategory_key,omitempty"`
+	CustomIntroduction   string                    `protobuf:"bytes,9,opt,name=custom_introduction,json=customIntroduction,proto3" json:"custom_introduction,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *FriendActionExerciseSummary) Reset() {
+	*x = FriendActionExerciseSummary{}
+	mi := &file_primary_friend_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendActionExerciseSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendActionExerciseSummary) ProtoMessage() {}
+
+func (x *FriendActionExerciseSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendActionExerciseSummary.ProtoReflect.Descriptor instead.
+func (*FriendActionExerciseSummary) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *FriendActionExerciseSummary) GetExerciseId() string {
+	if x != nil {
+		return x.ExerciseId
+	}
+	return ""
+}
+
+func (x *FriendActionExerciseSummary) GetNameKey() string {
+	if x != nil {
+		return x.NameKey
+	}
+	return ""
+}
+
+func (x *FriendActionExerciseSummary) GetNameSnapshot() string {
+	if x != nil {
+		return x.NameSnapshot
+	}
+	return ""
+}
+
+func (x *FriendActionExerciseSummary) GetCategoryKey() string {
+	if x != nil {
+		return x.CategoryKey
+	}
+	return ""
+}
+
+func (x *FriendActionExerciseSummary) GetTypeKey() string {
+	if x != nil {
+		return x.TypeKey
+	}
+	return ""
+}
+
+func (x *FriendActionExerciseSummary) GetSets() []*FriendActionSetSummary {
+	if x != nil {
+		return x.Sets
+	}
+	return nil
+}
+
+func (x *FriendActionExerciseSummary) GetCustomName() string {
+	if x != nil {
+		return x.CustomName
+	}
+	return ""
+}
+
+func (x *FriendActionExerciseSummary) GetCustomSubcategoryKey() string {
+	if x != nil {
+		return x.CustomSubcategoryKey
+	}
+	return ""
+}
+
+func (x *FriendActionExerciseSummary) GetCustomIntroduction() string {
+	if x != nil {
+		return x.CustomIntroduction
+	}
+	return ""
+}
+
+// FriendBoundWorkoutSummary 表示与动作训练时间重叠的 HealthKit 运动基础数据。
+// 不包含心率、路线、备注或 HealthKit UUID。
+type FriendBoundWorkoutSummary struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	WorkoutType     string                 `protobuf:"bytes,1,opt,name=workout_type,json=workoutType,proto3" json:"workout_type,omitempty"`
+	StartAt         int64                  `protobuf:"varint,2,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
+	EndAt           int64                  `protobuf:"varint,3,opt,name=end_at,json=endAt,proto3" json:"end_at,omitempty"`
+	DurationSeconds int32                  `protobuf:"varint,4,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	EnergyKcal      float64                `protobuf:"fixed64,5,opt,name=energy_kcal,json=energyKcal,proto3" json:"energy_kcal,omitempty"`
+	DistanceMeters  float64                `protobuf:"fixed64,6,opt,name=distance_meters,json=distanceMeters,proto3" json:"distance_meters,omitempty"`
+	HasDistance     bool                   `protobuf:"varint,7,opt,name=has_distance,json=hasDistance,proto3" json:"has_distance,omitempty"`
+	Tags            []string               `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *FriendBoundWorkoutSummary) Reset() {
+	*x = FriendBoundWorkoutSummary{}
+	mi := &file_primary_friend_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendBoundWorkoutSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendBoundWorkoutSummary) ProtoMessage() {}
+
+func (x *FriendBoundWorkoutSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendBoundWorkoutSummary.ProtoReflect.Descriptor instead.
+func (*FriendBoundWorkoutSummary) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *FriendBoundWorkoutSummary) GetWorkoutType() string {
+	if x != nil {
+		return x.WorkoutType
+	}
+	return ""
+}
+
+func (x *FriendBoundWorkoutSummary) GetStartAt() int64 {
+	if x != nil {
+		return x.StartAt
+	}
+	return 0
+}
+
+func (x *FriendBoundWorkoutSummary) GetEndAt() int64 {
+	if x != nil {
+		return x.EndAt
+	}
+	return 0
+}
+
+func (x *FriendBoundWorkoutSummary) GetDurationSeconds() int32 {
+	if x != nil {
+		return x.DurationSeconds
+	}
+	return 0
+}
+
+func (x *FriendBoundWorkoutSummary) GetEnergyKcal() float64 {
+	if x != nil {
+		return x.EnergyKcal
+	}
+	return 0
+}
+
+func (x *FriendBoundWorkoutSummary) GetDistanceMeters() float64 {
+	if x != nil {
+		return x.DistanceMeters
+	}
+	return 0
+}
+
+func (x *FriendBoundWorkoutSummary) GetHasDistance() bool {
+	if x != nil {
+		return x.HasDistance
+	}
+	return false
+}
+
+func (x *FriendBoundWorkoutSummary) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// FriendActionTrainingSession 是好友可见的一次只读动作训练摘要。
+type FriendActionTrainingSession struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 仅用于好友资料页列表稳定标识，不是服务端训练快照主键。
+	SessionId string                         `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	StartAt   int64                          `protobuf:"varint,2,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
+	EndAt     int64                          `protobuf:"varint,3,opt,name=end_at,json=endAt,proto3" json:"end_at,omitempty"`
+	Kind      FriendActionTrainingKind       `protobuf:"varint,4,opt,name=kind,proto3,enum=api.FriendActionTrainingKind" json:"kind,omitempty"`
+	Exercises []*FriendActionExerciseSummary `protobuf:"bytes,5,rep,name=exercises,proto3" json:"exercises,omitempty"`
+	// 仅当该动作训练与某次 HealthKit 运动重叠时存在。
+	BoundWorkout  *FriendBoundWorkoutSummary `protobuf:"bytes,6,opt,name=bound_workout,json=boundWorkout,proto3" json:"bound_workout,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FriendActionTrainingSession) Reset() {
+	*x = FriendActionTrainingSession{}
+	mi := &file_primary_friend_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendActionTrainingSession) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendActionTrainingSession) ProtoMessage() {}
+
+func (x *FriendActionTrainingSession) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendActionTrainingSession.ProtoReflect.Descriptor instead.
+func (*FriendActionTrainingSession) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FriendActionTrainingSession) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *FriendActionTrainingSession) GetStartAt() int64 {
+	if x != nil {
+		return x.StartAt
+	}
+	return 0
+}
+
+func (x *FriendActionTrainingSession) GetEndAt() int64 {
+	if x != nil {
+		return x.EndAt
+	}
+	return 0
+}
+
+func (x *FriendActionTrainingSession) GetKind() FriendActionTrainingKind {
+	if x != nil {
+		return x.Kind
+	}
+	return FriendActionTrainingKind_FRIEND_ACTION_TRAINING_KIND_UNKNOWN
+}
+
+func (x *FriendActionTrainingSession) GetExercises() []*FriendActionExerciseSummary {
+	if x != nil {
+		return x.Exercises
+	}
+	return nil
+}
+
+func (x *FriendActionTrainingSession) GetBoundWorkout() *FriendBoundWorkoutSummary {
+	if x != nil {
+		return x.BoundWorkout
+	}
+	return nil
+}
+
+// FriendSharedPlanSet 是好友分享计划中的一组目标值。
+type FriendSharedPlanSet struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	WeightText    string                 `protobuf:"bytes,1,opt,name=weight_text,json=weightText,proto3" json:"weight_text,omitempty"`
+	RepsText      string                 `protobuf:"bytes,2,opt,name=reps_text,json=repsText,proto3" json:"reps_text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FriendSharedPlanSet) Reset() {
+	*x = FriendSharedPlanSet{}
+	mi := &file_primary_friend_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendSharedPlanSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendSharedPlanSet) ProtoMessage() {}
+
+func (x *FriendSharedPlanSet) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendSharedPlanSet.ProtoReflect.Descriptor instead.
+func (*FriendSharedPlanSet) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *FriendSharedPlanSet) GetWeightText() string {
+	if x != nil {
+		return x.WeightText
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanSet) GetRepsText() string {
+	if x != nil {
+		return x.RepsText
+	}
+	return ""
+}
+
+// FriendSharedPlanExercise 是好友分享计划中的动作配置。
+type FriendSharedPlanExercise struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	ExerciseId           string                 `protobuf:"bytes,1,opt,name=exercise_id,json=exerciseId,proto3" json:"exercise_id,omitempty"`
+	NameKey              string                 `protobuf:"bytes,2,opt,name=name_key,json=nameKey,proto3" json:"name_key,omitempty"`
+	NameSnapshot         string                 `protobuf:"bytes,3,opt,name=name_snapshot,json=nameSnapshot,proto3" json:"name_snapshot,omitempty"`
+	CategoryKey          string                 `protobuf:"bytes,4,opt,name=category_key,json=categoryKey,proto3" json:"category_key,omitempty"`
+	TypeKey              string                 `protobuf:"bytes,5,opt,name=type_key,json=typeKey,proto3" json:"type_key,omitempty"`
+	DisplayTypeKey       string                 `protobuf:"bytes,6,opt,name=display_type_key,json=displayTypeKey,proto3" json:"display_type_key,omitempty"`
+	CustomName           string                 `protobuf:"bytes,7,opt,name=custom_name,json=customName,proto3" json:"custom_name,omitempty"`
+	CustomSubcategoryKey string                 `protobuf:"bytes,8,opt,name=custom_subcategory_key,json=customSubcategoryKey,proto3" json:"custom_subcategory_key,omitempty"`
+	Note                 string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"`
+	SetCount             int32                  `protobuf:"varint,10,opt,name=set_count,json=setCount,proto3" json:"set_count,omitempty"`
+	WeightUnit           string                 `protobuf:"bytes,11,opt,name=weight_unit,json=weightUnit,proto3" json:"weight_unit,omitempty"`
+	Sets                 []*FriendSharedPlanSet `protobuf:"bytes,12,rep,name=sets,proto3" json:"sets,omitempty"`
+	CustomIntroduction   string                 `protobuf:"bytes,13,opt,name=custom_introduction,json=customIntroduction,proto3" json:"custom_introduction,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *FriendSharedPlanExercise) Reset() {
+	*x = FriendSharedPlanExercise{}
+	mi := &file_primary_friend_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendSharedPlanExercise) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendSharedPlanExercise) ProtoMessage() {}
+
+func (x *FriendSharedPlanExercise) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendSharedPlanExercise.ProtoReflect.Descriptor instead.
+func (*FriendSharedPlanExercise) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *FriendSharedPlanExercise) GetExerciseId() string {
+	if x != nil {
+		return x.ExerciseId
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetNameKey() string {
+	if x != nil {
+		return x.NameKey
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetNameSnapshot() string {
+	if x != nil {
+		return x.NameSnapshot
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetCategoryKey() string {
+	if x != nil {
+		return x.CategoryKey
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetTypeKey() string {
+	if x != nil {
+		return x.TypeKey
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetDisplayTypeKey() string {
+	if x != nil {
+		return x.DisplayTypeKey
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetCustomName() string {
+	if x != nil {
+		return x.CustomName
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetCustomSubcategoryKey() string {
+	if x != nil {
+		return x.CustomSubcategoryKey
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetSetCount() int32 {
+	if x != nil {
+		return x.SetCount
+	}
+	return 0
+}
+
+func (x *FriendSharedPlanExercise) GetWeightUnit() string {
+	if x != nil {
+		return x.WeightUnit
+	}
+	return ""
+}
+
+func (x *FriendSharedPlanExercise) GetSets() []*FriendSharedPlanSet {
+	if x != nil {
+		return x.Sets
+	}
+	return nil
+}
+
+func (x *FriendSharedPlanExercise) GetCustomIntroduction() string {
+	if x != nil {
+		return x.CustomIntroduction
+	}
+	return ""
+}
+
+// FriendSharedPlan 是可由接收方复制到自己计划文件夹的只读计划快照。
+type FriendSharedPlan struct {
+	state     protoimpl.MessageState      `protogen:"open.v1"`
+	Title     string                      `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Exercises []*FriendSharedPlanExercise `protobuf:"bytes,2,rep,name=exercises,proto3" json:"exercises,omitempty"`
+	// 分享者本地计划 ID，用于归属同一计划的使用积分。
+	SourcePlanId  string `protobuf:"bytes,3,opt,name=source_plan_id,json=sourcePlanId,proto3" json:"source_plan_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FriendSharedPlan) Reset() {
+	*x = FriendSharedPlan{}
+	mi := &file_primary_friend_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendSharedPlan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendSharedPlan) ProtoMessage() {}
+
+func (x *FriendSharedPlan) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendSharedPlan.ProtoReflect.Descriptor instead.
+func (*FriendSharedPlan) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *FriendSharedPlan) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *FriendSharedPlan) GetExercises() []*FriendSharedPlanExercise {
+	if x != nil {
+		return x.Exercises
+	}
+	return nil
+}
+
+func (x *FriendSharedPlan) GetSourcePlanId() string {
+	if x != nil {
+		return x.SourcePlanId
+	}
+	return ""
+}
+
+// FriendPlanShareNotification 是一条待处理的好友计划分享通知。
+type FriendPlanShareNotification struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	FromUid       uint64                 `protobuf:"varint,2,opt,name=from_uid,json=fromUid,proto3" json:"from_uid,omitempty"`
+	FromUserId    string                 `protobuf:"bytes,3,opt,name=from_user_id,json=fromUserId,proto3" json:"from_user_id,omitempty"`
+	Nickname      string                 `protobuf:"bytes,4,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	AvatarSymbol  string                 `protobuf:"bytes,5,opt,name=avatar_symbol,json=avatarSymbol,proto3" json:"avatar_symbol,omitempty"`
+	Plan          *FriendSharedPlan      `protobuf:"bytes,6,opt,name=plan,proto3" json:"plan,omitempty"`
+	CreatedAt     int64                  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FriendPlanShareNotification) Reset() {
+	*x = FriendPlanShareNotification{}
+	mi := &file_primary_friend_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FriendPlanShareNotification) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FriendPlanShareNotification) ProtoMessage() {}
+
+func (x *FriendPlanShareNotification) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FriendPlanShareNotification.ProtoReflect.Descriptor instead.
+func (*FriendPlanShareNotification) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *FriendPlanShareNotification) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *FriendPlanShareNotification) GetFromUid() uint64 {
+	if x != nil {
+		return x.FromUid
+	}
+	return 0
+}
+
+func (x *FriendPlanShareNotification) GetFromUserId() string {
+	if x != nil {
+		return x.FromUserId
+	}
+	return ""
+}
+
+func (x *FriendPlanShareNotification) GetNickname() string {
+	if x != nil {
+		return x.Nickname
+	}
+	return ""
+}
+
+func (x *FriendPlanShareNotification) GetAvatarSymbol() string {
+	if x != nil {
+		return x.AvatarSymbol
+	}
+	return ""
+}
+
+func (x *FriendPlanShareNotification) GetPlan() *FriendSharedPlan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+func (x *FriendPlanShareNotification) GetCreatedAt() int64 {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return 0
+}
+
 // MyTrainingPublicSnapshot 表示当前用户公开给好友看的训练摘要。
 type MyTrainingPublicSnapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -578,7 +1450,7 @@ type MyTrainingPublicSnapshot struct {
 
 func (x *MyTrainingPublicSnapshot) Reset() {
 	*x = MyTrainingPublicSnapshot{}
-	mi := &file_primary_friend_proto_msgTypes[5]
+	mi := &file_primary_friend_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -590,7 +1462,7 @@ func (x *MyTrainingPublicSnapshot) String() string {
 func (*MyTrainingPublicSnapshot) ProtoMessage() {}
 
 func (x *MyTrainingPublicSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[5]
+	mi := &file_primary_friend_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -603,7 +1475,7 @@ func (x *MyTrainingPublicSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MyTrainingPublicSnapshot.ProtoReflect.Descriptor instead.
 func (*MyTrainingPublicSnapshot) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{5}
+	return file_primary_friend_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *MyTrainingPublicSnapshot) GetVisible() bool {
@@ -643,7 +1515,7 @@ type ListFriendsRequest struct {
 
 func (x *ListFriendsRequest) Reset() {
 	*x = ListFriendsRequest{}
-	mi := &file_primary_friend_proto_msgTypes[6]
+	mi := &file_primary_friend_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +1527,7 @@ func (x *ListFriendsRequest) String() string {
 func (*ListFriendsRequest) ProtoMessage() {}
 
 func (x *ListFriendsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[6]
+	mi := &file_primary_friend_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +1540,7 @@ func (x *ListFriendsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendsRequest.ProtoReflect.Descriptor instead.
 func (*ListFriendsRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{6}
+	return file_primary_friend_proto_rawDescGZIP(), []int{14}
 }
 
 // ListFriendsResponse 返回好友列表以及当前用户训练数据公开状态。
@@ -684,7 +1556,7 @@ type ListFriendsResponse struct {
 
 func (x *ListFriendsResponse) Reset() {
 	*x = ListFriendsResponse{}
-	mi := &file_primary_friend_proto_msgTypes[7]
+	mi := &file_primary_friend_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -696,7 +1568,7 @@ func (x *ListFriendsResponse) String() string {
 func (*ListFriendsResponse) ProtoMessage() {}
 
 func (x *ListFriendsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[7]
+	mi := &file_primary_friend_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +1581,7 @@ func (x *ListFriendsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendsResponse.ProtoReflect.Descriptor instead.
 func (*ListFriendsResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{7}
+	return file_primary_friend_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListFriendsResponse) GetFriends() []*FriendListItem {
@@ -737,7 +1609,7 @@ type AddFriendRequest struct {
 
 func (x *AddFriendRequest) Reset() {
 	*x = AddFriendRequest{}
-	mi := &file_primary_friend_proto_msgTypes[8]
+	mi := &file_primary_friend_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -749,7 +1621,7 @@ func (x *AddFriendRequest) String() string {
 func (*AddFriendRequest) ProtoMessage() {}
 
 func (x *AddFriendRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[8]
+	mi := &file_primary_friend_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -762,7 +1634,7 @@ func (x *AddFriendRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddFriendRequest.ProtoReflect.Descriptor instead.
 func (*AddFriendRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{8}
+	return file_primary_friend_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *AddFriendRequest) GetFriendUserId() string {
@@ -785,7 +1657,7 @@ type AddFriendResponse struct {
 
 func (x *AddFriendResponse) Reset() {
 	*x = AddFriendResponse{}
-	mi := &file_primary_friend_proto_msgTypes[9]
+	mi := &file_primary_friend_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -797,7 +1669,7 @@ func (x *AddFriendResponse) String() string {
 func (*AddFriendResponse) ProtoMessage() {}
 
 func (x *AddFriendResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[9]
+	mi := &file_primary_friend_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -810,7 +1682,7 @@ func (x *AddFriendResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddFriendResponse.ProtoReflect.Descriptor instead.
 func (*AddFriendResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{9}
+	return file_primary_friend_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *AddFriendResponse) GetSuccess() bool {
@@ -836,7 +1708,7 @@ type ListFriendRequestsRequest struct {
 
 func (x *ListFriendRequestsRequest) Reset() {
 	*x = ListFriendRequestsRequest{}
-	mi := &file_primary_friend_proto_msgTypes[10]
+	mi := &file_primary_friend_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -848,7 +1720,7 @@ func (x *ListFriendRequestsRequest) String() string {
 func (*ListFriendRequestsRequest) ProtoMessage() {}
 
 func (x *ListFriendRequestsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[10]
+	mi := &file_primary_friend_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -861,21 +1733,23 @@ func (x *ListFriendRequestsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendRequestsRequest.ProtoReflect.Descriptor instead.
 func (*ListFriendRequestsRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{10}
+	return file_primary_friend_proto_rawDescGZIP(), []int{18}
 }
 
 // ListFriendRequestsResponse 返回好友申请列表。
 type ListFriendRequestsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 好友申请列表，可包含已处理申请；客户端只对 pending 展示红点。
-	Requests      []*FriendRequest `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	Requests []*FriendRequest `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	// 尚未使用或忽略的好友计划分享通知。
+	PlanShares    []*FriendPlanShareNotification `protobuf:"bytes,2,rep,name=plan_shares,json=planShares,proto3" json:"plan_shares,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListFriendRequestsResponse) Reset() {
 	*x = ListFriendRequestsResponse{}
-	mi := &file_primary_friend_proto_msgTypes[11]
+	mi := &file_primary_friend_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -887,7 +1761,7 @@ func (x *ListFriendRequestsResponse) String() string {
 func (*ListFriendRequestsResponse) ProtoMessage() {}
 
 func (x *ListFriendRequestsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[11]
+	mi := &file_primary_friend_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,12 +1774,19 @@ func (x *ListFriendRequestsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendRequestsResponse.ProtoReflect.Descriptor instead.
 func (*ListFriendRequestsResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{11}
+	return file_primary_friend_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListFriendRequestsResponse) GetRequests() []*FriendRequest {
 	if x != nil {
 		return x.Requests
+	}
+	return nil
+}
+
+func (x *ListFriendRequestsResponse) GetPlanShares() []*FriendPlanShareNotification {
+	if x != nil {
+		return x.PlanShares
 	}
 	return nil
 }
@@ -923,7 +1804,7 @@ type HandleFriendRequestRequest struct {
 
 func (x *HandleFriendRequestRequest) Reset() {
 	*x = HandleFriendRequestRequest{}
-	mi := &file_primary_friend_proto_msgTypes[12]
+	mi := &file_primary_friend_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -935,7 +1816,7 @@ func (x *HandleFriendRequestRequest) String() string {
 func (*HandleFriendRequestRequest) ProtoMessage() {}
 
 func (x *HandleFriendRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[12]
+	mi := &file_primary_friend_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -948,7 +1829,7 @@ func (x *HandleFriendRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HandleFriendRequestRequest.ProtoReflect.Descriptor instead.
 func (*HandleFriendRequestRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{12}
+	return file_primary_friend_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *HandleFriendRequestRequest) GetRequestId() string {
@@ -976,7 +1857,7 @@ type HandleFriendRequestResponse struct {
 
 func (x *HandleFriendRequestResponse) Reset() {
 	*x = HandleFriendRequestResponse{}
-	mi := &file_primary_friend_proto_msgTypes[13]
+	mi := &file_primary_friend_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -988,7 +1869,7 @@ func (x *HandleFriendRequestResponse) String() string {
 func (*HandleFriendRequestResponse) ProtoMessage() {}
 
 func (x *HandleFriendRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[13]
+	mi := &file_primary_friend_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1001,10 +1882,327 @@ func (x *HandleFriendRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HandleFriendRequestResponse.ProtoReflect.Descriptor instead.
 func (*HandleFriendRequestResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{13}
+	return file_primary_friend_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *HandleFriendRequestResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// SendFriendPlanShareRequest 给一位现有好友分享计划。
+type SendFriendPlanShareRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	ToUid uint64                 `protobuf:"varint,1,opt,name=to_uid,json=toUid,proto3" json:"to_uid,omitempty"`
+	// 客户端生成的幂等 ID，队列重试时保持不变。
+	ClientShareId string            `protobuf:"bytes,2,opt,name=client_share_id,json=clientShareId,proto3" json:"client_share_id,omitempty"`
+	Plan          *FriendSharedPlan `protobuf:"bytes,3,opt,name=plan,proto3" json:"plan,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendFriendPlanShareRequest) Reset() {
+	*x = SendFriendPlanShareRequest{}
+	mi := &file_primary_friend_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendFriendPlanShareRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendFriendPlanShareRequest) ProtoMessage() {}
+
+func (x *SendFriendPlanShareRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendFriendPlanShareRequest.ProtoReflect.Descriptor instead.
+func (*SendFriendPlanShareRequest) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SendFriendPlanShareRequest) GetToUid() uint64 {
+	if x != nil {
+		return x.ToUid
+	}
+	return 0
+}
+
+func (x *SendFriendPlanShareRequest) GetClientShareId() string {
+	if x != nil {
+		return x.ClientShareId
+	}
+	return ""
+}
+
+func (x *SendFriendPlanShareRequest) GetPlan() *FriendSharedPlan {
+	if x != nil {
+		return x.Plan
+	}
+	return nil
+}
+
+type SendFriendPlanShareResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	ShareId       string                 `protobuf:"bytes,2,opt,name=share_id,json=shareId,proto3" json:"share_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendFriendPlanShareResponse) Reset() {
+	*x = SendFriendPlanShareResponse{}
+	mi := &file_primary_friend_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendFriendPlanShareResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendFriendPlanShareResponse) ProtoMessage() {}
+
+func (x *SendFriendPlanShareResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendFriendPlanShareResponse.ProtoReflect.Descriptor instead.
+func (*SendFriendPlanShareResponse) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *SendFriendPlanShareResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SendFriendPlanShareResponse) GetShareId() string {
+	if x != nil {
+		return x.ShareId
+	}
+	return ""
+}
+
+// HandleFriendPlanShareRequest 在真正复制完成或明确忽略后处理通知。
+type HandleFriendPlanShareRequest struct {
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	ShareId       string                     `protobuf:"bytes,1,opt,name=share_id,json=shareId,proto3" json:"share_id,omitempty"`
+	Disposition   FriendPlanShareDisposition `protobuf:"varint,2,opt,name=disposition,proto3,enum=api.FriendPlanShareDisposition" json:"disposition,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HandleFriendPlanShareRequest) Reset() {
+	*x = HandleFriendPlanShareRequest{}
+	mi := &file_primary_friend_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandleFriendPlanShareRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandleFriendPlanShareRequest) ProtoMessage() {}
+
+func (x *HandleFriendPlanShareRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandleFriendPlanShareRequest.ProtoReflect.Descriptor instead.
+func (*HandleFriendPlanShareRequest) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *HandleFriendPlanShareRequest) GetShareId() string {
+	if x != nil {
+		return x.ShareId
+	}
+	return ""
+}
+
+func (x *HandleFriendPlanShareRequest) GetDisposition() FriendPlanShareDisposition {
+	if x != nil {
+		return x.Disposition
+	}
+	return FriendPlanShareDisposition_FRIEND_PLAN_SHARE_DISPOSITION_UNKNOWN
+}
+
+type HandleFriendPlanShareResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HandleFriendPlanShareResponse) Reset() {
+	*x = HandleFriendPlanShareResponse{}
+	mi := &file_primary_friend_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandleFriendPlanShareResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandleFriendPlanShareResponse) ProtoMessage() {}
+
+func (x *HandleFriendPlanShareResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandleFriendPlanShareResponse.ProtoReflect.Descriptor instead.
+func (*HandleFriendPlanShareResponse) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *HandleFriendPlanShareResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// RecordFriendTrainingUseRequest 在好友训练被确认保存为自己的计划后增加一次使用积分。
+type RecordFriendTrainingUseRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 每次用户确认保存生成一个新 ID；只用于网络重试幂等，不限制同一用户重复使用。
+	ClientEventId     string `protobuf:"bytes,1,opt,name=client_event_id,json=clientEventId,proto3" json:"client_event_id,omitempty"`
+	SourceUid         uint64 `protobuf:"varint,2,opt,name=source_uid,json=sourceUid,proto3" json:"source_uid,omitempty"`
+	TrainingSessionId string `protobuf:"bytes,3,opt,name=training_session_id,json=trainingSessionId,proto3" json:"training_session_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *RecordFriendTrainingUseRequest) Reset() {
+	*x = RecordFriendTrainingUseRequest{}
+	mi := &file_primary_friend_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordFriendTrainingUseRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordFriendTrainingUseRequest) ProtoMessage() {}
+
+func (x *RecordFriendTrainingUseRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordFriendTrainingUseRequest.ProtoReflect.Descriptor instead.
+func (*RecordFriendTrainingUseRequest) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *RecordFriendTrainingUseRequest) GetClientEventId() string {
+	if x != nil {
+		return x.ClientEventId
+	}
+	return ""
+}
+
+func (x *RecordFriendTrainingUseRequest) GetSourceUid() uint64 {
+	if x != nil {
+		return x.SourceUid
+	}
+	return 0
+}
+
+func (x *RecordFriendTrainingUseRequest) GetTrainingSessionId() string {
+	if x != nil {
+		return x.TrainingSessionId
+	}
+	return ""
+}
+
+type RecordFriendTrainingUseResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordFriendTrainingUseResponse) Reset() {
+	*x = RecordFriendTrainingUseResponse{}
+	mi := &file_primary_friend_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordFriendTrainingUseResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordFriendTrainingUseResponse) ProtoMessage() {}
+
+func (x *RecordFriendTrainingUseResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_primary_friend_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordFriendTrainingUseResponse.ProtoReflect.Descriptor instead.
+func (*RecordFriendTrainingUseResponse) Descriptor() ([]byte, []int) {
+	return file_primary_friend_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *RecordFriendTrainingUseResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
@@ -1024,7 +2222,7 @@ type UpdateTrainingDataVisibilityRequest struct {
 
 func (x *UpdateTrainingDataVisibilityRequest) Reset() {
 	*x = UpdateTrainingDataVisibilityRequest{}
-	mi := &file_primary_friend_proto_msgTypes[14]
+	mi := &file_primary_friend_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1036,7 +2234,7 @@ func (x *UpdateTrainingDataVisibilityRequest) String() string {
 func (*UpdateTrainingDataVisibilityRequest) ProtoMessage() {}
 
 func (x *UpdateTrainingDataVisibilityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[14]
+	mi := &file_primary_friend_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1049,7 +2247,7 @@ func (x *UpdateTrainingDataVisibilityRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use UpdateTrainingDataVisibilityRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTrainingDataVisibilityRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{14}
+	return file_primary_friend_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *UpdateTrainingDataVisibilityRequest) GetVisible() bool {
@@ -1077,7 +2275,7 @@ type UpdateTrainingDataVisibilityResponse struct {
 
 func (x *UpdateTrainingDataVisibilityResponse) Reset() {
 	*x = UpdateTrainingDataVisibilityResponse{}
-	mi := &file_primary_friend_proto_msgTypes[15]
+	mi := &file_primary_friend_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1089,7 +2287,7 @@ func (x *UpdateTrainingDataVisibilityResponse) String() string {
 func (*UpdateTrainingDataVisibilityResponse) ProtoMessage() {}
 
 func (x *UpdateTrainingDataVisibilityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[15]
+	mi := &file_primary_friend_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1102,7 +2300,7 @@ func (x *UpdateTrainingDataVisibilityResponse) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use UpdateTrainingDataVisibilityResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTrainingDataVisibilityResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{15}
+	return file_primary_friend_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *UpdateTrainingDataVisibilityResponse) GetVisible() bool {
@@ -1124,7 +2322,7 @@ type UploadMyTrainingPublicSnapshotRequest struct {
 
 func (x *UploadMyTrainingPublicSnapshotRequest) Reset() {
 	*x = UploadMyTrainingPublicSnapshotRequest{}
-	mi := &file_primary_friend_proto_msgTypes[16]
+	mi := &file_primary_friend_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1136,7 +2334,7 @@ func (x *UploadMyTrainingPublicSnapshotRequest) String() string {
 func (*UploadMyTrainingPublicSnapshotRequest) ProtoMessage() {}
 
 func (x *UploadMyTrainingPublicSnapshotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[16]
+	mi := &file_primary_friend_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1149,7 +2347,7 @@ func (x *UploadMyTrainingPublicSnapshotRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use UploadMyTrainingPublicSnapshotRequest.ProtoReflect.Descriptor instead.
 func (*UploadMyTrainingPublicSnapshotRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{16}
+	return file_primary_friend_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *UploadMyTrainingPublicSnapshotRequest) GetSnapshot() *MyTrainingPublicSnapshot {
@@ -1170,7 +2368,7 @@ type UploadMyTrainingPublicSnapshotResponse struct {
 
 func (x *UploadMyTrainingPublicSnapshotResponse) Reset() {
 	*x = UploadMyTrainingPublicSnapshotResponse{}
-	mi := &file_primary_friend_proto_msgTypes[17]
+	mi := &file_primary_friend_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1182,7 +2380,7 @@ func (x *UploadMyTrainingPublicSnapshotResponse) String() string {
 func (*UploadMyTrainingPublicSnapshotResponse) ProtoMessage() {}
 
 func (x *UploadMyTrainingPublicSnapshotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[17]
+	mi := &file_primary_friend_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1195,7 +2393,7 @@ func (x *UploadMyTrainingPublicSnapshotResponse) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use UploadMyTrainingPublicSnapshotResponse.ProtoReflect.Descriptor instead.
 func (*UploadMyTrainingPublicSnapshotResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{17}
+	return file_primary_friend_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *UploadMyTrainingPublicSnapshotResponse) GetSuccess() bool {
@@ -1215,7 +2413,7 @@ type GetFriendEntryStatusRequest struct {
 
 func (x *GetFriendEntryStatusRequest) Reset() {
 	*x = GetFriendEntryStatusRequest{}
-	mi := &file_primary_friend_proto_msgTypes[18]
+	mi := &file_primary_friend_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1227,7 +2425,7 @@ func (x *GetFriendEntryStatusRequest) String() string {
 func (*GetFriendEntryStatusRequest) ProtoMessage() {}
 
 func (x *GetFriendEntryStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[18]
+	mi := &file_primary_friend_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1240,7 +2438,7 @@ func (x *GetFriendEntryStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFriendEntryStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetFriendEntryStatusRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{18}
+	return file_primary_friend_proto_rawDescGZIP(), []int{32}
 }
 
 // GetFriendEntryStatusResponse 返回好友入口状态。
@@ -1252,13 +2450,17 @@ type GetFriendEntryStatusResponse struct {
 	PendingRequestCount int32 `protobuf:"varint,2,opt,name=pending_request_count,json=pendingRequestCount,proto3" json:"pending_request_count,omitempty"`
 	// 当前用户是否公开训练数据；客户端结合本地更新时间判断是否显示蓝点。
 	MyTrainingDataVisible bool `protobuf:"varint,3,opt,name=my_training_data_visible,json=myTrainingDataVisible,proto3" json:"my_training_data_visible,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// 是否存在好友申请或计划分享通知。
+	HasPendingNotification bool `protobuf:"varint,4,opt,name=has_pending_notification,json=hasPendingNotification,proto3" json:"has_pending_notification,omitempty"`
+	// 好友申请与计划分享通知总数。
+	PendingNotificationCount int32 `protobuf:"varint,5,opt,name=pending_notification_count,json=pendingNotificationCount,proto3" json:"pending_notification_count,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *GetFriendEntryStatusResponse) Reset() {
 	*x = GetFriendEntryStatusResponse{}
-	mi := &file_primary_friend_proto_msgTypes[19]
+	mi := &file_primary_friend_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1270,7 +2472,7 @@ func (x *GetFriendEntryStatusResponse) String() string {
 func (*GetFriendEntryStatusResponse) ProtoMessage() {}
 
 func (x *GetFriendEntryStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[19]
+	mi := &file_primary_friend_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1283,7 +2485,7 @@ func (x *GetFriendEntryStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFriendEntryStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetFriendEntryStatusResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{19}
+	return file_primary_friend_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GetFriendEntryStatusResponse) GetHasPendingRequest() bool {
@@ -1307,6 +2509,20 @@ func (x *GetFriendEntryStatusResponse) GetMyTrainingDataVisible() bool {
 	return false
 }
 
+func (x *GetFriendEntryStatusResponse) GetHasPendingNotification() bool {
+	if x != nil {
+		return x.HasPendingNotification
+	}
+	return false
+}
+
+func (x *GetFriendEntryStatusResponse) GetPendingNotificationCount() int32 {
+	if x != nil {
+		return x.PendingNotificationCount
+	}
+	return 0
+}
+
 // GetMyFriendProfileRequest 请求当前用户自己的朋友资料。
 type GetMyFriendProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1316,7 +2532,7 @@ type GetMyFriendProfileRequest struct {
 
 func (x *GetMyFriendProfileRequest) Reset() {
 	*x = GetMyFriendProfileRequest{}
-	mi := &file_primary_friend_proto_msgTypes[20]
+	mi := &file_primary_friend_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1328,7 +2544,7 @@ func (x *GetMyFriendProfileRequest) String() string {
 func (*GetMyFriendProfileRequest) ProtoMessage() {}
 
 func (x *GetMyFriendProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[20]
+	mi := &file_primary_friend_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1341,7 +2557,7 @@ func (x *GetMyFriendProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMyFriendProfileRequest.ProtoReflect.Descriptor instead.
 func (*GetMyFriendProfileRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{20}
+	return file_primary_friend_proto_rawDescGZIP(), []int{34}
 }
 
 // GetMyFriendProfileResponse 返回当前用户自己的朋友资料。
@@ -1355,7 +2571,7 @@ type GetMyFriendProfileResponse struct {
 
 func (x *GetMyFriendProfileResponse) Reset() {
 	*x = GetMyFriendProfileResponse{}
-	mi := &file_primary_friend_proto_msgTypes[21]
+	mi := &file_primary_friend_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1367,7 +2583,7 @@ func (x *GetMyFriendProfileResponse) String() string {
 func (*GetMyFriendProfileResponse) ProtoMessage() {}
 
 func (x *GetMyFriendProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[21]
+	mi := &file_primary_friend_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1380,7 +2596,7 @@ func (x *GetMyFriendProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMyFriendProfileResponse.ProtoReflect.Descriptor instead.
 func (*GetMyFriendProfileResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{21}
+	return file_primary_friend_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetMyFriendProfileResponse) GetProfile() *FriendProfile {
@@ -1401,7 +2617,7 @@ type GetFriendProfileRequest struct {
 
 func (x *GetFriendProfileRequest) Reset() {
 	*x = GetFriendProfileRequest{}
-	mi := &file_primary_friend_proto_msgTypes[22]
+	mi := &file_primary_friend_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1413,7 +2629,7 @@ func (x *GetFriendProfileRequest) String() string {
 func (*GetFriendProfileRequest) ProtoMessage() {}
 
 func (x *GetFriendProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[22]
+	mi := &file_primary_friend_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1426,7 +2642,7 @@ func (x *GetFriendProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFriendProfileRequest.ProtoReflect.Descriptor instead.
 func (*GetFriendProfileRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{22}
+	return file_primary_friend_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *GetFriendProfileRequest) GetUid() uint64 {
@@ -1447,7 +2663,7 @@ type GetFriendProfileResponse struct {
 
 func (x *GetFriendProfileResponse) Reset() {
 	*x = GetFriendProfileResponse{}
-	mi := &file_primary_friend_proto_msgTypes[23]
+	mi := &file_primary_friend_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1459,7 +2675,7 @@ func (x *GetFriendProfileResponse) String() string {
 func (*GetFriendProfileResponse) ProtoMessage() {}
 
 func (x *GetFriendProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[23]
+	mi := &file_primary_friend_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1472,7 +2688,7 @@ func (x *GetFriendProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFriendProfileResponse.ProtoReflect.Descriptor instead.
 func (*GetFriendProfileResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{23}
+	return file_primary_friend_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *GetFriendProfileResponse) GetProfile() *FriendProfile {
@@ -1501,7 +2717,7 @@ type UpdateMyFriendProfileRequest struct {
 
 func (x *UpdateMyFriendProfileRequest) Reset() {
 	*x = UpdateMyFriendProfileRequest{}
-	mi := &file_primary_friend_proto_msgTypes[24]
+	mi := &file_primary_friend_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1513,7 +2729,7 @@ func (x *UpdateMyFriendProfileRequest) String() string {
 func (*UpdateMyFriendProfileRequest) ProtoMessage() {}
 
 func (x *UpdateMyFriendProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[24]
+	mi := &file_primary_friend_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1526,7 +2742,7 @@ func (x *UpdateMyFriendProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateMyFriendProfileRequest.ProtoReflect.Descriptor instead.
 func (*UpdateMyFriendProfileRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{24}
+	return file_primary_friend_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *UpdateMyFriendProfileRequest) GetNickname() string {
@@ -1575,7 +2791,7 @@ type UpdateMyFriendProfileResponse struct {
 
 func (x *UpdateMyFriendProfileResponse) Reset() {
 	*x = UpdateMyFriendProfileResponse{}
-	mi := &file_primary_friend_proto_msgTypes[25]
+	mi := &file_primary_friend_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1587,7 +2803,7 @@ func (x *UpdateMyFriendProfileResponse) String() string {
 func (*UpdateMyFriendProfileResponse) ProtoMessage() {}
 
 func (x *UpdateMyFriendProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[25]
+	mi := &file_primary_friend_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1600,7 +2816,7 @@ func (x *UpdateMyFriendProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateMyFriendProfileResponse.ProtoReflect.Descriptor instead.
 func (*UpdateMyFriendProfileResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{25}
+	return file_primary_friend_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *UpdateMyFriendProfileResponse) GetProfile() *FriendProfile {
@@ -1623,7 +2839,7 @@ type UpdateFriendRemarkRequest struct {
 
 func (x *UpdateFriendRemarkRequest) Reset() {
 	*x = UpdateFriendRemarkRequest{}
-	mi := &file_primary_friend_proto_msgTypes[26]
+	mi := &file_primary_friend_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1635,7 +2851,7 @@ func (x *UpdateFriendRemarkRequest) String() string {
 func (*UpdateFriendRemarkRequest) ProtoMessage() {}
 
 func (x *UpdateFriendRemarkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[26]
+	mi := &file_primary_friend_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1648,7 +2864,7 @@ func (x *UpdateFriendRemarkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateFriendRemarkRequest.ProtoReflect.Descriptor instead.
 func (*UpdateFriendRemarkRequest) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{26}
+	return file_primary_friend_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *UpdateFriendRemarkRequest) GetUid() uint64 {
@@ -1676,7 +2892,7 @@ type UpdateFriendRemarkResponse struct {
 
 func (x *UpdateFriendRemarkResponse) Reset() {
 	*x = UpdateFriendRemarkResponse{}
-	mi := &file_primary_friend_proto_msgTypes[27]
+	mi := &file_primary_friend_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1688,7 +2904,7 @@ func (x *UpdateFriendRemarkResponse) String() string {
 func (*UpdateFriendRemarkResponse) ProtoMessage() {}
 
 func (x *UpdateFriendRemarkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_primary_friend_proto_msgTypes[27]
+	mi := &file_primary_friend_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1701,7 +2917,7 @@ func (x *UpdateFriendRemarkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateFriendRemarkResponse.ProtoReflect.Descriptor instead.
 func (*UpdateFriendRemarkResponse) Descriptor() ([]byte, []int) {
-	return file_primary_friend_proto_rawDescGZIP(), []int{27}
+	return file_primary_friend_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *UpdateFriendRemarkResponse) GetSuccess() bool {
@@ -1756,12 +2972,85 @@ const file_primary_friend_proto_rawDesc = "" +
 	"handled_at\x18\t \x01(\x03R\thandledAt\"G\n" +
 	"\x15FriendTrainingTagStat\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
-	"\bcalories\x18\x02 \x01(\tR\bcalories\"\x87\x01\n" +
+	"\bcalories\x18\x02 \x01(\tR\bcalories\"\xe3\x01\n" +
 	"\x18FriendTrainingDaySummary\x12\x1f\n" +
 	"\vrecord_date\x18\x01 \x01(\tR\n" +
 	"recordDate\x12.\n" +
 	"\x04tags\x18\x02 \x03(\v2\x1a.api.FriendTrainingTagStatR\x04tags\x12\x1a\n" +
-	"\bcalories\x18\x03 \x01(\tR\bcalories\"\xc3\x01\n" +
+	"\bcalories\x18\x03 \x01(\tR\bcalories\x12Z\n" +
+	"\x18action_training_sessions\x18\x04 \x03(\v2 .api.FriendActionTrainingSessionR\x16actionTrainingSessions\"\x89\x01\n" +
+	"\x16FriendActionSetSummary\x12\x1d\n" +
+	"\n" +
+	"weight_x10\x18\x01 \x01(\x05R\tweightX10\x12<\n" +
+	"\vweight_unit\x18\x02 \x01(\x0e2\x1b.api.FriendActionWeightUnitR\n" +
+	"weightUnit\x12\x12\n" +
+	"\x04reps\x18\x03 \x01(\x05R\x04reps\"\xf5\x02\n" +
+	"\x1bFriendActionExerciseSummary\x12\x1f\n" +
+	"\vexercise_id\x18\x01 \x01(\tR\n" +
+	"exerciseId\x12\x19\n" +
+	"\bname_key\x18\x02 \x01(\tR\anameKey\x12#\n" +
+	"\rname_snapshot\x18\x03 \x01(\tR\fnameSnapshot\x12!\n" +
+	"\fcategory_key\x18\x04 \x01(\tR\vcategoryKey\x12\x19\n" +
+	"\btype_key\x18\x05 \x01(\tR\atypeKey\x12/\n" +
+	"\x04sets\x18\x06 \x03(\v2\x1b.api.FriendActionSetSummaryR\x04sets\x12\x1f\n" +
+	"\vcustom_name\x18\a \x01(\tR\n" +
+	"customName\x124\n" +
+	"\x16custom_subcategory_key\x18\b \x01(\tR\x14customSubcategoryKey\x12/\n" +
+	"\x13custom_introduction\x18\t \x01(\tR\x12customIntroduction\"\x9c\x02\n" +
+	"\x19FriendBoundWorkoutSummary\x12!\n" +
+	"\fworkout_type\x18\x01 \x01(\tR\vworkoutType\x12\x19\n" +
+	"\bstart_at\x18\x02 \x01(\x03R\astartAt\x12\x15\n" +
+	"\x06end_at\x18\x03 \x01(\x03R\x05endAt\x12)\n" +
+	"\x10duration_seconds\x18\x04 \x01(\x05R\x0fdurationSeconds\x12\x1f\n" +
+	"\venergy_kcal\x18\x05 \x01(\x01R\n" +
+	"energyKcal\x12'\n" +
+	"\x0fdistance_meters\x18\x06 \x01(\x01R\x0edistanceMeters\x12!\n" +
+	"\fhas_distance\x18\a \x01(\bR\vhasDistance\x12\x12\n" +
+	"\x04tags\x18\b \x03(\tR\x04tags\"\xa6\x02\n" +
+	"\x1bFriendActionTrainingSession\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x19\n" +
+	"\bstart_at\x18\x02 \x01(\x03R\astartAt\x12\x15\n" +
+	"\x06end_at\x18\x03 \x01(\x03R\x05endAt\x121\n" +
+	"\x04kind\x18\x04 \x01(\x0e2\x1d.api.FriendActionTrainingKindR\x04kind\x12>\n" +
+	"\texercises\x18\x05 \x03(\v2 .api.FriendActionExerciseSummaryR\texercises\x12C\n" +
+	"\rbound_workout\x18\x06 \x01(\v2\x1e.api.FriendBoundWorkoutSummaryR\fboundWorkout\"S\n" +
+	"\x13FriendSharedPlanSet\x12\x1f\n" +
+	"\vweight_text\x18\x01 \x01(\tR\n" +
+	"weightText\x12\x1b\n" +
+	"\treps_text\x18\x02 \x01(\tR\brepsText\"\xeb\x03\n" +
+	"\x18FriendSharedPlanExercise\x12\x1f\n" +
+	"\vexercise_id\x18\x01 \x01(\tR\n" +
+	"exerciseId\x12\x19\n" +
+	"\bname_key\x18\x02 \x01(\tR\anameKey\x12#\n" +
+	"\rname_snapshot\x18\x03 \x01(\tR\fnameSnapshot\x12!\n" +
+	"\fcategory_key\x18\x04 \x01(\tR\vcategoryKey\x12\x19\n" +
+	"\btype_key\x18\x05 \x01(\tR\atypeKey\x12(\n" +
+	"\x10display_type_key\x18\x06 \x01(\tR\x0edisplayTypeKey\x12\x1f\n" +
+	"\vcustom_name\x18\a \x01(\tR\n" +
+	"customName\x124\n" +
+	"\x16custom_subcategory_key\x18\b \x01(\tR\x14customSubcategoryKey\x12\x12\n" +
+	"\x04note\x18\t \x01(\tR\x04note\x12\x1b\n" +
+	"\tset_count\x18\n" +
+	" \x01(\x05R\bsetCount\x12\x1f\n" +
+	"\vweight_unit\x18\v \x01(\tR\n" +
+	"weightUnit\x12,\n" +
+	"\x04sets\x18\f \x03(\v2\x18.api.FriendSharedPlanSetR\x04sets\x12/\n" +
+	"\x13custom_introduction\x18\r \x01(\tR\x12customIntroduction\"\x8b\x01\n" +
+	"\x10FriendSharedPlan\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12;\n" +
+	"\texercises\x18\x02 \x03(\v2\x1d.api.FriendSharedPlanExerciseR\texercises\x12$\n" +
+	"\x0esource_plan_id\x18\x03 \x01(\tR\fsourcePlanId\"\xf5\x01\n" +
+	"\x1bFriendPlanShareNotification\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bfrom_uid\x18\x02 \x01(\x04R\afromUid\x12 \n" +
+	"\ffrom_user_id\x18\x03 \x01(\tR\n" +
+	"fromUserId\x12\x1a\n" +
+	"\bnickname\x18\x04 \x01(\tR\bnickname\x12#\n" +
+	"\ravatar_symbol\x18\x05 \x01(\tR\favatarSymbol\x12)\n" +
+	"\x04plan\x18\x06 \x01(\v2\x15.api.FriendSharedPlanR\x04plan\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\a \x01(\x03R\tcreatedAt\"\xc3\x01\n" +
 	"\x18MyTrainingPublicSnapshot\x12\x18\n" +
 	"\avisible\x18\x01 \x01(\bR\avisible\x12\x1d\n" +
 	"\n" +
@@ -1778,14 +3067,35 @@ const file_primary_friend_proto_rawDesc = "" +
 	"\x11AddFriendResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\x1b\n" +
-	"\x19ListFriendRequestsRequest\"L\n" +
+	"\x19ListFriendRequestsRequest\"\x8f\x01\n" +
 	"\x1aListFriendRequestsResponse\x12.\n" +
-	"\brequests\x18\x01 \x03(\v2\x12.api.FriendRequestR\brequests\"S\n" +
+	"\brequests\x18\x01 \x03(\v2\x12.api.FriendRequestR\brequests\x12A\n" +
+	"\vplan_shares\x18\x02 \x03(\v2 .api.FriendPlanShareNotificationR\n" +
+	"planShares\"S\n" +
 	"\x1aHandleFriendRequestRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x16\n" +
 	"\x06accept\x18\x02 \x01(\bR\x06accept\"7\n" +
 	"\x1bHandleFriendRequestResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x86\x01\n" +
+	"\x1aSendFriendPlanShareRequest\x12\x15\n" +
+	"\x06to_uid\x18\x01 \x01(\x04R\x05toUid\x12&\n" +
+	"\x0fclient_share_id\x18\x02 \x01(\tR\rclientShareId\x12)\n" +
+	"\x04plan\x18\x03 \x01(\v2\x15.api.FriendSharedPlanR\x04plan\"R\n" +
+	"\x1bSendFriendPlanShareResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
+	"\bshare_id\x18\x02 \x01(\tR\ashareId\"|\n" +
+	"\x1cHandleFriendPlanShareRequest\x12\x19\n" +
+	"\bshare_id\x18\x01 \x01(\tR\ashareId\x12A\n" +
+	"\vdisposition\x18\x02 \x01(\x0e2\x1f.api.FriendPlanShareDispositionR\vdisposition\"9\n" +
+	"\x1dHandleFriendPlanShareResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x97\x01\n" +
+	"\x1eRecordFriendTrainingUseRequest\x12&\n" +
+	"\x0fclient_event_id\x18\x01 \x01(\tR\rclientEventId\x12\x1d\n" +
+	"\n" +
+	"source_uid\x18\x02 \x01(\x04R\tsourceUid\x12.\n" +
+	"\x13training_session_id\x18\x03 \x01(\tR\x11trainingSessionId\";\n" +
+	"\x1fRecordFriendTrainingUseResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"z\n" +
 	"#UpdateTrainingDataVisibilityRequest\x12\x18\n" +
 	"\avisible\x18\x01 \x01(\bR\avisible\x129\n" +
@@ -1796,11 +3106,13 @@ const file_primary_friend_proto_rawDesc = "" +
 	"\bsnapshot\x18\x01 \x01(\v2\x1d.api.MyTrainingPublicSnapshotR\bsnapshot\"B\n" +
 	"&UploadMyTrainingPublicSnapshotResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x1d\n" +
-	"\x1bGetFriendEntryStatusRequest\"\xbb\x01\n" +
+	"\x1bGetFriendEntryStatusRequest\"\xb3\x02\n" +
 	"\x1cGetFriendEntryStatusResponse\x12.\n" +
 	"\x13has_pending_request\x18\x01 \x01(\bR\x11hasPendingRequest\x122\n" +
 	"\x15pending_request_count\x18\x02 \x01(\x05R\x13pendingRequestCount\x127\n" +
-	"\x18my_training_data_visible\x18\x03 \x01(\bR\x15myTrainingDataVisible\"\x1b\n" +
+	"\x18my_training_data_visible\x18\x03 \x01(\bR\x15myTrainingDataVisible\x128\n" +
+	"\x18has_pending_notification\x18\x04 \x01(\bR\x16hasPendingNotification\x12<\n" +
+	"\x1apending_notification_count\x18\x05 \x01(\x05R\x18pendingNotificationCount\"\x1b\n" +
 	"\x19GetMyFriendProfileRequest\"J\n" +
 	"\x1aGetMyFriendProfileResponse\x12,\n" +
 	"\aprofile\x18\x01 \x01(\v2\x12.api.FriendProfileR\aprofile\"+\n" +
@@ -1826,12 +3138,29 @@ const file_primary_friend_proto_rawDesc = "" +
 	"\x1dFRIEND_REQUEST_STATUS_UNKNOWN\x10\x00\x12!\n" +
 	"\x1dFRIEND_REQUEST_STATUS_PENDING\x10\x01\x12\"\n" +
 	"\x1eFRIEND_REQUEST_STATUS_ACCEPTED\x10\x02\x12\"\n" +
-	"\x1eFRIEND_REQUEST_STATUS_REJECTED\x10\x032\xea\a\n" +
+	"\x1eFRIEND_REQUEST_STATUS_REJECTED\x10\x03*\x83\x01\n" +
+	"\x16FriendActionWeightUnit\x12%\n" +
+	"!FRIEND_ACTION_WEIGHT_UNIT_UNKNOWN\x10\x00\x12 \n" +
+	"\x1cFRIEND_ACTION_WEIGHT_UNIT_KG\x10\x01\x12 \n" +
+	"\x1cFRIEND_ACTION_WEIGHT_UNIT_LB\x10\x02*\xbc\x01\n" +
+	"\x18FriendActionTrainingKind\x12'\n" +
+	"#FRIEND_ACTION_TRAINING_KIND_UNKNOWN\x10\x00\x12(\n" +
+	"$FRIEND_ACTION_TRAINING_KIND_STRENGTH\x10\x01\x12&\n" +
+	"\"FRIEND_ACTION_TRAINING_KIND_CARDIO\x10\x02\x12%\n" +
+	"!FRIEND_ACTION_TRAINING_KIND_MIXED\x10\x03*\x9a\x01\n" +
+	"\x1aFriendPlanShareDisposition\x12)\n" +
+	"%FRIEND_PLAN_SHARE_DISPOSITION_UNKNOWN\x10\x00\x12&\n" +
+	"\"FRIEND_PLAN_SHARE_DISPOSITION_USED\x10\x01\x12)\n" +
+	"%FRIEND_PLAN_SHARE_DISPOSITION_IGNORED\x10\x022\x8a\n" +
+	"\n" +
 	"\rFriendService\x12@\n" +
 	"\vListFriends\x12\x17.api.ListFriendsRequest\x1a\x18.api.ListFriendsResponse\x12:\n" +
 	"\tAddFriend\x12\x15.api.AddFriendRequest\x1a\x16.api.AddFriendResponse\x12U\n" +
 	"\x12ListFriendRequests\x12\x1e.api.ListFriendRequestsRequest\x1a\x1f.api.ListFriendRequestsResponse\x12X\n" +
-	"\x13HandleFriendRequest\x12\x1f.api.HandleFriendRequestRequest\x1a .api.HandleFriendRequestResponse\x12s\n" +
+	"\x13HandleFriendRequest\x12\x1f.api.HandleFriendRequestRequest\x1a .api.HandleFriendRequestResponse\x12X\n" +
+	"\x13SendFriendPlanShare\x12\x1f.api.SendFriendPlanShareRequest\x1a .api.SendFriendPlanShareResponse\x12^\n" +
+	"\x15HandleFriendPlanShare\x12!.api.HandleFriendPlanShareRequest\x1a\".api.HandleFriendPlanShareResponse\x12d\n" +
+	"\x17RecordFriendTrainingUse\x12#.api.RecordFriendTrainingUseRequest\x1a$.api.RecordFriendTrainingUseResponse\x12s\n" +
 	"\x1cUpdateTrainingDataVisibility\x12(.api.UpdateTrainingDataVisibilityRequest\x1a).api.UpdateTrainingDataVisibilityResponse\x12y\n" +
 	"\x1eUploadMyTrainingPublicSnapshot\x12*.api.UploadMyTrainingPublicSnapshotRequest\x1a+.api.UploadMyTrainingPublicSnapshotResponse\x12[\n" +
 	"\x14GetFriendEntryStatus\x12 .api.GetFriendEntryStatusRequest\x1a!.api.GetFriendEntryStatusResponse\x12O\n" +
@@ -1852,78 +3181,113 @@ func file_primary_friend_proto_rawDescGZIP() []byte {
 	return file_primary_friend_proto_rawDescData
 }
 
-var file_primary_friend_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_primary_friend_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_primary_friend_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_primary_friend_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_primary_friend_proto_goTypes = []any{
 	(FriendRequestStatus)(0),                       // 0: api.FriendRequestStatus
-	(*FriendListItem)(nil),                         // 1: api.FriendListItem
-	(*FriendProfile)(nil),                          // 2: api.FriendProfile
-	(*FriendRequest)(nil),                          // 3: api.FriendRequest
-	(*FriendTrainingTagStat)(nil),                  // 4: api.FriendTrainingTagStat
-	(*FriendTrainingDaySummary)(nil),               // 5: api.FriendTrainingDaySummary
-	(*MyTrainingPublicSnapshot)(nil),               // 6: api.MyTrainingPublicSnapshot
-	(*ListFriendsRequest)(nil),                     // 7: api.ListFriendsRequest
-	(*ListFriendsResponse)(nil),                    // 8: api.ListFriendsResponse
-	(*AddFriendRequest)(nil),                       // 9: api.AddFriendRequest
-	(*AddFriendResponse)(nil),                      // 10: api.AddFriendResponse
-	(*ListFriendRequestsRequest)(nil),              // 11: api.ListFriendRequestsRequest
-	(*ListFriendRequestsResponse)(nil),             // 12: api.ListFriendRequestsResponse
-	(*HandleFriendRequestRequest)(nil),             // 13: api.HandleFriendRequestRequest
-	(*HandleFriendRequestResponse)(nil),            // 14: api.HandleFriendRequestResponse
-	(*UpdateTrainingDataVisibilityRequest)(nil),    // 15: api.UpdateTrainingDataVisibilityRequest
-	(*UpdateTrainingDataVisibilityResponse)(nil),   // 16: api.UpdateTrainingDataVisibilityResponse
-	(*UploadMyTrainingPublicSnapshotRequest)(nil),  // 17: api.UploadMyTrainingPublicSnapshotRequest
-	(*UploadMyTrainingPublicSnapshotResponse)(nil), // 18: api.UploadMyTrainingPublicSnapshotResponse
-	(*GetFriendEntryStatusRequest)(nil),            // 19: api.GetFriendEntryStatusRequest
-	(*GetFriendEntryStatusResponse)(nil),           // 20: api.GetFriendEntryStatusResponse
-	(*GetMyFriendProfileRequest)(nil),              // 21: api.GetMyFriendProfileRequest
-	(*GetMyFriendProfileResponse)(nil),             // 22: api.GetMyFriendProfileResponse
-	(*GetFriendProfileRequest)(nil),                // 23: api.GetFriendProfileRequest
-	(*GetFriendProfileResponse)(nil),               // 24: api.GetFriendProfileResponse
-	(*UpdateMyFriendProfileRequest)(nil),           // 25: api.UpdateMyFriendProfileRequest
-	(*UpdateMyFriendProfileResponse)(nil),          // 26: api.UpdateMyFriendProfileResponse
-	(*UpdateFriendRemarkRequest)(nil),              // 27: api.UpdateFriendRemarkRequest
-	(*UpdateFriendRemarkResponse)(nil),             // 28: api.UpdateFriendRemarkResponse
+	(FriendActionWeightUnit)(0),                    // 1: api.FriendActionWeightUnit
+	(FriendActionTrainingKind)(0),                  // 2: api.FriendActionTrainingKind
+	(FriendPlanShareDisposition)(0),                // 3: api.FriendPlanShareDisposition
+	(*FriendListItem)(nil),                         // 4: api.FriendListItem
+	(*FriendProfile)(nil),                          // 5: api.FriendProfile
+	(*FriendRequest)(nil),                          // 6: api.FriendRequest
+	(*FriendTrainingTagStat)(nil),                  // 7: api.FriendTrainingTagStat
+	(*FriendTrainingDaySummary)(nil),               // 8: api.FriendTrainingDaySummary
+	(*FriendActionSetSummary)(nil),                 // 9: api.FriendActionSetSummary
+	(*FriendActionExerciseSummary)(nil),            // 10: api.FriendActionExerciseSummary
+	(*FriendBoundWorkoutSummary)(nil),              // 11: api.FriendBoundWorkoutSummary
+	(*FriendActionTrainingSession)(nil),            // 12: api.FriendActionTrainingSession
+	(*FriendSharedPlanSet)(nil),                    // 13: api.FriendSharedPlanSet
+	(*FriendSharedPlanExercise)(nil),               // 14: api.FriendSharedPlanExercise
+	(*FriendSharedPlan)(nil),                       // 15: api.FriendSharedPlan
+	(*FriendPlanShareNotification)(nil),            // 16: api.FriendPlanShareNotification
+	(*MyTrainingPublicSnapshot)(nil),               // 17: api.MyTrainingPublicSnapshot
+	(*ListFriendsRequest)(nil),                     // 18: api.ListFriendsRequest
+	(*ListFriendsResponse)(nil),                    // 19: api.ListFriendsResponse
+	(*AddFriendRequest)(nil),                       // 20: api.AddFriendRequest
+	(*AddFriendResponse)(nil),                      // 21: api.AddFriendResponse
+	(*ListFriendRequestsRequest)(nil),              // 22: api.ListFriendRequestsRequest
+	(*ListFriendRequestsResponse)(nil),             // 23: api.ListFriendRequestsResponse
+	(*HandleFriendRequestRequest)(nil),             // 24: api.HandleFriendRequestRequest
+	(*HandleFriendRequestResponse)(nil),            // 25: api.HandleFriendRequestResponse
+	(*SendFriendPlanShareRequest)(nil),             // 26: api.SendFriendPlanShareRequest
+	(*SendFriendPlanShareResponse)(nil),            // 27: api.SendFriendPlanShareResponse
+	(*HandleFriendPlanShareRequest)(nil),           // 28: api.HandleFriendPlanShareRequest
+	(*HandleFriendPlanShareResponse)(nil),          // 29: api.HandleFriendPlanShareResponse
+	(*RecordFriendTrainingUseRequest)(nil),         // 30: api.RecordFriendTrainingUseRequest
+	(*RecordFriendTrainingUseResponse)(nil),        // 31: api.RecordFriendTrainingUseResponse
+	(*UpdateTrainingDataVisibilityRequest)(nil),    // 32: api.UpdateTrainingDataVisibilityRequest
+	(*UpdateTrainingDataVisibilityResponse)(nil),   // 33: api.UpdateTrainingDataVisibilityResponse
+	(*UploadMyTrainingPublicSnapshotRequest)(nil),  // 34: api.UploadMyTrainingPublicSnapshotRequest
+	(*UploadMyTrainingPublicSnapshotResponse)(nil), // 35: api.UploadMyTrainingPublicSnapshotResponse
+	(*GetFriendEntryStatusRequest)(nil),            // 36: api.GetFriendEntryStatusRequest
+	(*GetFriendEntryStatusResponse)(nil),           // 37: api.GetFriendEntryStatusResponse
+	(*GetMyFriendProfileRequest)(nil),              // 38: api.GetMyFriendProfileRequest
+	(*GetMyFriendProfileResponse)(nil),             // 39: api.GetMyFriendProfileResponse
+	(*GetFriendProfileRequest)(nil),                // 40: api.GetFriendProfileRequest
+	(*GetFriendProfileResponse)(nil),               // 41: api.GetFriendProfileResponse
+	(*UpdateMyFriendProfileRequest)(nil),           // 42: api.UpdateMyFriendProfileRequest
+	(*UpdateMyFriendProfileResponse)(nil),          // 43: api.UpdateMyFriendProfileResponse
+	(*UpdateFriendRemarkRequest)(nil),              // 44: api.UpdateFriendRemarkRequest
+	(*UpdateFriendRemarkResponse)(nil),             // 45: api.UpdateFriendRemarkResponse
 }
 var file_primary_friend_proto_depIdxs = []int32{
-	5,  // 0: api.FriendProfile.recent_training_days:type_name -> api.FriendTrainingDaySummary
+	8,  // 0: api.FriendProfile.recent_training_days:type_name -> api.FriendTrainingDaySummary
 	0,  // 1: api.FriendRequest.status:type_name -> api.FriendRequestStatus
-	4,  // 2: api.FriendTrainingDaySummary.tags:type_name -> api.FriendTrainingTagStat
-	5,  // 3: api.MyTrainingPublicSnapshot.recent_training_days:type_name -> api.FriendTrainingDaySummary
-	1,  // 4: api.ListFriendsResponse.friends:type_name -> api.FriendListItem
-	3,  // 5: api.ListFriendRequestsResponse.requests:type_name -> api.FriendRequest
-	6,  // 6: api.UpdateTrainingDataVisibilityRequest.snapshot:type_name -> api.MyTrainingPublicSnapshot
-	6,  // 7: api.UploadMyTrainingPublicSnapshotRequest.snapshot:type_name -> api.MyTrainingPublicSnapshot
-	2,  // 8: api.GetMyFriendProfileResponse.profile:type_name -> api.FriendProfile
-	2,  // 9: api.GetFriendProfileResponse.profile:type_name -> api.FriendProfile
-	2,  // 10: api.UpdateMyFriendProfileResponse.profile:type_name -> api.FriendProfile
-	7,  // 11: api.FriendService.ListFriends:input_type -> api.ListFriendsRequest
-	9,  // 12: api.FriendService.AddFriend:input_type -> api.AddFriendRequest
-	11, // 13: api.FriendService.ListFriendRequests:input_type -> api.ListFriendRequestsRequest
-	13, // 14: api.FriendService.HandleFriendRequest:input_type -> api.HandleFriendRequestRequest
-	15, // 15: api.FriendService.UpdateTrainingDataVisibility:input_type -> api.UpdateTrainingDataVisibilityRequest
-	17, // 16: api.FriendService.UploadMyTrainingPublicSnapshot:input_type -> api.UploadMyTrainingPublicSnapshotRequest
-	19, // 17: api.FriendService.GetFriendEntryStatus:input_type -> api.GetFriendEntryStatusRequest
-	23, // 18: api.FriendService.GetFriendProfile:input_type -> api.GetFriendProfileRequest
-	21, // 19: api.FriendService.GetMyFriendProfile:input_type -> api.GetMyFriendProfileRequest
-	25, // 20: api.FriendService.UpdateMyFriendProfile:input_type -> api.UpdateMyFriendProfileRequest
-	27, // 21: api.FriendService.UpdateFriendRemark:input_type -> api.UpdateFriendRemarkRequest
-	8,  // 22: api.FriendService.ListFriends:output_type -> api.ListFriendsResponse
-	10, // 23: api.FriendService.AddFriend:output_type -> api.AddFriendResponse
-	12, // 24: api.FriendService.ListFriendRequests:output_type -> api.ListFriendRequestsResponse
-	14, // 25: api.FriendService.HandleFriendRequest:output_type -> api.HandleFriendRequestResponse
-	16, // 26: api.FriendService.UpdateTrainingDataVisibility:output_type -> api.UpdateTrainingDataVisibilityResponse
-	18, // 27: api.FriendService.UploadMyTrainingPublicSnapshot:output_type -> api.UploadMyTrainingPublicSnapshotResponse
-	20, // 28: api.FriendService.GetFriendEntryStatus:output_type -> api.GetFriendEntryStatusResponse
-	24, // 29: api.FriendService.GetFriendProfile:output_type -> api.GetFriendProfileResponse
-	22, // 30: api.FriendService.GetMyFriendProfile:output_type -> api.GetMyFriendProfileResponse
-	26, // 31: api.FriendService.UpdateMyFriendProfile:output_type -> api.UpdateMyFriendProfileResponse
-	28, // 32: api.FriendService.UpdateFriendRemark:output_type -> api.UpdateFriendRemarkResponse
-	22, // [22:33] is the sub-list for method output_type
-	11, // [11:22] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	7,  // 2: api.FriendTrainingDaySummary.tags:type_name -> api.FriendTrainingTagStat
+	12, // 3: api.FriendTrainingDaySummary.action_training_sessions:type_name -> api.FriendActionTrainingSession
+	1,  // 4: api.FriendActionSetSummary.weight_unit:type_name -> api.FriendActionWeightUnit
+	9,  // 5: api.FriendActionExerciseSummary.sets:type_name -> api.FriendActionSetSummary
+	2,  // 6: api.FriendActionTrainingSession.kind:type_name -> api.FriendActionTrainingKind
+	10, // 7: api.FriendActionTrainingSession.exercises:type_name -> api.FriendActionExerciseSummary
+	11, // 8: api.FriendActionTrainingSession.bound_workout:type_name -> api.FriendBoundWorkoutSummary
+	13, // 9: api.FriendSharedPlanExercise.sets:type_name -> api.FriendSharedPlanSet
+	14, // 10: api.FriendSharedPlan.exercises:type_name -> api.FriendSharedPlanExercise
+	15, // 11: api.FriendPlanShareNotification.plan:type_name -> api.FriendSharedPlan
+	8,  // 12: api.MyTrainingPublicSnapshot.recent_training_days:type_name -> api.FriendTrainingDaySummary
+	4,  // 13: api.ListFriendsResponse.friends:type_name -> api.FriendListItem
+	6,  // 14: api.ListFriendRequestsResponse.requests:type_name -> api.FriendRequest
+	16, // 15: api.ListFriendRequestsResponse.plan_shares:type_name -> api.FriendPlanShareNotification
+	15, // 16: api.SendFriendPlanShareRequest.plan:type_name -> api.FriendSharedPlan
+	3,  // 17: api.HandleFriendPlanShareRequest.disposition:type_name -> api.FriendPlanShareDisposition
+	17, // 18: api.UpdateTrainingDataVisibilityRequest.snapshot:type_name -> api.MyTrainingPublicSnapshot
+	17, // 19: api.UploadMyTrainingPublicSnapshotRequest.snapshot:type_name -> api.MyTrainingPublicSnapshot
+	5,  // 20: api.GetMyFriendProfileResponse.profile:type_name -> api.FriendProfile
+	5,  // 21: api.GetFriendProfileResponse.profile:type_name -> api.FriendProfile
+	5,  // 22: api.UpdateMyFriendProfileResponse.profile:type_name -> api.FriendProfile
+	18, // 23: api.FriendService.ListFriends:input_type -> api.ListFriendsRequest
+	20, // 24: api.FriendService.AddFriend:input_type -> api.AddFriendRequest
+	22, // 25: api.FriendService.ListFriendRequests:input_type -> api.ListFriendRequestsRequest
+	24, // 26: api.FriendService.HandleFriendRequest:input_type -> api.HandleFriendRequestRequest
+	26, // 27: api.FriendService.SendFriendPlanShare:input_type -> api.SendFriendPlanShareRequest
+	28, // 28: api.FriendService.HandleFriendPlanShare:input_type -> api.HandleFriendPlanShareRequest
+	30, // 29: api.FriendService.RecordFriendTrainingUse:input_type -> api.RecordFriendTrainingUseRequest
+	32, // 30: api.FriendService.UpdateTrainingDataVisibility:input_type -> api.UpdateTrainingDataVisibilityRequest
+	34, // 31: api.FriendService.UploadMyTrainingPublicSnapshot:input_type -> api.UploadMyTrainingPublicSnapshotRequest
+	36, // 32: api.FriendService.GetFriendEntryStatus:input_type -> api.GetFriendEntryStatusRequest
+	40, // 33: api.FriendService.GetFriendProfile:input_type -> api.GetFriendProfileRequest
+	38, // 34: api.FriendService.GetMyFriendProfile:input_type -> api.GetMyFriendProfileRequest
+	42, // 35: api.FriendService.UpdateMyFriendProfile:input_type -> api.UpdateMyFriendProfileRequest
+	44, // 36: api.FriendService.UpdateFriendRemark:input_type -> api.UpdateFriendRemarkRequest
+	19, // 37: api.FriendService.ListFriends:output_type -> api.ListFriendsResponse
+	21, // 38: api.FriendService.AddFriend:output_type -> api.AddFriendResponse
+	23, // 39: api.FriendService.ListFriendRequests:output_type -> api.ListFriendRequestsResponse
+	25, // 40: api.FriendService.HandleFriendRequest:output_type -> api.HandleFriendRequestResponse
+	27, // 41: api.FriendService.SendFriendPlanShare:output_type -> api.SendFriendPlanShareResponse
+	29, // 42: api.FriendService.HandleFriendPlanShare:output_type -> api.HandleFriendPlanShareResponse
+	31, // 43: api.FriendService.RecordFriendTrainingUse:output_type -> api.RecordFriendTrainingUseResponse
+	33, // 44: api.FriendService.UpdateTrainingDataVisibility:output_type -> api.UpdateTrainingDataVisibilityResponse
+	35, // 45: api.FriendService.UploadMyTrainingPublicSnapshot:output_type -> api.UploadMyTrainingPublicSnapshotResponse
+	37, // 46: api.FriendService.GetFriendEntryStatus:output_type -> api.GetFriendEntryStatusResponse
+	41, // 47: api.FriendService.GetFriendProfile:output_type -> api.GetFriendProfileResponse
+	39, // 48: api.FriendService.GetMyFriendProfile:output_type -> api.GetMyFriendProfileResponse
+	43, // 49: api.FriendService.UpdateMyFriendProfile:output_type -> api.UpdateMyFriendProfileResponse
+	45, // 50: api.FriendService.UpdateFriendRemark:output_type -> api.UpdateFriendRemarkResponse
+	37, // [37:51] is the sub-list for method output_type
+	23, // [23:37] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_primary_friend_proto_init() }
@@ -1936,8 +3300,8 @@ func file_primary_friend_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_primary_friend_proto_rawDesc), len(file_primary_friend_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   28,
+			NumEnums:      4,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

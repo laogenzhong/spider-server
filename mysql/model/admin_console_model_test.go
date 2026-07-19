@@ -42,6 +42,66 @@ func TestAdminClientSyncFailurePaginationUsesStableNewestFirstOrder(t *testing.T
 	}
 }
 
+func TestAdminPaywallSessionPaginationUsesStableNewestFirstOrder(t *testing.T) {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN:                       "gorm:gorm@tcp(localhost:9910)/gorm?charset=utf8&parseTime=True&loc=Local",
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{DryRun: true, DisableAutomaticPing: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pageOneSQL := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return applyAdminPaywallSessionOrderingAndPage(tx.Table("paywall_session_records AS p"), AdminPageQuery{Page: 1, PageSize: 2}).
+			Find(&[]AdminPaywallSessionRecord{})
+	})
+	pageTwoSQL := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return applyAdminPaywallSessionOrderingAndPage(tx.Table("paywall_session_records AS p"), AdminPageQuery{Page: 2, PageSize: 2}).
+			Find(&[]AdminPaywallSessionRecord{})
+	})
+
+	const stableOrder = "ORDER BY p.presented_at DESC, p.id DESC"
+	if !strings.Contains(pageOneSQL, stableOrder) || !strings.Contains(pageTwoSQL, stableOrder) {
+		t.Fatalf("paywall pagination must use stable newest-first order: page 1 = %q, page 2 = %q", pageOneSQL, pageTwoSQL)
+	}
+	if !strings.Contains(pageOneSQL, "LIMIT 2") || strings.Contains(pageOneSQL, "OFFSET") {
+		t.Fatalf("page 1 SQL = %q", pageOneSQL)
+	}
+	if !strings.Contains(pageTwoSQL, "LIMIT 2 OFFSET 2") {
+		t.Fatalf("page 2 SQL = %q", pageTwoSQL)
+	}
+}
+
+func TestAdminSharedContentScorePaginationOrdersBeforeStablePage(t *testing.T) {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN:                       "gorm:gorm@tcp(localhost:9910)/gorm?charset=utf8&parseTime=True&loc=Local",
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{DryRun: true, DisableAutomaticPing: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pageOneSQL := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return applyAdminSharedContentScoreOrderingAndPage(tx.Table("friend_shared_content_score_records AS s"), AdminPageQuery{Page: 1, PageSize: 2}).
+			Find(&[]AdminSharedContentScoreRecord{})
+	})
+	pageTwoSQL := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return applyAdminSharedContentScoreOrderingAndPage(tx.Table("friend_shared_content_score_records AS s"), AdminPageQuery{Page: 2, PageSize: 2}).
+			Find(&[]AdminSharedContentScoreRecord{})
+	})
+
+	const stableOrder = "ORDER BY s.score DESC, s.last_used_at DESC, s.id DESC"
+	if !strings.Contains(pageOneSQL, stableOrder) || !strings.Contains(pageTwoSQL, stableOrder) {
+		t.Fatalf("score pagination must use server-side stable order: page 1 = %q, page 2 = %q", pageOneSQL, pageTwoSQL)
+	}
+	if !strings.Contains(pageOneSQL, "LIMIT 2") || strings.Contains(pageOneSQL, "OFFSET") {
+		t.Fatalf("page 1 SQL = %q", pageOneSQL)
+	}
+	if !strings.Contains(pageTwoSQL, "LIMIT 2 OFFSET 2") {
+		t.Fatalf("page 2 SQL = %q", pageTwoSQL)
+	}
+}
+
 func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T) {
 	query := AdminPageQuery{Page: 1, PageSize: 2}
 	firstPage, total, err := mergeAdminDailyFeatureRecords(
@@ -49,9 +109,8 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 2}, {Date: "2026-07-16", UserCount: 4}},
 		[]adminDailyUIDCount{{Date: "2026-07-16", UserCount: 3}},
 		[]adminDailyUIDCount{{Date: "2026-07-15", UserCount: 5}},
-		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 7}},
-		[]adminDailyRecordCount{{Date: "2026-07-15", RecordCount: 2}},
-		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 1}},
+		[]adminDailyUIDCount{{Date: "2026-07-15", UserCount: 2}},
+		[]adminDailyUIDCount{{Date: "2026-07-16", UserCount: 1}},
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 1}},
 	)
 	if err != nil {
@@ -66,7 +125,7 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 	if firstPage[0].WeightUsers != 4 || firstPage[0].TrainingTagUsers != 3 {
 		t.Fatalf("merged newest day = %#v", firstPage[0])
 	}
-	if firstPage[0].ExerciseSetCount != 7 || firstPage[0].UpdatedPlanCount != 1 || firstPage[1].CreatedPlanCount != 2 {
+	if firstPage[1].ExerciseSetCount != 5 || firstPage[0].UpdatedPlanCount != 1 || firstPage[1].CreatedPlanCount != 2 {
 		t.Fatalf("merged action and plan counts = %#v", firstPage)
 	}
 
@@ -76,9 +135,8 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 2}, {Date: "2026-07-16", UserCount: 4}},
 		[]adminDailyUIDCount{{Date: "2026-07-16", UserCount: 3}},
 		[]adminDailyUIDCount{{Date: "2026-07-15", UserCount: 5}},
-		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 7}},
-		[]adminDailyRecordCount{{Date: "2026-07-15", RecordCount: 2}},
-		[]adminDailyRecordCount{{Date: "2026-07-16", RecordCount: 1}},
+		[]adminDailyUIDCount{{Date: "2026-07-15", UserCount: 2}},
+		[]adminDailyUIDCount{{Date: "2026-07-16", UserCount: 1}},
 		[]adminDailyUIDCount{{Date: "2026-07-14", UserCount: 1}},
 	)
 	if err != nil {
@@ -93,12 +151,53 @@ func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T)
 }
 
 func TestMergeAdminDailyFeatureRecordsReturnsEmptyArray(t *testing.T) {
-	items, total, err := mergeAdminDailyFeatureRecords(AdminPageQuery{Page: 1, PageSize: 30}, nil, nil, nil, nil, nil, nil, nil)
+	items, total, err := mergeAdminDailyFeatureRecords(AdminPageQuery{Page: 1, PageSize: 30}, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if total != 0 || items == nil || len(items) != 0 {
 		t.Fatalf("items = %#v, total = %d, want non-nil empty list", items, total)
+	}
+}
+
+func TestAdminDailyFeatureQueriesCountDistinctUIDsByBusinessDate(t *testing.T) {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN:                       "gorm:gorm@tcp(localhost:9910)/gorm?charset=utf8&parseTime=True&loc=Local",
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{DryRun: true, DisableAutomaticPing: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name       string
+		table      string
+		condition  string
+		timeColumn string
+		expected   []string
+	}{
+		{name: "created exercise sets", table: "exercise_set_records", timeColumn: "created_at"},
+		{name: "created plans", table: "workout_data_snapshots", condition: "kind = 4", timeColumn: "created_at", expected: []string{"kind = 4"}},
+		{name: "updated plans", table: "workout_data_snapshots", condition: "kind = 4 AND deleted_at IS NULL AND updated_at > created_at", timeColumn: "updated_at", expected: []string{"kind = 4 AND deleted_at IS NULL AND updated_at > created_at"}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+				return adminDailyDistinctUIDQuery(tx, test.table, test.condition, test.timeColumn, AdminPageQuery{}).
+					Scan(&[]adminDailyUIDCount{})
+			})
+			expectedParts := append([]string{
+				"DATE(" + test.timeColumn + ") AS activity_date",
+				"COUNT(DISTINCT uid) AS user_count",
+				"GROUP BY DATE(" + test.timeColumn + ")",
+			}, test.expected...)
+			for _, expected := range expectedParts {
+				if !strings.Contains(sql, expected) {
+					t.Fatalf("daily feature SQL must contain %q: %s", expected, sql)
+				}
+			}
+		})
 	}
 }
 

@@ -27,6 +27,7 @@ func (s *GRPCServer) Init() {
 		pb.RegisterFeedbackServiceServer(server, &router.FeedbackApi{})
 		pb.RegisterFriendServiceServer(server, &router.FriendApi{})
 		pb.RegisterVIPServiceServer(server, &router.VIPApi{})
+		pb.RegisterPaywallAnalyticsServiceServer(server, &router.PaywallAnalyticsApi{})
 		pb.RegisterAppUpdateServiceServer(server, &router.AppUpdateApi{})
 		pb.RegisterAdminVIPApiServer(server, &router.AdminVIPApi{})
 		pb.RegisterClientSyncFailureServiceServer(server, &router.ClientSyncFailureApi{})

@@ -101,6 +101,119 @@ message FriendTrainingDaySummary {
   repeated FriendTrainingTagStat tags = 2;
   // 当天总消耗热量，单位 kcal。
   string calories = 3;
+  // 当天可下钻的动作训练；仅最近 7 个训练日携带，服务端会限制数量与快照体积。
+  repeated FriendActionTrainingSession action_training_sessions = 4;
+}
+
+// FriendActionWeightUnit 表示好友动作组中公开的重量单位。
+enum FriendActionWeightUnit {
+  FRIEND_ACTION_WEIGHT_UNIT_UNKNOWN = 0;
+  FRIEND_ACTION_WEIGHT_UNIT_KG = 1;
+  FRIEND_ACTION_WEIGHT_UNIT_LB = 2;
+}
+
+// FriendActionSetSummary 表示一个公开动作组的基础数据。
+message FriendActionSetSummary {
+  // 用户录入重量乘 10；有氧器械动作可为 0。
+  int32 weight_x10 = 1;
+  FriendActionWeightUnit weight_unit = 2;
+  // 力量动作为次数，有氧器械动作为分钟数。
+  int32 reps = 3;
+}
+
+// FriendActionExerciseSummary 表示一次动作训练中的一个动作及其组数。
+message FriendActionExerciseSummary {
+  string exercise_id = 1;
+  string name_key = 2;
+  string name_snapshot = 3;
+  string category_key = 4;
+  string type_key = 5;
+  repeated FriendActionSetSummary sets = 6;
+  string custom_name = 7;
+  string custom_subcategory_key = 8;
+  string custom_introduction = 9;
+}
+
+// FriendBoundWorkoutSummary 表示与动作训练时间重叠的 HealthKit 运动基础数据。
+// 不包含心率、路线、备注或 HealthKit UUID。
+message FriendBoundWorkoutSummary {
+  string workout_type = 1;
+  int64 start_at = 2;
+  int64 end_at = 3;
+  int32 duration_seconds = 4;
+  double energy_kcal = 5;
+  double distance_meters = 6;
+  bool has_distance = 7;
+  repeated string tags = 8;
+}
+
+enum FriendActionTrainingKind {
+  FRIEND_ACTION_TRAINING_KIND_UNKNOWN = 0;
+  FRIEND_ACTION_TRAINING_KIND_STRENGTH = 1;
+  FRIEND_ACTION_TRAINING_KIND_CARDIO = 2;
+  FRIEND_ACTION_TRAINING_KIND_MIXED = 3;
+}
+
+// FriendActionTrainingSession 是好友可见的一次只读动作训练摘要。
+message FriendActionTrainingSession {
+  // 仅用于好友资料页列表稳定标识，不是服务端训练快照主键。
+  string session_id = 1;
+  int64 start_at = 2;
+  int64 end_at = 3;
+  FriendActionTrainingKind kind = 4;
+  repeated FriendActionExerciseSummary exercises = 5;
+  // 仅当该动作训练与某次 HealthKit 运动重叠时存在。
+  FriendBoundWorkoutSummary bound_workout = 6;
+}
+
+// FriendSharedPlanSet 是好友分享计划中的一组目标值。
+message FriendSharedPlanSet {
+  string weight_text = 1;
+  string reps_text = 2;
+}
+
+// FriendSharedPlanExercise 是好友分享计划中的动作配置。
+message FriendSharedPlanExercise {
+  string exercise_id = 1;
+  string name_key = 2;
+  string name_snapshot = 3;
+  string category_key = 4;
+  string type_key = 5;
+  string display_type_key = 6;
+  string custom_name = 7;
+  string custom_subcategory_key = 8;
+  string note = 9;
+  int32 set_count = 10;
+  string weight_unit = 11;
+  repeated FriendSharedPlanSet sets = 12;
+  string custom_introduction = 13;
+}
+
+// FriendSharedPlan 是可由接收方复制到自己计划文件夹的只读计划快照。
+message FriendSharedPlan {
+  string title = 1;
+  repeated FriendSharedPlanExercise exercises = 2;
+  // 分享者本地计划 ID，用于归属同一计划的使用积分。
+  string source_plan_id = 3;
+}
+
+// FriendPlanShareNotification 是一条待处理的好友计划分享通知。
+message FriendPlanShareNotification {
+  string id = 1;
+  uint64 from_uid = 2;
+  string from_user_id = 3;
+  string nickname = 4;
+  string avatar_symbol = 5;
+  FriendSharedPlan plan = 6;
+  int64 created_at = 7;
+}
+
+enum FriendPlanShareDisposition {
+  FRIEND_PLAN_SHARE_DISPOSITION_UNKNOWN = 0;
+  // 已确认复制到自己的计划文件夹。
+  FRIEND_PLAN_SHARE_DISPOSITION_USED = 1;
+  // 未使用并忽略。
+  FRIEND_PLAN_SHARE_DISPOSITION_IGNORED = 2;
 }
 
 // MyTrainingPublicSnapshot 表示当前用户公开给好友看的训练摘要。
@@ -147,6 +260,8 @@ message ListFriendRequestsRequest {}
 message ListFriendRequestsResponse {
   // 好友申请列表，可包含已处理申请；客户端只对 pending 展示红点。
   repeated FriendRequest requests = 1;
+  // 尚未使用或忽略的好友计划分享通知。
+  repeated FriendPlanShareNotification plan_shares = 2;
 }
 
 // HandleFriendRequestRequest 处理一条好友申请。
@@ -160,6 +275,41 @@ message HandleFriendRequestRequest {
 // HandleFriendRequestResponse 返回处理结果。
 message HandleFriendRequestResponse {
   // 是否处理成功。
+  bool success = 1;
+}
+
+// SendFriendPlanShareRequest 给一位现有好友分享计划。
+message SendFriendPlanShareRequest {
+  uint64 to_uid = 1;
+  // 客户端生成的幂等 ID，队列重试时保持不变。
+  string client_share_id = 2;
+  FriendSharedPlan plan = 3;
+}
+
+message SendFriendPlanShareResponse {
+  bool success = 1;
+  string share_id = 2;
+}
+
+// HandleFriendPlanShareRequest 在真正复制完成或明确忽略后处理通知。
+message HandleFriendPlanShareRequest {
+  string share_id = 1;
+  FriendPlanShareDisposition disposition = 2;
+}
+
+message HandleFriendPlanShareResponse {
+  bool success = 1;
+}
+
+// RecordFriendTrainingUseRequest 在好友训练被确认保存为自己的计划后增加一次使用积分。
+message RecordFriendTrainingUseRequest {
+  // 每次用户确认保存生成一个新 ID；只用于网络重试幂等，不限制同一用户重复使用。
+  string client_event_id = 1;
+  uint64 source_uid = 2;
+  string training_session_id = 3;
+}
+
+message RecordFriendTrainingUseResponse {
   bool success = 1;
 }
 
@@ -202,6 +352,10 @@ message GetFriendEntryStatusResponse {
   int32 pending_request_count = 2;
   // 当前用户是否公开训练数据；客户端结合本地更新时间判断是否显示蓝点。
   bool my_training_data_visible = 3;
+  // 是否存在好友申请或计划分享通知。
+  bool has_pending_notification = 4;
+  // 好友申请与计划分享通知总数。
+  int32 pending_notification_count = 5;
 }
 
 // GetMyFriendProfileRequest 请求当前用户自己的朋友资料。
@@ -268,6 +422,12 @@ service FriendService {
   rpc ListFriendRequests(ListFriendRequestsRequest) returns (ListFriendRequestsResponse);
   // 同意或拒绝好友申请。
   rpc HandleFriendRequest(HandleFriendRequestRequest) returns (HandleFriendRequestResponse);
+  // 给现有好友分享一份计划。
+  rpc SendFriendPlanShare(SendFriendPlanShareRequest) returns (SendFriendPlanShareResponse);
+  // 将计划分享标记为已使用或已忽略，并进行带原因的软删除。
+  rpc HandleFriendPlanShare(HandleFriendPlanShareRequest) returns (HandleFriendPlanShareResponse);
+  // 记录好友训练被保存为计划的一次使用积分。
+  rpc RecordFriendTrainingUse(RecordFriendTrainingUseRequest) returns (RecordFriendTrainingUseResponse);
   // 设置当前用户训练数据是否公开。
   rpc UpdateTrainingDataVisibility(UpdateTrainingDataVisibilityRequest) returns (UpdateTrainingDataVisibilityResponse);
   // 上传当前用户公开训练快照。

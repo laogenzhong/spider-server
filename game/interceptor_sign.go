@@ -209,6 +209,9 @@ func messageHasField(msg protoreflect.Message, field protoreflect.FieldDescripto
 }
 
 func formatProtoFieldValue(field protoreflect.FieldDescriptor, value protoreflect.Value) string {
+	if shouldRedactProtoLogField(field) {
+		return "<redacted>"
+	}
 	if field.IsMap() {
 		return formatProtoMap(value.Map(), field.MapValue())
 	}
@@ -216,6 +219,15 @@ func formatProtoFieldValue(field protoreflect.FieldDescriptor, value protoreflec
 		return formatProtoList(value.List(), field)
 	}
 	return formatProtoScalar(field, value)
+}
+
+func shouldRedactProtoLogField(field protoreflect.FieldDescriptor) bool {
+	switch string(field.TextName()) {
+	case "anonymous_id", "device_unique_id":
+		return true
+	default:
+		return false
+	}
 }
 
 func formatProtoList(list protoreflect.List, field protoreflect.FieldDescriptor) string {

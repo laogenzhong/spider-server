@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+service PaywallAnalyticsService {
+  // 无需登录。客户端通过独立持久队列静默写入一次付费墙展示会话。
+  rpc recordPaywallSession(RecordPaywallSessionRequest) returns (RecordPaywallSessionResponse);
+}
+
+enum PaywallSessionStatus {
+  PAYWALL_SESSION_STATUS_DEFAULT = 0;
+  PAYWALL_SESSION_STATUS_CANCELLED = 1;
+  PAYWALL_SESSION_STATUS_PURCHASED = 2;
+}
+
+message RecordPaywallSessionRequest {
+  string presentation_id = 1;
+  // 展示付费墙当时的 uid；未登录固定为 0。
+  uint64 presented_uid = 2;
+  string anonymous_id = 3;
+  string entry_point = 4;
+  // Unix 毫秒。
+  int64 presented_at = 5;
+  PaywallSessionStatus status = 6;
+  // Unix 毫秒；默认状态与 presented_at 相同。
+  int64 status_changed_at = 7;
+  string product_id = 8;
+  string app_version = 9;
+  // App 生成并保存在 ThisDeviceOnly Keychain 的设备 UUID；不是 IDFA 或硬件序列号。
+  string device_unique_id = 10;
+}
+
+message RecordPaywallSessionResponse {
+  bool success = 1;
+}

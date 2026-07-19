@@ -213,6 +213,7 @@ func (a *ExerciseSetRecordApi) SaveCustomExercise(ctx context.Context, req *pb.S
 	categoryKey := strings.TrimSpace(exercise.GetCategoryKey())
 	subcategoryKey := strings.TrimSpace(exercise.GetSubcategoryKey())
 	typeKey := strings.TrimSpace(exercise.GetTypeKey())
+	introduction := strings.TrimSpace(exercise.GetIntroduction())
 
 	if localID == "" {
 		return session.Error(ctx, gamecode.CustomExerciseLocalIDEmpty, &pb.SaveCustomExerciseResponse{})
@@ -226,6 +227,9 @@ func (a *ExerciseSetRecordApi) SaveCustomExercise(ctx context.Context, req *pb.S
 	if typeKey == "" {
 		return session.Error(ctx, gamecode.CustomExerciseTypeEmpty, &pb.SaveCustomExerciseResponse{})
 	}
+	if !validOptionalString(introduction, maxCustomExerciseIntroductionBytes) {
+		return session.Error(ctx, gamecode.CustomExerciseSaveFailed, &pb.SaveCustomExerciseResponse{})
+	}
 
 	saved, err := mysqlmodel.SaveCustomExercise(&mysqlmodel.CustomExercise{
 		UID:             uid,
@@ -234,6 +238,7 @@ func (a *ExerciseSetRecordApi) SaveCustomExercise(ctx context.Context, req *pb.S
 		CategoryKey:     categoryKey,
 		SubcategoryKey:  subcategoryKey,
 		TypeKey:         typeKey,
+		Introduction:    introduction,
 		ClientCreatedAt: exercise.GetCreatedAt(),
 	})
 	if err != nil {
@@ -379,13 +384,14 @@ func validWorkoutDataSnapshot(snapshot *pb.WorkoutDataSnapshot) bool {
 }
 
 const (
-	maxWorkoutPlanItemsPerLevel    = 99
-	maxWorkoutSnapshotIDBytes      = 64
-	maxWorkoutSnapshotTitleBytes   = 160
-	maxWorkoutSnapshotKeyBytes     = 128
-	maxWorkoutSnapshotNameBytes    = 256
-	maxWorkoutSnapshotNoteBytes    = 2048
-	maxWorkoutSnapshotSetTextBytes = 32
+	maxWorkoutPlanItemsPerLevel        = 99
+	maxWorkoutSnapshotIDBytes          = 64
+	maxWorkoutSnapshotTitleBytes       = 160
+	maxWorkoutSnapshotKeyBytes         = 128
+	maxWorkoutSnapshotNameBytes        = 256
+	maxWorkoutSnapshotNoteBytes        = 2048
+	maxCustomExerciseIntroductionBytes = 4096
+	maxWorkoutSnapshotSetTextBytes     = 32
 )
 
 var maxWorkoutDataSyncRequestBytes = appconfig.Default().WorkoutDataSync.SyncRPCMaxRequestBytes
@@ -431,7 +437,7 @@ func validWorkoutPlanSnapshot(plan *pb.WorkoutPlanSnapshot) bool {
 		return false
 	}
 	for _, exercise := range plan.GetExercises() {
-		if exercise == nil || !validRequiredString(exercise.GetId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(exercise.GetExerciseId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(exercise.GetNameKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetNameSnapshot(), maxWorkoutSnapshotNameBytes) || !validOptionalString(exercise.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetDisplayTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetCustomName(), maxWorkoutSnapshotNameBytes) || !validOptionalString(exercise.GetCustomSubcategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetNote(), maxWorkoutSnapshotNoteBytes) || !validOptionalString(exercise.GetWeightUnit(), 8) || exercise.GetSetCount() <= 0 || exercise.GetSetCount() > maxWorkoutPlanItemsPerLevel || len(exercise.GetSets()) > maxWorkoutPlanItemsPerLevel {
+		if exercise == nil || !validRequiredString(exercise.GetId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(exercise.GetExerciseId(), maxWorkoutSnapshotIDBytes) || !validOptionalString(exercise.GetNameKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetNameSnapshot(), maxWorkoutSnapshotNameBytes) || !validOptionalString(exercise.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetDisplayTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetCustomName(), maxWorkoutSnapshotNameBytes) || !validOptionalString(exercise.GetCustomSubcategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetCustomIntroduction(), maxCustomExerciseIntroductionBytes) || !validOptionalString(exercise.GetNote(), maxWorkoutSnapshotNoteBytes) || !validOptionalString(exercise.GetWeightUnit(), 8) || exercise.GetSetCount() <= 0 || exercise.GetSetCount() > maxWorkoutPlanItemsPerLevel || len(exercise.GetSets()) > maxWorkoutPlanItemsPerLevel {
 			return false
 		}
 		for _, set := range exercise.GetSets() {
@@ -448,7 +454,7 @@ func validCustomExerciseSnapshots(exercises []*pb.CustomExercise) bool {
 		return false
 	}
 	for _, exercise := range exercises {
-		if exercise == nil || !validRequiredString(exercise.GetLocalId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(exercise.GetName(), maxWorkoutSnapshotNameBytes) || !validRequiredString(exercise.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validRequiredString(exercise.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetSubcategoryKey(), maxWorkoutSnapshotKeyBytes) {
+		if exercise == nil || !validRequiredString(exercise.GetLocalId(), maxWorkoutSnapshotIDBytes) || !validRequiredString(exercise.GetName(), maxWorkoutSnapshotNameBytes) || !validRequiredString(exercise.GetCategoryKey(), maxWorkoutSnapshotKeyBytes) || !validRequiredString(exercise.GetTypeKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetSubcategoryKey(), maxWorkoutSnapshotKeyBytes) || !validOptionalString(exercise.GetIntroduction(), maxCustomExerciseIntroductionBytes) {
 			return false
 		}
 	}

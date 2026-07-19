@@ -25,7 +25,11 @@ func (s *VIPApi) GetVIPStatus(ctx context.Context, req *pb.GetVIPStatusRequest) 
 
 func (s *VIPApi) CreateApplePurchaseOrder(ctx context.Context, req *pb.CreateApplePurchaseOrderRequest) (*pb.CreateApplePurchaseOrderResponse, error) {
 	user := session.GetUser(ctx)
-	if user == nil || user.UIDOrDefault() == 0 {
+	var uid uint64
+	if user != nil {
+		uid = user.UIDOrDefault()
+	}
+	if uid == 0 && strings.TrimSpace(req.GetAnonymousId()) == "" {
 		return session.Error(ctx, gamecode.SessionNull, &pb.CreateApplePurchaseOrderResponse{})
 	}
 
@@ -38,8 +42,12 @@ func (s *VIPApi) CreateApplePurchaseOrder(ctx context.Context, req *pb.CreateApp
 	cfg := verifier.Config()
 	now := time.Now()
 	order, err := mysqlmodel.CreateApplePurchaseOrder(
-		user.UIDOrDefault(),
+		uid,
 		productID,
+		req.GetPaywallEntryPoint(),
+		req.GetPaywallPresentationId(),
+		req.GetAnonymousId(),
+		req.GetPresentedWhileLoggedOut(),
 		cfg.MonthlyProductID,
 		cfg.LifetimeProductID,
 		now,
@@ -97,6 +105,7 @@ func (s *VIPApi) ConfirmAppleTransaction(ctx context.Context, req *pb.ConfirmApp
 	if err := mysqlmodel.SaveAppleTransactionAndGrantVIP(
 		user.UIDOrDefault(),
 		req.GetOrderId(),
+		req.GetAnonymousId(),
 		transaction,
 		req.GetSignedTransactionJws(),
 		cfg.MonthlyProductID,

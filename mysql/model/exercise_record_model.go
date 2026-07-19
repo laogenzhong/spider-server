@@ -41,6 +41,7 @@ type CustomExercise struct {
 	CategoryKey     string         `gorm:"type:varchar(128);not null;default:''"`
 	SubcategoryKey  string         `gorm:"type:varchar(128);not null;default:''"`
 	TypeKey         string         `gorm:"type:varchar(128);not null;default:''"`
+	Introduction    string         `gorm:"type:text"`
 	ClientCreatedAt int64          `gorm:"not null;default:0"`
 	CreatedAt       time.Time      `gorm:"not null"`
 	UpdatedAt       time.Time      `gorm:"not null"`
@@ -410,6 +411,7 @@ func SaveCustomExercise(exercise *CustomExercise) (*CustomExercise, error) {
 	exercise.CategoryKey = strings.TrimSpace(exercise.CategoryKey)
 	exercise.SubcategoryKey = strings.TrimSpace(exercise.SubcategoryKey)
 	exercise.TypeKey = strings.TrimSpace(exercise.TypeKey)
+	exercise.Introduction = strings.TrimSpace(exercise.Introduction)
 	if exercise.LocalID == "" {
 		return nil, fmt.Errorf("local_id is empty")
 	}
@@ -444,6 +446,7 @@ func SaveCustomExercise(exercise *CustomExercise) (*CustomExercise, error) {
 			"category_key":      exercise.CategoryKey,
 			"subcategory_key":   exercise.SubcategoryKey,
 			"type_key":          exercise.TypeKey,
+			"introduction":      exercise.Introduction,
 			"client_created_at": exercise.ClientCreatedAt,
 			"updated_at":        now,
 			"deleted_at":        nil,
@@ -900,6 +903,7 @@ func CustomExerciseToPB(exercise *CustomExercise) *pb.CustomExercise {
 		CategoryKey:    exercise.CategoryKey,
 		SubcategoryKey: exercise.SubcategoryKey,
 		TypeKey:        exercise.TypeKey,
+		Introduction:   exercise.Introduction,
 		CreatedAt:      createdAt,
 		UpdatedAt:      exercise.UpdatedAt.UnixMilli(),
 	}

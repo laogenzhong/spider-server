@@ -61,6 +61,8 @@ message WorkoutPlanExerciseSnapshot {
   int32 set_count = 11;
   string weight_unit = 12;
   repeated WorkoutPlanExerciseSetSnapshot sets = 13;
+  // 自定义动作作者填写的介绍；内置动作保持为空。
+  string custom_introduction = 14;
 }
 
 message WorkoutPlanSnapshot {
@@ -154,6 +156,8 @@ message CustomExercise {
   int64 created_at = 7;
   int64 updated_at = 8;
   string subcategory_key = 9;
+  // 用户为自定义动作填写的介绍。
+  string introduction = 10;
 }
 
 message ExerciseTrainingSessionEndMarker {

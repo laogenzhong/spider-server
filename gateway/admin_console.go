@@ -66,6 +66,7 @@ func (s *GatewayServer) registerAdminConsoleRoutes(router *gin.Engine) {
 	group.GET("/app-update", s.adminGetAppUpdateHandler)
 	group.PUT("/app-update", s.adminUpdateAppUpdateHandler)
 	group.GET("/payments", s.adminPaymentsHandler)
+	group.GET("/paywall-sessions", s.adminPaywallSessionsHandler)
 	group.GET("/refunds", s.adminRefundsHandler)
 	group.GET("/daily-active", s.adminDailyActiveHandler)
 	group.GET("/registrations", s.adminRegistrationsHandler)
@@ -74,6 +75,7 @@ func (s *GatewayServer) registerAdminConsoleRoutes(router *gin.Engine) {
 	group.POST("/client-sync-failures/:id/resolve", s.adminResolveClientSyncFailureHandler)
 	group.GET("/onboarding-profiles", s.adminOnboardingProfilesHandler)
 	group.GET("/friend-profiles", s.adminFriendProfilesHandler)
+	group.GET("/shared-content-scores", s.adminSharedContentScoresHandler)
 	group.GET("/feature-adoption", s.adminFeatureAdoptionHandler)
 	group.GET("/plan-data-users", s.adminPlanDataUsersHandler)
 	group.GET("/plan-data-users/:uid", s.adminPlanDataDetailHandler)
@@ -102,7 +104,7 @@ func (s *GatewayServer) adminOverviewHandler(c *gin.Context) {
 		adminError(c, http.StatusInternalServerError, "查询注册数据失败")
 		return
 	}
-	_, paymentCount, err := mysqlmodel.ListAdminPayments(query, mysqlmodel.AdminPaymentSourceAll)
+	_, paymentCount, err := mysqlmodel.ListAdminPayments(query, mysqlmodel.AdminPaymentSourceAll, "")
 	if err != nil {
 		adminError(c, http.StatusInternalServerError, "查询付费数据失败")
 		return
@@ -253,9 +255,23 @@ func (s *GatewayServer) adminPaymentsHandler(c *gin.Context) {
 		adminError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	items, total, err := mysqlmodel.ListAdminPayments(query, c.Query("source"))
+	items, total, err := mysqlmodel.ListAdminPayments(query, c.Query("source"), c.Query("entry_point"))
 	if err != nil {
 		adminError(c, http.StatusInternalServerError, "查询付费记录失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminPaywallSessionsHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminPaywallSessions(query, c.Query("status"), c.Query("entry_point"))
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询付费墙会话失败")
 		return
 	}
 	adminPageOK(c, items, total, query)
@@ -386,6 +402,30 @@ func (s *GatewayServer) adminFriendProfilesHandler(c *gin.Context) {
 	items, total, err := mysqlmodel.ListAdminFriendProfiles(query)
 	if err != nil {
 		adminError(c, http.StatusInternalServerError, "查询好友资料失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminSharedContentScoresHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	var kind int32
+	switch strings.ToLower(strings.TrimSpace(c.Query("kind"))) {
+	case "", "plan":
+		kind = mysqlmodel.FriendSharedContentKindPlan
+	case "training":
+		kind = mysqlmodel.FriendSharedContentKindTraining
+	default:
+		adminError(c, http.StatusBadRequest, "积分类型无效")
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminSharedContentScores(query, kind)
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询分享积分失败")
 		return
 	}
 	adminPageOK(c, items, total, query)

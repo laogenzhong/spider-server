@@ -23,6 +23,9 @@ const (
 	FriendService_AddFriend_FullMethodName                      = "/api.FriendService/AddFriend"
 	FriendService_ListFriendRequests_FullMethodName             = "/api.FriendService/ListFriendRequests"
 	FriendService_HandleFriendRequest_FullMethodName            = "/api.FriendService/HandleFriendRequest"
+	FriendService_SendFriendPlanShare_FullMethodName            = "/api.FriendService/SendFriendPlanShare"
+	FriendService_HandleFriendPlanShare_FullMethodName          = "/api.FriendService/HandleFriendPlanShare"
+	FriendService_RecordFriendTrainingUse_FullMethodName        = "/api.FriendService/RecordFriendTrainingUse"
 	FriendService_UpdateTrainingDataVisibility_FullMethodName   = "/api.FriendService/UpdateTrainingDataVisibility"
 	FriendService_UploadMyTrainingPublicSnapshot_FullMethodName = "/api.FriendService/UploadMyTrainingPublicSnapshot"
 	FriendService_GetFriendEntryStatus_FullMethodName           = "/api.FriendService/GetFriendEntryStatus"
@@ -44,6 +47,12 @@ type FriendServiceClient interface {
 	ListFriendRequests(ctx context.Context, in *ListFriendRequestsRequest, opts ...grpc.CallOption) (*ListFriendRequestsResponse, error)
 	// 同意或拒绝好友申请。
 	HandleFriendRequest(ctx context.Context, in *HandleFriendRequestRequest, opts ...grpc.CallOption) (*HandleFriendRequestResponse, error)
+	// 给现有好友分享一份计划。
+	SendFriendPlanShare(ctx context.Context, in *SendFriendPlanShareRequest, opts ...grpc.CallOption) (*SendFriendPlanShareResponse, error)
+	// 将计划分享标记为已使用或已忽略，并进行带原因的软删除。
+	HandleFriendPlanShare(ctx context.Context, in *HandleFriendPlanShareRequest, opts ...grpc.CallOption) (*HandleFriendPlanShareResponse, error)
+	// 记录好友训练被保存为计划的一次使用积分。
+	RecordFriendTrainingUse(ctx context.Context, in *RecordFriendTrainingUseRequest, opts ...grpc.CallOption) (*RecordFriendTrainingUseResponse, error)
 	// 设置当前用户训练数据是否公开。
 	UpdateTrainingDataVisibility(ctx context.Context, in *UpdateTrainingDataVisibilityRequest, opts ...grpc.CallOption) (*UpdateTrainingDataVisibilityResponse, error)
 	// 上传当前用户公开训练快照。
@@ -102,6 +111,36 @@ func (c *friendServiceClient) HandleFriendRequest(ctx context.Context, in *Handl
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HandleFriendRequestResponse)
 	err := c.cc.Invoke(ctx, FriendService_HandleFriendRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *friendServiceClient) SendFriendPlanShare(ctx context.Context, in *SendFriendPlanShareRequest, opts ...grpc.CallOption) (*SendFriendPlanShareResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendFriendPlanShareResponse)
+	err := c.cc.Invoke(ctx, FriendService_SendFriendPlanShare_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *friendServiceClient) HandleFriendPlanShare(ctx context.Context, in *HandleFriendPlanShareRequest, opts ...grpc.CallOption) (*HandleFriendPlanShareResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HandleFriendPlanShareResponse)
+	err := c.cc.Invoke(ctx, FriendService_HandleFriendPlanShare_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *friendServiceClient) RecordFriendTrainingUse(ctx context.Context, in *RecordFriendTrainingUseRequest, opts ...grpc.CallOption) (*RecordFriendTrainingUseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecordFriendTrainingUseResponse)
+	err := c.cc.Invoke(ctx, FriendService_RecordFriendTrainingUse_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +229,12 @@ type FriendServiceServer interface {
 	ListFriendRequests(context.Context, *ListFriendRequestsRequest) (*ListFriendRequestsResponse, error)
 	// 同意或拒绝好友申请。
 	HandleFriendRequest(context.Context, *HandleFriendRequestRequest) (*HandleFriendRequestResponse, error)
+	// 给现有好友分享一份计划。
+	SendFriendPlanShare(context.Context, *SendFriendPlanShareRequest) (*SendFriendPlanShareResponse, error)
+	// 将计划分享标记为已使用或已忽略，并进行带原因的软删除。
+	HandleFriendPlanShare(context.Context, *HandleFriendPlanShareRequest) (*HandleFriendPlanShareResponse, error)
+	// 记录好友训练被保存为计划的一次使用积分。
+	RecordFriendTrainingUse(context.Context, *RecordFriendTrainingUseRequest) (*RecordFriendTrainingUseResponse, error)
 	// 设置当前用户训练数据是否公开。
 	UpdateTrainingDataVisibility(context.Context, *UpdateTrainingDataVisibilityRequest) (*UpdateTrainingDataVisibilityResponse, error)
 	// 上传当前用户公开训练快照。
@@ -225,6 +270,15 @@ func (UnimplementedFriendServiceServer) ListFriendRequests(context.Context, *Lis
 }
 func (UnimplementedFriendServiceServer) HandleFriendRequest(context.Context, *HandleFriendRequestRequest) (*HandleFriendRequestResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HandleFriendRequest not implemented")
+}
+func (UnimplementedFriendServiceServer) SendFriendPlanShare(context.Context, *SendFriendPlanShareRequest) (*SendFriendPlanShareResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendFriendPlanShare not implemented")
+}
+func (UnimplementedFriendServiceServer) HandleFriendPlanShare(context.Context, *HandleFriendPlanShareRequest) (*HandleFriendPlanShareResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HandleFriendPlanShare not implemented")
+}
+func (UnimplementedFriendServiceServer) RecordFriendTrainingUse(context.Context, *RecordFriendTrainingUseRequest) (*RecordFriendTrainingUseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecordFriendTrainingUse not implemented")
 }
 func (UnimplementedFriendServiceServer) UpdateTrainingDataVisibility(context.Context, *UpdateTrainingDataVisibilityRequest) (*UpdateTrainingDataVisibilityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateTrainingDataVisibility not implemented")
@@ -336,6 +390,60 @@ func _FriendService_HandleFriendRequest_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FriendServiceServer).HandleFriendRequest(ctx, req.(*HandleFriendRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FriendService_SendFriendPlanShare_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendFriendPlanShareRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FriendServiceServer).SendFriendPlanShare(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FriendService_SendFriendPlanShare_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FriendServiceServer).SendFriendPlanShare(ctx, req.(*SendFriendPlanShareRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FriendService_HandleFriendPlanShare_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleFriendPlanShareRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FriendServiceServer).HandleFriendPlanShare(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FriendService_HandleFriendPlanShare_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FriendServiceServer).HandleFriendPlanShare(ctx, req.(*HandleFriendPlanShareRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FriendService_RecordFriendTrainingUse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordFriendTrainingUseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FriendServiceServer).RecordFriendTrainingUse(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FriendService_RecordFriendTrainingUse_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FriendServiceServer).RecordFriendTrainingUse(ctx, req.(*RecordFriendTrainingUseRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -488,6 +596,18 @@ var FriendService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HandleFriendRequest",
 			Handler:    _FriendService_HandleFriendRequest_Handler,
+		},
+		{
+			MethodName: "SendFriendPlanShare",
+			Handler:    _FriendService_SendFriendPlanShare_Handler,
+		},
+		{
+			MethodName: "HandleFriendPlanShare",
+			Handler:    _FriendService_HandleFriendPlanShare_Handler,
+		},
+		{
+			MethodName: "RecordFriendTrainingUse",
+			Handler:    _FriendService_RecordFriendTrainingUse_Handler,
 		},
 		{
 			MethodName: "UpdateTrainingDataVisibility",

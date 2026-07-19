@@ -363,8 +363,10 @@ type WorkoutPlanExerciseSnapshot struct {
 	SetCount             int32                             `protobuf:"varint,11,opt,name=set_count,json=setCount,proto3" json:"set_count,omitempty"`
 	WeightUnit           string                            `protobuf:"bytes,12,opt,name=weight_unit,json=weightUnit,proto3" json:"weight_unit,omitempty"`
 	Sets                 []*WorkoutPlanExerciseSetSnapshot `protobuf:"bytes,13,rep,name=sets,proto3" json:"sets,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// 自定义动作作者填写的介绍；内置动作保持为空。
+	CustomIntroduction string `protobuf:"bytes,14,opt,name=custom_introduction,json=customIntroduction,proto3" json:"custom_introduction,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *WorkoutPlanExerciseSnapshot) Reset() {
@@ -486,6 +488,13 @@ func (x *WorkoutPlanExerciseSnapshot) GetSets() []*WorkoutPlanExerciseSetSnapsho
 		return x.Sets
 	}
 	return nil
+}
+
+func (x *WorkoutPlanExerciseSnapshot) GetCustomIntroduction() string {
+	if x != nil {
+		return x.CustomIntroduction
+	}
+	return ""
 }
 
 type WorkoutPlanSnapshot struct {
@@ -1208,8 +1217,10 @@ type CustomExercise struct {
 	CreatedAt      int64                  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt      int64                  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	SubcategoryKey string                 `protobuf:"bytes,9,opt,name=subcategory_key,json=subcategoryKey,proto3" json:"subcategory_key,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 用户为自定义动作填写的介绍。
+	Introduction  string `protobuf:"bytes,10,opt,name=introduction,proto3" json:"introduction,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CustomExercise) Reset() {
@@ -1301,6 +1312,13 @@ func (x *CustomExercise) GetUpdatedAt() int64 {
 func (x *CustomExercise) GetSubcategoryKey() string {
 	if x != nil {
 		return x.SubcategoryKey
+	}
+	return ""
+}
+
+func (x *CustomExercise) GetIntroduction() string {
+	if x != nil {
+		return x.Introduction
 	}
 	return ""
 }
@@ -2690,7 +2708,7 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vweight_text\x18\x02 \x01(\tR\n" +
 	"weightText\x12\x1b\n" +
-	"\treps_text\x18\x03 \x01(\tR\brepsText\"\xd8\x03\n" +
+	"\treps_text\x18\x03 \x01(\tR\brepsText\"\x89\x04\n" +
 	"\x1bWorkoutPlanExerciseSnapshot\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vexercise_id\x18\x02 \x01(\tR\n" +
@@ -2708,7 +2726,8 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"\tset_count\x18\v \x01(\x05R\bsetCount\x12\x1f\n" +
 	"\vweight_unit\x18\f \x01(\tR\n" +
 	"weightUnit\x127\n" +
-	"\x04sets\x18\r \x03(\v2#.api.WorkoutPlanExerciseSetSnapshotR\x04sets\"\xb9\x01\n" +
+	"\x04sets\x18\r \x03(\v2#.api.WorkoutPlanExerciseSetSnapshotR\x04sets\x12/\n" +
+	"\x13custom_introduction\x18\x0e \x01(\tR\x12customIntroduction\"\xb9\x01\n" +
 	"\x13WorkoutPlanSnapshot\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12>\n" +
@@ -2793,7 +2812,7 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"planFolder\x12?\n" +
 	"\vplan_entity\x18\f \x01(\v2\x1e.api.WorkoutPlanEntitySnapshotR\n" +
 	"planEntity\x12\x18\n" +
-	"\adeleted\x18\r \x01(\bR\adeleted\"\x86\x02\n" +
+	"\adeleted\x18\r \x01(\bR\adeleted\"\xaa\x02\n" +
 	"\x0eCustomExercise\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\x04R\x03uid\x12\x19\n" +
@@ -2805,7 +2824,9 @@ const file_primary_exercise_record_proto_rawDesc = "" +
 	"created_at\x18\a \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\b \x01(\x03R\tupdatedAt\x12'\n" +
-	"\x0fsubcategory_key\x18\t \x01(\tR\x0esubcategoryKey\"\xc7\x01\n" +
+	"\x0fsubcategory_key\x18\t \x01(\tR\x0esubcategoryKey\x12\"\n" +
+	"\fintroduction\x18\n" +
+	" \x01(\tR\fintroduction\"\xc7\x01\n" +
 	" ExerciseTrainingSessionEndMarker\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\x04R\x03uid\x12(\n" +

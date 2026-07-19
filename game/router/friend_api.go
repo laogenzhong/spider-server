@@ -4,13 +4,33 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
+	"unicode/utf8"
 
 	gamecode "spider-server/game/code"
 	"spider-server/game/session"
 	pb "spider-server/gen/spider/api"
 	mysqlmodel "spider-server/mysql/model"
 
+	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
+)
+
+const (
+	friendTrainingSnapshotMaxBytes               = 256 * 1024
+	friendTrainingSnapshotMaxDays                = 30
+	friendTrainingSnapshotMaxTagsPerDay          = 20
+	friendTrainingSnapshotActionDetailDays       = 7
+	friendTrainingSnapshotMaxSessionsPerDay      = 4
+	friendTrainingSnapshotMaxExercisesPerSession = 12
+	friendTrainingSnapshotMaxSetsPerExercise     = 20
+	friendTrainingSnapshotMaxWorkoutTags         = 12
+	friendTrainingSnapshotMaxStringRunes         = 128
+	friendSharedPlanMaxBytes                     = 64 * 1024
+	friendSharedPlanMaxExercises                 = 99
+	friendSharedPlanMaxSetsPerExercise           = 99
+	friendSharedPlanMaxStringRunes               = 256
+	friendSharedPlanMaxNoteRunes                 = 1000
 )
 
 // FriendApi 实现好友相关 gRPC 接口。
@@ -91,7 +111,24 @@ func (a *FriendApi) ListFriendRequests(ctx context.Context, req *pb.ListFriendRe
 		respRequests = append(respRequests, convertFriendRequest(request, fromProfile))
 	}
 
-	return &pb.ListFriendRequestsResponse{Requests: respRequests}, nil
+	shares, err := mysqlmodel.ListReceivedFriendPlanShares(uid)
+	if err != nil {
+		return session.Error(ctx, gamecode.FriendPlanShareListFailed, &pb.ListFriendRequestsResponse{})
+	}
+	respShares := make([]*pb.FriendPlanShareNotification, 0, len(shares))
+	for _, share := range shares {
+		fromProfile, err := mysqlmodel.EnsureFriendProfile(share.FromUID)
+		if err != nil {
+			return session.Error(ctx, gamecode.FriendPlanShareListFailed, &pb.ListFriendRequestsResponse{})
+		}
+		plan, err := mysqlmodel.ParseFriendSharedPlan(share.PlanJSON)
+		if err != nil {
+			return session.Error(ctx, gamecode.FriendPlanShareListFailed, &pb.ListFriendRequestsResponse{})
+		}
+		respShares = append(respShares, convertFriendPlanShare(share, fromProfile, plan))
+	}
+
+	return &pb.ListFriendRequestsResponse{Requests: respRequests, PlanShares: respShares}, nil
 }
 
 // HandleFriendRequest 同意或拒绝好友申请。
@@ -112,6 +149,73 @@ func (a *FriendApi) HandleFriendRequest(ctx context.Context, req *pb.HandleFrien
 	return &pb.HandleFriendRequestResponse{Success: true}, nil
 }
 
+// SendFriendPlanShare 给一位现有好友发送不可变计划快照。
+func (a *FriendApi) SendFriendPlanShare(ctx context.Context, req *pb.SendFriendPlanShareRequest) (*pb.SendFriendPlanShareResponse, error) {
+	uid := session.GetUser(ctx).UID()
+	if req.GetToUid() == 0 {
+		return session.Error(ctx, gamecode.FriendPlanShareRecipientEmpty, &pb.SendFriendPlanShareResponse{})
+	}
+	if code := validateFriendSharedPlan(req.GetClientShareId(), req.GetPlan()); code != 0 {
+		return session.Error(ctx, code, &pb.SendFriendPlanShareResponse{})
+	}
+	record, err := mysqlmodel.SendFriendPlanShare(uid, req.GetToUid(), req.GetClientShareId(), friendSharedPlanFromPB(req.GetPlan()))
+	if errors.Is(err, mysqlmodel.ErrFriendPlanShareNotFriend) {
+		return session.Error(ctx, gamecode.FriendPlanShareNotFriend, &pb.SendFriendPlanShareResponse{})
+	}
+	if errors.Is(err, mysqlmodel.ErrFriendPlanSharePendingLimit) {
+		return session.Error(ctx, gamecode.FriendPlanSharePendingLimit, &pb.SendFriendPlanShareResponse{})
+	}
+	if err != nil {
+		return session.Error(ctx, gamecode.FriendPlanShareSendFailed, &pb.SendFriendPlanShareResponse{})
+	}
+	return &pb.SendFriendPlanShareResponse{Success: true, ShareId: requestIDString(record.ID)}, nil
+}
+
+// HandleFriendPlanShare 将通知按“已使用”或“已忽略”记录原因后软删除。
+func (a *FriendApi) HandleFriendPlanShare(ctx context.Context, req *pb.HandleFriendPlanShareRequest) (*pb.HandleFriendPlanShareResponse, error) {
+	uid := session.GetUser(ctx).UID()
+	if req.GetShareId() == "" {
+		return session.Error(ctx, gamecode.FriendPlanShareIDEmpty, &pb.HandleFriendPlanShareResponse{})
+	}
+	disposition := int32(req.GetDisposition())
+	if disposition != mysqlmodel.FriendPlanShareDispositionUsed && disposition != mysqlmodel.FriendPlanShareDispositionIgnored {
+		return session.Error(ctx, gamecode.FriendPlanShareDispositionInvalid, &pb.HandleFriendPlanShareResponse{})
+	}
+	if err := mysqlmodel.HandleFriendPlanShare(uid, req.GetShareId(), disposition); errors.Is(err, gorm.ErrRecordNotFound) {
+		return session.Error(ctx, gamecode.FriendPlanShareNotFound, &pb.HandleFriendPlanShareResponse{})
+	} else if err != nil {
+		return session.Error(ctx, gamecode.FriendPlanShareHandleFailed, &pb.HandleFriendPlanShareResponse{})
+	}
+	return &pb.HandleFriendPlanShareResponse{Success: true}, nil
+}
+
+// RecordFriendTrainingUse records one confirmed copy of a friend's training.
+func (a *FriendApi) RecordFriendTrainingUse(ctx context.Context, req *pb.RecordFriendTrainingUseRequest) (*pb.RecordFriendTrainingUseResponse, error) {
+	uid := session.GetUser(ctx).UID()
+	clientEventID := req.GetClientEventId()
+	if clientEventID == "" || utf8.RuneCountInString(clientEventID) > 64 {
+		return session.Error(ctx, gamecode.FriendTrainingUseEventInvalid, &pb.RecordFriendTrainingUseResponse{})
+	}
+	if req.GetSourceUid() == 0 {
+		return session.Error(ctx, gamecode.FriendTrainingUseSourceEmpty, &pb.RecordFriendTrainingUseResponse{})
+	}
+	trainingSessionID := req.GetTrainingSessionId()
+	if trainingSessionID == "" || utf8.RuneCountInString(trainingSessionID) > friendTrainingSnapshotMaxStringRunes {
+		return session.Error(ctx, gamecode.FriendTrainingUseSessionInvalid, &pb.RecordFriendTrainingUseResponse{})
+	}
+	err := mysqlmodel.RecordFriendTrainingUse(uid, clientEventID, req.GetSourceUid(), trainingSessionID)
+	if errors.Is(err, mysqlmodel.ErrFriendTrainingUseNotFriend) {
+		return session.Error(ctx, gamecode.FriendTrainingUseNotFriend, &pb.RecordFriendTrainingUseResponse{})
+	}
+	if errors.Is(err, mysqlmodel.ErrFriendTrainingUseUnavailable) {
+		return session.Error(ctx, gamecode.FriendTrainingUseUnavailable, &pb.RecordFriendTrainingUseResponse{})
+	}
+	if err != nil {
+		return session.Error(ctx, gamecode.FriendTrainingUseRecordFailed, &pb.RecordFriendTrainingUseResponse{})
+	}
+	return &pb.RecordFriendTrainingUseResponse{Success: true}, nil
+}
+
 // UpdateTrainingDataVisibility 设置当前用户训练数据公开状态。
 func (a *FriendApi) UpdateTrainingDataVisibility(ctx context.Context, req *pb.UpdateTrainingDataVisibilityRequest) (*pb.UpdateTrainingDataVisibilityResponse, error) {
 	uid := session.GetUser(ctx).UID()
@@ -121,6 +225,9 @@ func (a *FriendApi) UpdateTrainingDataVisibility(ctx context.Context, req *pb.Up
 	var days []mysqlmodel.FriendTrainingDaySummaryRecord
 	var updatedAt int64
 	if snapshot != nil {
+		if code := validateFriendTrainingSnapshot(snapshot); code != 0 {
+			return session.Error(ctx, code, &pb.UpdateTrainingDataVisibilityResponse{})
+		}
 		sparkDays = snapshot.GetSparkDays()
 		days = friendTrainingDaysFromPB(snapshot.GetRecentTrainingDays())
 		updatedAt = snapshot.GetUpdatedAt()
@@ -140,6 +247,9 @@ func (a *FriendApi) UploadMyTrainingPublicSnapshot(ctx context.Context, req *pb.
 	snapshot := req.GetSnapshot()
 	if snapshot == nil {
 		return session.Error(ctx, gamecode.FriendTrainingSnapshotEmpty, &pb.UploadMyTrainingPublicSnapshotResponse{})
+	}
+	if code := validateFriendTrainingSnapshot(snapshot); code != 0 {
+		return session.Error(ctx, code, &pb.UploadMyTrainingPublicSnapshotResponse{})
 	}
 
 	err := mysqlmodel.UploadTrainingPublicSnapshot(
@@ -167,11 +277,18 @@ func (a *FriendApi) GetFriendEntryStatus(ctx context.Context, req *pb.GetFriendE
 	if err != nil {
 		return session.Error(ctx, gamecode.FriendEntryStatusQueryFailed, &pb.GetFriendEntryStatusResponse{})
 	}
+	pendingPlanShareCount, err := mysqlmodel.CountPendingFriendPlanShares(uid)
+	if err != nil {
+		return session.Error(ctx, gamecode.FriendEntryStatusQueryFailed, &pb.GetFriendEntryStatusResponse{})
+	}
+	pendingNotificationCount := pendingCount + pendingPlanShareCount
 
 	return &pb.GetFriendEntryStatusResponse{
-		HasPendingRequest:     pendingCount > 0,
-		PendingRequestCount:   int32(pendingCount),
-		MyTrainingDataVisible: profile.TrainingDataVisible,
+		HasPendingRequest:        pendingCount > 0,
+		PendingRequestCount:      int32(pendingCount),
+		MyTrainingDataVisible:    profile.TrainingDataVisible,
+		HasPendingNotification:   pendingNotificationCount > 0,
+		PendingNotificationCount: int32(pendingNotificationCount),
 	}, nil
 }
 
@@ -327,6 +444,82 @@ func convertFriendRequest(request *mysqlmodel.FriendRequestRecord, fromProfile *
 	}
 }
 
+func convertFriendPlanShare(share *mysqlmodel.FriendPlanShareRecord, fromProfile *mysqlmodel.FriendProfileRecord, plan mysqlmodel.FriendSharedPlanRecord) *pb.FriendPlanShareNotification {
+	return &pb.FriendPlanShareNotification{
+		Id:           requestIDString(share.ID),
+		FromUid:      share.FromUID,
+		FromUserId:   fromProfile.UserID,
+		Nickname:     fromProfile.Nickname,
+		AvatarSymbol: fromProfile.AvatarSymbol,
+		Plan:         friendSharedPlanToPB(plan),
+		CreatedAt:    share.CreatedAt.UnixMilli(),
+	}
+}
+
+func friendSharedPlanFromPB(plan *pb.FriendSharedPlan) mysqlmodel.FriendSharedPlanRecord {
+	if plan == nil {
+		return mysqlmodel.FriendSharedPlanRecord{}
+	}
+	exercises := make([]mysqlmodel.FriendSharedPlanExerciseRecord, 0, len(plan.GetExercises()))
+	for _, exercise := range plan.GetExercises() {
+		if exercise == nil {
+			continue
+		}
+		sets := make([]mysqlmodel.FriendSharedPlanSetRecord, 0, len(exercise.GetSets()))
+		for _, set := range exercise.GetSets() {
+			if set == nil {
+				continue
+			}
+			sets = append(sets, mysqlmodel.FriendSharedPlanSetRecord{
+				WeightText: set.GetWeightText(),
+				RepsText:   set.GetRepsText(),
+			})
+		}
+		exercises = append(exercises, mysqlmodel.FriendSharedPlanExerciseRecord{
+			ExerciseID:           exercise.GetExerciseId(),
+			NameKey:              exercise.GetNameKey(),
+			NameSnapshot:         exercise.GetNameSnapshot(),
+			CategoryKey:          exercise.GetCategoryKey(),
+			TypeKey:              exercise.GetTypeKey(),
+			DisplayTypeKey:       exercise.GetDisplayTypeKey(),
+			CustomName:           exercise.GetCustomName(),
+			CustomSubcategoryKey: exercise.GetCustomSubcategoryKey(),
+			CustomIntroduction:   exercise.GetCustomIntroduction(),
+			Note:                 exercise.GetNote(),
+			SetCount:             exercise.GetSetCount(),
+			WeightUnit:           exercise.GetWeightUnit(),
+			Sets:                 sets,
+		})
+	}
+	return mysqlmodel.FriendSharedPlanRecord{Title: plan.GetTitle(), SourcePlanID: plan.GetSourcePlanId(), Exercises: exercises}
+}
+
+func friendSharedPlanToPB(plan mysqlmodel.FriendSharedPlanRecord) *pb.FriendSharedPlan {
+	exercises := make([]*pb.FriendSharedPlanExercise, 0, len(plan.Exercises))
+	for _, exercise := range plan.Exercises {
+		sets := make([]*pb.FriendSharedPlanSet, 0, len(exercise.Sets))
+		for _, set := range exercise.Sets {
+			sets = append(sets, &pb.FriendSharedPlanSet{WeightText: set.WeightText, RepsText: set.RepsText})
+		}
+		exercises = append(exercises, &pb.FriendSharedPlanExercise{
+			ExerciseId:           exercise.ExerciseID,
+			NameKey:              exercise.NameKey,
+			NameSnapshot:         exercise.NameSnapshot,
+			CategoryKey:          exercise.CategoryKey,
+			TypeKey:              exercise.TypeKey,
+			DisplayTypeKey:       exercise.DisplayTypeKey,
+			CustomName:           exercise.CustomName,
+			CustomSubcategoryKey: exercise.CustomSubcategoryKey,
+			CustomIntroduction:   exercise.CustomIntroduction,
+			Note:                 exercise.Note,
+			SetCount:             exercise.SetCount,
+			WeightUnit:           exercise.WeightUnit,
+			Sets:                 sets,
+		})
+	}
+	return &pb.FriendSharedPlan{Title: plan.Title, SourcePlanId: plan.SourcePlanID, Exercises: exercises}
+}
+
 func friendTrainingDaysFromPB(days []*pb.FriendTrainingDaySummary) []mysqlmodel.FriendTrainingDaySummaryRecord {
 	result := make([]mysqlmodel.FriendTrainingDaySummaryRecord, 0, len(days))
 	for _, day := range days {
@@ -344,9 +537,10 @@ func friendTrainingDaysFromPB(days []*pb.FriendTrainingDaySummary) []mysqlmodel.
 			})
 		}
 		result = append(result, mysqlmodel.FriendTrainingDaySummaryRecord{
-			RecordDate: day.GetRecordDate(),
-			Tags:       tags,
-			Calories:   day.GetCalories(),
+			RecordDate:             day.GetRecordDate(),
+			Tags:                   tags,
+			Calories:               day.GetCalories(),
+			ActionTrainingSessions: friendActionTrainingSessionsFromPB(day.GetActionTrainingSessions()),
 		})
 	}
 	return result
@@ -363,12 +557,265 @@ func friendTrainingDaysToPB(days []mysqlmodel.FriendTrainingDaySummaryRecord) []
 			})
 		}
 		result = append(result, &pb.FriendTrainingDaySummary{
-			RecordDate: day.RecordDate,
-			Tags:       tags,
-			Calories:   day.Calories,
+			RecordDate:             day.RecordDate,
+			Tags:                   tags,
+			Calories:               day.Calories,
+			ActionTrainingSessions: friendActionTrainingSessionsToPB(day.ActionTrainingSessions),
 		})
 	}
 	return result
+}
+
+func friendActionTrainingSessionsFromPB(sessions []*pb.FriendActionTrainingSession) []mysqlmodel.FriendActionTrainingSessionRecord {
+	result := make([]mysqlmodel.FriendActionTrainingSessionRecord, 0, len(sessions))
+	for _, training := range sessions {
+		if training == nil {
+			continue
+		}
+		exercises := make([]mysqlmodel.FriendActionExerciseSummaryRecord, 0, len(training.GetExercises()))
+		for _, exercise := range training.GetExercises() {
+			if exercise == nil {
+				continue
+			}
+			sets := make([]mysqlmodel.FriendActionSetSummaryRecord, 0, len(exercise.GetSets()))
+			for _, set := range exercise.GetSets() {
+				if set == nil {
+					continue
+				}
+				sets = append(sets, mysqlmodel.FriendActionSetSummaryRecord{
+					WeightX10:  set.GetWeightX10(),
+					WeightUnit: int32(set.GetWeightUnit()),
+					Reps:       set.GetReps(),
+				})
+			}
+			exercises = append(exercises, mysqlmodel.FriendActionExerciseSummaryRecord{
+				ExerciseID:           exercise.GetExerciseId(),
+				NameKey:              exercise.GetNameKey(),
+				NameSnapshot:         exercise.GetNameSnapshot(),
+				CategoryKey:          exercise.GetCategoryKey(),
+				TypeKey:              exercise.GetTypeKey(),
+				CustomName:           exercise.GetCustomName(),
+				CustomSubcategoryKey: exercise.GetCustomSubcategoryKey(),
+				CustomIntroduction:   exercise.GetCustomIntroduction(),
+				Sets:                 sets,
+			})
+		}
+
+		var boundWorkout *mysqlmodel.FriendBoundWorkoutSummaryRecord
+		if training.BoundWorkout != nil {
+			remote := training.GetBoundWorkout()
+			boundWorkout = &mysqlmodel.FriendBoundWorkoutSummaryRecord{
+				WorkoutType:  remote.GetWorkoutType(),
+				StartAt:      remote.GetStartAt(),
+				EndAt:        remote.GetEndAt(),
+				DurationSecs: remote.GetDurationSeconds(),
+				EnergyKcal:   remote.GetEnergyKcal(),
+				Tags:         append([]string(nil), remote.GetTags()...),
+			}
+			if remote.GetHasDistance() {
+				distance := remote.GetDistanceMeters()
+				boundWorkout.DistanceMeter = &distance
+			}
+		}
+
+		result = append(result, mysqlmodel.FriendActionTrainingSessionRecord{
+			SessionID:    training.GetSessionId(),
+			StartAt:      training.GetStartAt(),
+			EndAt:        training.GetEndAt(),
+			Kind:         int32(training.GetKind()),
+			Exercises:    exercises,
+			BoundWorkout: boundWorkout,
+		})
+	}
+	return result
+}
+
+func friendActionTrainingSessionsToPB(sessions []mysqlmodel.FriendActionTrainingSessionRecord) []*pb.FriendActionTrainingSession {
+	result := make([]*pb.FriendActionTrainingSession, 0, len(sessions))
+	for _, training := range sessions {
+		exercises := make([]*pb.FriendActionExerciseSummary, 0, len(training.Exercises))
+		for _, exercise := range training.Exercises {
+			sets := make([]*pb.FriendActionSetSummary, 0, len(exercise.Sets))
+			for _, set := range exercise.Sets {
+				sets = append(sets, &pb.FriendActionSetSummary{
+					WeightX10:  set.WeightX10,
+					WeightUnit: pb.FriendActionWeightUnit(set.WeightUnit),
+					Reps:       set.Reps,
+				})
+			}
+			exercises = append(exercises, &pb.FriendActionExerciseSummary{
+				ExerciseId:           exercise.ExerciseID,
+				NameKey:              exercise.NameKey,
+				NameSnapshot:         exercise.NameSnapshot,
+				CategoryKey:          exercise.CategoryKey,
+				TypeKey:              exercise.TypeKey,
+				CustomName:           exercise.CustomName,
+				CustomSubcategoryKey: exercise.CustomSubcategoryKey,
+				CustomIntroduction:   exercise.CustomIntroduction,
+				Sets:                 sets,
+			})
+		}
+
+		remote := &pb.FriendActionTrainingSession{
+			SessionId: training.SessionID,
+			StartAt:   training.StartAt,
+			EndAt:     training.EndAt,
+			Kind:      pb.FriendActionTrainingKind(training.Kind),
+			Exercises: exercises,
+		}
+		if training.BoundWorkout != nil {
+			bound := training.BoundWorkout
+			remote.BoundWorkout = &pb.FriendBoundWorkoutSummary{
+				WorkoutType:     bound.WorkoutType,
+				StartAt:         bound.StartAt,
+				EndAt:           bound.EndAt,
+				DurationSeconds: bound.DurationSecs,
+				EnergyKcal:      bound.EnergyKcal,
+				Tags:            append([]string(nil), bound.Tags...),
+			}
+			if bound.DistanceMeter != nil {
+				remote.BoundWorkout.HasDistance = true
+				remote.BoundWorkout.DistanceMeters = *bound.DistanceMeter
+			}
+		}
+		result = append(result, remote)
+	}
+	return result
+}
+
+func validateFriendTrainingSnapshot(snapshot *pb.MyTrainingPublicSnapshot) int {
+	if snapshot == nil {
+		return gamecode.FriendTrainingSnapshotEmpty
+	}
+	if proto.Size(snapshot) > friendTrainingSnapshotMaxBytes {
+		return gamecode.FriendTrainingSnapshotTooLarge
+	}
+	if len(snapshot.GetRecentTrainingDays()) > friendTrainingSnapshotMaxDays {
+		return gamecode.FriendTrainingSnapshotInvalid
+	}
+	for dayIndex, day := range snapshot.GetRecentTrainingDays() {
+		if day == nil || !validFriendSnapshotString(day.GetRecordDate()) || len(day.GetCalories()) > 32 {
+			return gamecode.FriendTrainingSnapshotInvalid
+		}
+		if _, err := time.Parse("2006-01-02", day.GetRecordDate()); err != nil {
+			return gamecode.FriendTrainingSnapshotInvalid
+		}
+		if len(day.GetTags()) > friendTrainingSnapshotMaxTagsPerDay {
+			return gamecode.FriendTrainingSnapshotInvalid
+		}
+		for _, tag := range day.GetTags() {
+			if tag == nil || !validFriendSnapshotString(tag.GetName()) || len(tag.GetCalories()) > 32 {
+				return gamecode.FriendTrainingSnapshotInvalid
+			}
+		}
+
+		sessions := day.GetActionTrainingSessions()
+		if dayIndex >= friendTrainingSnapshotActionDetailDays && len(sessions) > 0 {
+			return gamecode.FriendTrainingSnapshotInvalid
+		}
+		if len(sessions) > friendTrainingSnapshotMaxSessionsPerDay {
+			return gamecode.FriendTrainingSnapshotInvalid
+		}
+		for _, training := range sessions {
+			if !validFriendActionTrainingSession(training) {
+				return gamecode.FriendTrainingSnapshotInvalid
+			}
+		}
+	}
+	return 0
+}
+
+func validFriendActionTrainingSession(training *pb.FriendActionTrainingSession) bool {
+	if training == nil || !validFriendSnapshotString(training.GetSessionId()) || training.GetStartAt() <= 0 || training.GetEndAt() < training.GetStartAt() {
+		return false
+	}
+	if training.GetKind() < pb.FriendActionTrainingKind_FRIEND_ACTION_TRAINING_KIND_STRENGTH || training.GetKind() > pb.FriendActionTrainingKind_FRIEND_ACTION_TRAINING_KIND_MIXED {
+		return false
+	}
+	if len(training.GetExercises()) == 0 || len(training.GetExercises()) > friendTrainingSnapshotMaxExercisesPerSession {
+		return false
+	}
+	for _, exercise := range training.GetExercises() {
+		if exercise == nil || !validFriendSnapshotString(exercise.GetExerciseId()) || !validFriendSnapshotString(exercise.GetNameSnapshot()) || !validOptionalFriendSnapshotString(exercise.GetNameKey()) || !validOptionalFriendSnapshotString(exercise.GetCategoryKey()) || !validOptionalFriendSnapshotString(exercise.GetTypeKey()) || !validOptionalFriendSnapshotString(exercise.GetCustomName()) || !validOptionalFriendSnapshotString(exercise.GetCustomSubcategoryKey()) || utf8.RuneCountInString(exercise.GetCustomIntroduction()) > friendSharedPlanMaxNoteRunes {
+			return false
+		}
+		if len(exercise.GetSets()) == 0 || len(exercise.GetSets()) > friendTrainingSnapshotMaxSetsPerExercise {
+			return false
+		}
+		for _, set := range exercise.GetSets() {
+			if set == nil || set.GetWeightX10() < 0 || set.GetReps() <= 0 {
+				return false
+			}
+			if set.GetWeightUnit() != pb.FriendActionWeightUnit_FRIEND_ACTION_WEIGHT_UNIT_KG && set.GetWeightUnit() != pb.FriendActionWeightUnit_FRIEND_ACTION_WEIGHT_UNIT_LB {
+				return false
+			}
+		}
+	}
+
+	bound := training.GetBoundWorkout()
+	if bound == nil {
+		return true
+	}
+	if !validFriendSnapshotString(bound.GetWorkoutType()) || bound.GetStartAt() <= 0 || bound.GetEndAt() < bound.GetStartAt() || bound.GetDurationSeconds() < 0 || bound.GetEnergyKcal() < 0 || bound.GetDistanceMeters() < 0 || len(bound.GetTags()) > friendTrainingSnapshotMaxWorkoutTags {
+		return false
+	}
+	for _, tag := range bound.GetTags() {
+		if !validFriendSnapshotString(tag) {
+			return false
+		}
+	}
+	return true
+}
+
+func validFriendSnapshotString(value string) bool {
+	return value != "" && utf8.RuneCountInString(value) <= friendTrainingSnapshotMaxStringRunes
+}
+
+func validOptionalFriendSnapshotString(value string) bool {
+	return utf8.RuneCountInString(value) <= friendTrainingSnapshotMaxStringRunes
+}
+
+func validateFriendSharedPlan(clientShareID string, plan *pb.FriendSharedPlan) int {
+	if clientShareID == "" || utf8.RuneCountInString(clientShareID) > 64 || plan == nil {
+		return gamecode.FriendPlanShareInvalid
+	}
+	if proto.Size(plan) > friendSharedPlanMaxBytes {
+		return gamecode.FriendPlanShareTooLarge
+	}
+	if !validFriendSharedPlanString(plan.GetTitle()) || len(plan.GetExercises()) == 0 || len(plan.GetExercises()) > friendSharedPlanMaxExercises {
+		return gamecode.FriendPlanShareInvalid
+	}
+	if !validOptionalFriendSharedPlanString(plan.GetSourcePlanId()) {
+		return gamecode.FriendPlanShareInvalid
+	}
+	for _, exercise := range plan.GetExercises() {
+		if exercise == nil || !validFriendSharedPlanString(exercise.GetExerciseId()) || !validFriendSharedPlanString(exercise.GetNameSnapshot()) {
+			return gamecode.FriendPlanShareInvalid
+		}
+		if !validOptionalFriendSharedPlanString(exercise.GetNameKey()) || !validOptionalFriendSharedPlanString(exercise.GetCategoryKey()) || !validOptionalFriendSharedPlanString(exercise.GetTypeKey()) || !validOptionalFriendSharedPlanString(exercise.GetDisplayTypeKey()) || !validOptionalFriendSharedPlanString(exercise.GetCustomName()) || !validOptionalFriendSharedPlanString(exercise.GetCustomSubcategoryKey()) || utf8.RuneCountInString(exercise.GetCustomIntroduction()) > friendSharedPlanMaxNoteRunes || utf8.RuneCountInString(exercise.GetNote()) > friendSharedPlanMaxNoteRunes {
+			return gamecode.FriendPlanShareInvalid
+		}
+		if exercise.GetSetCount() <= 0 || exercise.GetSetCount() > friendSharedPlanMaxSetsPerExercise || len(exercise.GetSets()) != int(exercise.GetSetCount()) {
+			return gamecode.FriendPlanShareInvalid
+		}
+		if unit := exercise.GetWeightUnit(); unit != "" && unit != "kg" && unit != "lb" {
+			return gamecode.FriendPlanShareInvalid
+		}
+		for _, set := range exercise.GetSets() {
+			if set == nil || !validOptionalFriendSharedPlanString(set.GetWeightText()) || !validOptionalFriendSharedPlanString(set.GetRepsText()) {
+				return gamecode.FriendPlanShareInvalid
+			}
+		}
+	}
+	return 0
+}
+
+func validFriendSharedPlanString(value string) bool {
+	return value != "" && utf8.RuneCountInString(value) <= friendSharedPlanMaxStringRunes
+}
+
+func validOptionalFriendSharedPlanString(value string) bool {
+	return utf8.RuneCountInString(value) <= friendSharedPlanMaxStringRunes
 }
 
 func requestIDString(id uint64) string {
