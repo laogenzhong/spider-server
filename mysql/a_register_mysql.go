@@ -67,6 +67,7 @@ func InitWithConfig(mysqlCfg appconfig.MySQLConfig) {
 		&mysqlmodel2.AppStoreServerNotification{},
 		&mysqlmodel2.ApplePaymentFailure{},
 		&mysqlmodel2.AppUpdateConfig{},
+		&mysqlmodel2.ClientSyncFailure{},
 	}
 
 	if err := config.InitAndAutoMigrate(cfg, models...); err != nil {

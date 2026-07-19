@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
@@ -50,6 +50,33 @@ async function requiredDirectory(path, label) {
   return path
 }
 
+async function readCurrentWorkoutExploreConfig(clientRoot) {
+  const configDirectory = join(clientRoot, 'WorkoutExploreConfigs')
+  let filenames
+  try {
+    filenames = (await readdir(configDirectory))
+      .filter(name => name.endsWith('.workout-explore.json'))
+      .sort()
+  } catch {
+    throw Object.assign(new Error(`客户端探索配置目录不存在：${configDirectory}`), { status: 404 })
+  }
+  if (!filenames.length) {
+    throw Object.assign(new Error('客户端当前没有探索配置文件'), { status: 404 })
+  }
+  if (filenames.length > 1) {
+    throw Object.assign(new Error(`客户端存在 ${filenames.length} 份探索配置，暂不能确定要加载哪一份`), { status: 409 })
+  }
+  const filename = filenames[0]
+  try {
+    return {
+      filename,
+      document: JSON.parse(await readFile(join(configDirectory, filename), 'utf8')),
+    }
+  } catch {
+    throw Object.assign(new Error(`无法读取客户端探索配置：${filename}`), { status: 422 })
+  }
+}
+
 async function runNodeScript(scriptPath, args, cwd, environment = {}) {
   try {
     const result = await execFileAsync(process.execPath, [scriptPath, ...args], {
@@ -77,12 +104,22 @@ export function createLocalClientSyncPlugin(env) {
         next()
         return
       }
-      if (req.method !== 'POST') {
-        sendJSON(res, 405, { code: 405, message: '只支持 POST' })
-        return
-      }
       if (!isAllowedOrigin(req.headers.origin)) {
         sendJSON(res, 403, { code: 403, message: '本地客户端同步服务拒绝了跨站请求' })
+        return
+      }
+      if (req.method === 'GET' && pathname === '/local-client-sync/workout-explore') {
+        try {
+          const clientRoot = await requiredDirectory(configuredClientRoot ? resolve(configuredClientRoot) : '', 'SPIDER_CLIENT_ROOT')
+          const current = await readCurrentWorkoutExploreConfig(clientRoot)
+          sendJSON(res, 200, { code: 0, message: '客户端探索配置读取成功', ...current })
+        } catch (error) {
+          sendJSON(res, error.status || 500, { code: error.status || 500, message: error.message || '客户端探索配置读取失败' })
+        }
+        return
+      }
+      if (req.method !== 'POST') {
+        sendJSON(res, 405, { code: 405, message: '只支持 POST；读取探索配置请使用 GET' })
         return
       }
       if (inFlight) {

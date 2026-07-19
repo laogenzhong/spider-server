@@ -256,7 +256,7 @@ func formatProtoScalar(field protoreflect.FieldDescriptor, value protoreflect.Va
 	case protoreflect.StringKind:
 		return compactLogText(value.String())
 	case protoreflect.BytesKind:
-		return hex.EncodeToString(value.Bytes())
+		return fmt.Sprintf("<bytes:%d>", len(value.Bytes()))
 	case protoreflect.MessageKind, protoreflect.GroupKind:
 		return "{" + formatProtoMessageForLog(value.Message()) + "}"
 	default:

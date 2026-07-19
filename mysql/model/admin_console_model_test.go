@@ -1,11 +1,46 @@
 package mysqlmodel
 
 import (
+	"strings"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	pb "spider-server/gen/spider/api"
 )
+
+func TestAdminClientSyncFailurePaginationUsesStableNewestFirstOrder(t *testing.T) {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN:                       "gorm:gorm@tcp(localhost:9910)/gorm?charset=utf8&parseTime=True&loc=Local",
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{DryRun: true, DisableAutomaticPing: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	query := AdminPageQuery{Page: 1, PageSize: 2}
+	pageOneSQL := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return applyAdminClientSyncFailureOrderingAndPage(tx.Table("client_sync_failures AS f"), query).
+			Find(&[]AdminClientSyncFailureRecord{})
+	})
+	query.Page = 2
+	pageTwoSQL := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return applyAdminClientSyncFailureOrderingAndPage(tx.Table("client_sync_failures AS f"), query).
+			Find(&[]AdminClientSyncFailureRecord{})
+	})
+
+	const stableOrder = "ORDER BY f.last_failed_at DESC, f.id DESC"
+	if !strings.Contains(pageOneSQL, stableOrder) || !strings.Contains(pageTwoSQL, stableOrder) {
+		t.Fatalf("pagination SQL must order equal timestamps by id: page 1 = %q, page 2 = %q", pageOneSQL, pageTwoSQL)
+	}
+	if !strings.Contains(pageOneSQL, "LIMIT 2") || strings.Contains(pageOneSQL, "OFFSET") {
+		t.Fatalf("page 1 SQL = %q", pageOneSQL)
+	}
+	if !strings.Contains(pageTwoSQL, "LIMIT 2 OFFSET 2") {
+		t.Fatalf("page 2 SQL = %q", pageTwoSQL)
+	}
+}
 
 func TestMergeAdminDailyFeatureRecordsSortsAndPaginatesNewestFirst(t *testing.T) {
 	query := AdminPageQuery{Page: 1, PageSize: 2}

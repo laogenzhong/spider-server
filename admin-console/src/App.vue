@@ -8,6 +8,7 @@ import {
   ChartNoAxesColumnIncreasing,
   CheckCheck,
   ChevronDown,
+  CircleAlert,
   CircleUserRound,
   ClipboardList,
   ClipboardCopy,
@@ -58,6 +59,7 @@ const navGroups = [
   { label: '商业与系统', items: [
     { id: 'payments', label: '付费记录', icon: BadgeDollarSign },
     { id: 'refunds', label: '退款用户', icon: RotateCcw },
+    { id: 'syncFailures', label: '丢弃任务', icon: CircleAlert },
     { id: 'offerReply', label: '兑换码回复', icon: MessageSquareReply },
     { id: 'update', label: '版本更新', icon: Settings2 },
   ] },
@@ -108,6 +110,9 @@ const registrations = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const registrationFilters = reactive({ search: '', from: today, to: today })
 const feedback = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const feedbackFilters = reactive({ search: '', from: thirtyDaysAgo, to: today })
+const syncFailures = reactive({ items: [], total: 0, page: 1, page_size: 30 })
+const syncFailureFilters = reactive({ search: '', status: 'pending', from: '', to: '' })
+const expandedSyncFailureID = ref(0)
 const onboardingProfiles = reactive({ items: [], total: 0, page: 1, page_size: 30 })
 const onboardingFilters = reactive({ search: '', from: thirtyDaysAgo, to: today })
 const expandedOnboardingID = ref(0)
@@ -220,6 +225,7 @@ async function selectSection(id) {
   if (id === 'userList') await loadUserList()
   if (id === 'registrations') await loadRegistrations()
   if (id === 'feedback') await loadFeedback()
+  if (id === 'syncFailures') await loadSyncFailures()
   if (id === 'onboarding') await loadOnboardingProfiles()
   if (id === 'friendProfiles') await loadFriendProfiles()
   if (id === 'featureAdoption') await loadFeatureAdoption()
@@ -334,6 +340,34 @@ async function loadRegistrations(page = registrations.page) {
 async function loadFeedback(page = feedback.page) {
   await withLoading('feedback', async () => {
     Object.assign(feedback, await request(`/feedback${queryString({ ...feedbackFilters, page, page_size: feedback.page_size })}`))
+  }).catch(() => {})
+}
+
+async function loadSyncFailures(page = syncFailures.page) {
+  await withLoading('syncFailures', async () => {
+    Object.assign(syncFailures, await request(`/client-sync-failures${queryString({ ...syncFailureFilters, page, page_size: syncFailures.page_size })}`))
+    expandedSyncFailureID.value = 0
+  }).catch(() => {})
+}
+
+async function resolveSyncFailure(item) {
+  if (!window.confirm(`确认将任务 ${item.id} 标记为已处理？此操作只更新处理状态，不会自动重放请求。`)) return
+  const resolvedBy = operator.value.trim()
+  if (!resolvedBy) {
+    notify('请填写操作人', 'error')
+    return
+  }
+  localStorage.setItem('spider-admin-operator', resolvedBy)
+  await withLoading(`resolveSyncFailure-${item.id}`, async () => {
+    await request(`/client-sync-failures/${item.id}/resolve`, {
+      method: 'POST',
+      body: { operator: resolvedBy, note: 'admin_console_mark_resolved' },
+    })
+    notify('任务已标记为已处理')
+    const page = syncFailureFilters.status === 'pending' && syncFailures.items.length === 1 && syncFailures.page > 1
+      ? syncFailures.page - 1
+      : syncFailures.page
+    await loadSyncFailures(page)
   }).catch(() => {})
 }
 
@@ -913,6 +947,59 @@ onMounted(async () => {
           </table>
         </div>
         <Pagination :data="feedback" :page-count="pageCount(feedback)" @change="loadFeedback" />
+      </section>
+
+      <section v-else-if="current === 'syncFailures'" class="page-section">
+        <div class="filter-toolbar">
+          <div class="segmented">
+            <button type="button" :class="{ selected: syncFailureFilters.status === 'pending' }" @click="syncFailureFilters.status = 'pending'; loadSyncFailures(1)">待处理</button>
+            <button type="button" :class="{ selected: syncFailureFilters.status === 'resolved' }" @click="syncFailureFilters.status = 'resolved'; loadSyncFailures(1)">已处理</button>
+            <button type="button" :class="{ selected: syncFailureFilters.status === 'all' }" @click="syncFailureFilters.status = 'all'; loadSyncFailures(1)">全部</button>
+          </div>
+          <input v-model="syncFailureFilters.from" type="date" title="最后失败开始日期" />
+          <input v-model="syncFailureFilters.to" type="date" title="最后失败结束日期" />
+          <input v-model="operator" class="operator-input" placeholder="操作人" autocomplete="off" />
+          <div class="compact-search"><Search :size="16" /><input v-model="syncFailureFilters.search" placeholder="UID / 任务 ID / 接口 / 错误码" @keyup.enter="loadSyncFailures(1)" /></div>
+          <button class="primary-button" type="button" @click="loadSyncFailures(1)">查询</button>
+        </div>
+        <div class="result-meta">共 {{ syncFailures.total }} 条{{ syncFailureFilters.status === 'pending' ? '待处理' : '' }}任务</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用户</th><th>队列 / 接口</th><th>业务错误</th><th>最后失败</th><th>尝试</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <template v-for="item in syncFailures.items" :key="item.id">
+                <tr>
+                  <td><strong>{{ item.nickname || item.account || `UID ${item.uid}` }}</strong><small>UID {{ item.uid }} · 任务 {{ item.id }}</small></td>
+                  <td><strong>{{ item.queue_name || '通用队列' }}</strong><small class="mono">{{ item.original_rpc_path }}</small></td>
+                  <td><strong>错误码 {{ item.business_code }}</strong><small>{{ item.business_message || '无错误信息' }}</small></td>
+                  <td>{{ formatEpochDateTime(item.last_failed_at) }}</td>
+                  <td>{{ item.attempt_count }} 次</td>
+                  <td><span class="status-pill" :class="item.status === 'resolved' ? 'positive' : 'warning'">{{ item.status === 'resolved' ? '已处理' : '待处理' }}</span></td>
+                  <td class="sync-failure-actions">
+                    <button class="secondary-button" type="button" @click="expandedSyncFailureID = expandedSyncFailureID === item.id ? 0 : item.id">{{ expandedSyncFailureID === item.id ? '收起' : '查看数据' }}</button>
+                    <button v-if="item.status !== 'resolved'" class="primary-button" type="button" :disabled="loading[`resolveSyncFailure-${item.id}`]" @click="resolveSyncFailure(item)"><CheckCheck :size="14" />标记已处理</button>
+                  </td>
+                </tr>
+                <tr v-if="expandedSyncFailureID === item.id" class="expanded-row">
+                  <td colspan="7">
+                    <div class="record-detail-grid">
+                      <div><span>客户端任务 ID</span><strong class="mono">{{ item.client_task_id }}</strong></div>
+                      <div><span>客户端创建时间</span><strong>{{ formatEpochDateTime(item.client_created_at) }}</strong></div>
+                      <div><span>服务器归档时间</span><strong>{{ formatDateTime(item.created_at) }}</strong></div>
+                      <div><span>App 版本</span><strong>{{ item.app_version || '—' }}</strong></div>
+                      <div><span>处理信息</span><strong>{{ item.resolved_by ? `${item.resolved_by} · ${formatDateTime(item.resolved_at)}` : '尚未处理' }}</strong></div>
+                      <div><span>处理备注</span><strong>{{ item.resolution_note || '—' }}</strong></div>
+                    </div>
+                    <div class="record-detail-meta">请求接口：{{ item.original_rpc_path }}</div>
+                    <pre class="json-viewer">{{ formatJSON(item.request_data_json) }}</pre>
+                  </td>
+                </tr>
+              </template>
+              <tr v-if="!syncFailures.items?.length"><td colspan="7" class="empty-cell">暂无丢弃任务</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Pagination :data="syncFailures" :page-count="pageCount(syncFailures)" @change="loadSyncFailures" />
       </section>
 
       <section v-else-if="current === 'onboarding'" class="page-section">

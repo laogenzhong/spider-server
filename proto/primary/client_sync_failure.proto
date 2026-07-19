@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "spider/api;api";
+
+// ArchiveClientSyncFailureRequest 保存客户端经过三次业务重试后仍失败的队列任务。
+// 请求体不包含登录 token；原始 protobuf body 用于后续人工排查和补偿。
+message ArchiveClientSyncFailureRequest {
+  string client_task_id = 1;
+  string queue_name = 2;
+  string original_rpc_path = 3;
+  bytes original_request_body = 4;
+  int32 business_code = 5;
+  string business_message = 6;
+  int32 attempt_count = 7;
+  int64 client_created_at = 8;
+  int64 last_failed_at = 9;
+  string app_version = 10;
+  // request_data_json 是面向人工修复的可读请求数据；原始二进制仍保留用于精确重放。
+  string request_data_json = 11;
+}
+
+message ArchiveClientSyncFailureResponse {
+  bool stored = 1;
+}
+
+service ClientSyncFailureService {
+  rpc ArchiveClientSyncFailure(ArchiveClientSyncFailureRequest) returns (ArchiveClientSyncFailureResponse);
+}

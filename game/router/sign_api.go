@@ -45,7 +45,7 @@ func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.Sign
 	}
 	_ = mysqlmodel.UpdateUserLastLoginDevice(user.ID, req.GetParams().GetDeviceModel(), req.GetParams().GetIosVersion(), time.Now())
 
-	token, _, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
+	token, sessionUser, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
 		sessionAttachAccountKey: user.Account,
 	})
 	if err != nil {
@@ -55,6 +55,7 @@ func (s *SignApi) SignIn(ctx context.Context, req *api.SignInRequest) (*api.Sign
 	resp := &api.SignInResponse{}
 	resp.Uid = uint64(user.ID)
 	resp.UcToken = token
+	resp.SessionExpiresAt = sessionUser.ExpiresAtUnix()
 
 	return resp, nil
 }
@@ -109,7 +110,7 @@ func (s *SignApi) SignInWithApple(ctx context.Context, req *api.AppleSignInReque
 	}
 	_ = mysqlmodel.UpdateUserLastLoginDevice(user.ID, profile.DeviceModel, profile.IOSVersion, time.Now())
 
-	token, _, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
+	token, sessionUser, err := session.SignSessionManager.NewToken(ctx, uint64(user.ID), 1, map[string]string{
 		sessionAttachAccountKey: user.Account,
 	})
 	if err != nil {
@@ -119,6 +120,7 @@ func (s *SignApi) SignInWithApple(ctx context.Context, req *api.AppleSignInReque
 	resp := &api.SignInResponse{}
 	resp.Uid = uint64(user.ID)
 	resp.UcToken = token
+	resp.SessionExpiresAt = sessionUser.ExpiresAtUnix()
 	return resp, nil
 }
 
@@ -144,7 +146,7 @@ func (s *SignApi) Token(ctx context.Context, req *api.TokenRequest) (*api.SignIn
 	}
 
 	account, _ := user.GetAttachString(sessionAttachAccountKey)
-	newToken, _, err := session.SignSessionManager.NewToken(ctx, uid, scopeID, map[string]string{
+	newToken, sessionUser, err := session.SignSessionManager.NewToken(ctx, uid, scopeID, map[string]string{
 		sessionAttachAccountKey: account,
 	})
 	if err != nil {
@@ -154,6 +156,7 @@ func (s *SignApi) Token(ctx context.Context, req *api.TokenRequest) (*api.SignIn
 	resp := &api.SignInResponse{}
 	resp.Uid = uid
 	resp.UcToken = newToken
+	resp.SessionExpiresAt = sessionUser.ExpiresAtUnix()
 	return resp, nil
 }
 

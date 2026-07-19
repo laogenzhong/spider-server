@@ -22,6 +22,10 @@ const (
 
 	AdminRefundStatusRequested = "requested"
 	AdminRefundStatusCompleted = "completed"
+
+	AdminClientSyncFailureStatusAll      = "all"
+	AdminClientSyncFailureStatusPending  = "pending"
+	AdminClientSyncFailureStatusResolved = "resolved"
 )
 
 type AdminPageQuery struct {
@@ -118,6 +122,29 @@ type AdminFeedbackRecord struct {
 	Nickname  string    `json:"nickname"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type AdminClientSyncFailureRecord struct {
+	ID              uint64     `json:"id"`
+	UID             uint64     `json:"uid"`
+	Account         string     `json:"account"`
+	Nickname        string     `json:"nickname"`
+	ClientTaskID    string     `json:"client_task_id"`
+	QueueName       string     `json:"queue_name"`
+	OriginalRPCPath string     `json:"original_rpc_path"`
+	RequestDataJSON string     `json:"request_data_json"`
+	BusinessCode    int32      `json:"business_code"`
+	BusinessMessage string     `json:"business_message"`
+	AttemptCount    int32      `json:"attempt_count"`
+	ClientCreatedAt int64      `json:"client_created_at"`
+	LastFailedAt    int64      `json:"last_failed_at"`
+	AppVersion      string     `json:"app_version"`
+	Status          string     `json:"status"`
+	ResolvedAt      *time.Time `json:"resolved_at"`
+	ResolvedBy      string     `json:"resolved_by"`
+	ResolutionNote  string     `json:"resolution_note"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
 }
 
 type AdminOnboardingProfileRecord struct {
@@ -595,6 +622,48 @@ func ListAdminFeedback(query AdminPageQuery) ([]AdminFeedbackRecord, int64, erro
 		Limit(query.PageSize).
 		Offset((query.Page - 1) * query.PageSize).
 		Scan(&records).Error
+	return records, total, err
+}
+
+func ListAdminClientSyncFailures(query AdminPageQuery, status string) ([]AdminClientSyncFailureRecord, int64, error) {
+	db, err := config.DB()
+	if err != nil {
+		return nil, 0, err
+	}
+	query = normalizeAdminPageQuery(query)
+	base := db.Table("client_sync_failures AS f").
+		Joins("LEFT JOIN users AS u ON u.id = f.uid AND u.deleted_at IS NULL").
+		Joins("LEFT JOIN friend_profile_records AS fp ON fp.uid = f.uid AND fp.deleted_at IS NULL")
+	base = applyAdminClientSyncFailureStatus(base, status)
+	base = applyAdminClientSyncFailureSearch(base, query.Search)
+	base = applyAdminEpochMilliRange(base, "f.last_failed_at", query.From, query.To)
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	records := make([]AdminClientSyncFailureRecord, 0)
+	err = applyAdminClientSyncFailureOrderingAndPage(base.Select(`
+		f.id,
+		f.uid,
+		COALESCE(u.account, '') AS account,
+		COALESCE(fp.nickname, '') AS nickname,
+		f.client_task_id,
+		f.queue_name,
+		f.original_rpc_path,
+		f.request_data_json,
+		f.business_code,
+		f.business_message,
+		f.attempt_count,
+		f.client_created_at,
+		f.last_failed_at,
+		f.app_version,
+		f.status,
+		f.resolved_at,
+		f.resolved_by,
+		f.resolution_note,
+		f.created_at,
+		f.updated_at`), query).Scan(&records).Error
 	return records, total, err
 }
 
@@ -1094,6 +1163,61 @@ func applyAdminFriendProfileSearch(db *gorm.DB, search string) *gorm.DB {
 		return db.Where("(fp.uid = ? OR u.account LIKE ? OR fp.user_id LIKE ? OR fp.nickname LIKE ? OR fp.bio LIKE ?)", uid, like, like, like, like)
 	}
 	return db.Where("(u.account LIKE ? OR fp.user_id LIKE ? OR fp.nickname LIKE ? OR fp.bio LIKE ?)", like, like, like, like)
+}
+
+func normalizeAdminClientSyncFailureStatus(status string) string {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case AdminClientSyncFailureStatusAll:
+		return AdminClientSyncFailureStatusAll
+	case AdminClientSyncFailureStatusResolved:
+		return AdminClientSyncFailureStatusResolved
+	default:
+		return AdminClientSyncFailureStatusPending
+	}
+}
+
+func applyAdminClientSyncFailureStatus(db *gorm.DB, status string) *gorm.DB {
+	status = normalizeAdminClientSyncFailureStatus(status)
+	if status == AdminClientSyncFailureStatusAll {
+		return db
+	}
+	return db.Where("f.status = ?", status)
+}
+
+func applyAdminClientSyncFailureSearch(db *gorm.DB, search string) *gorm.DB {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return db
+	}
+	like := "%" + search + "%"
+	if numeric, err := strconv.ParseUint(search, 10, 64); err == nil && numeric > 0 {
+		return db.Where(`(
+			f.id = ? OR f.uid = ? OR f.business_code = ? OR
+			u.account LIKE ? OR fp.nickname LIKE ? OR f.client_task_id LIKE ? OR
+			f.queue_name LIKE ? OR f.original_rpc_path LIKE ? OR f.business_message LIKE ?
+		)`, numeric, numeric, numeric, like, like, like, like, like, like)
+	}
+	return db.Where(`(
+		u.account LIKE ? OR fp.nickname LIKE ? OR f.client_task_id LIKE ? OR
+		f.queue_name LIKE ? OR f.original_rpc_path LIKE ? OR f.business_message LIKE ?
+	)`, like, like, like, like, like, like)
+}
+
+func applyAdminEpochMilliRange(db *gorm.DB, column string, from *time.Time, to *time.Time) *gorm.DB {
+	if from != nil {
+		db = db.Where(column+" >= ?", from.UnixMilli())
+	}
+	if to != nil {
+		db = db.Where(column+" < ?", to.UnixMilli())
+	}
+	return db
+}
+
+func applyAdminClientSyncFailureOrderingAndPage(db *gorm.DB, query AdminPageQuery) *gorm.DB {
+	query = normalizeAdminPageQuery(query)
+	return db.Order("f.last_failed_at DESC, f.id DESC").
+		Limit(query.PageSize).
+		Offset((query.Page - 1) * query.PageSize)
 }
 
 func applyAdminTimeRange(db *gorm.DB, column string, from *time.Time, to *time.Time) *gorm.DB {

@@ -98,4 +98,6 @@ message SignInResponse {
   string jwt_token = 12;
   // ws Url
   string ws_url = 18;
+  // 当前服务端 session 的绝对过期时间，秒级 Unix 时间戳。
+  int64 session_expires_at = 19;
 }

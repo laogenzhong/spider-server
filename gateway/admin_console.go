@@ -29,6 +29,11 @@ type adminRevokeVIPRequest struct {
 	Reason   string `json:"reason"`
 }
 
+type adminResolveClientSyncFailureRequest struct {
+	Operator string `json:"operator"`
+	Note     string `json:"note"`
+}
+
 type adminAppUpdateRequest struct {
 	LatestVersion          string `json:"latest_version"`
 	MinSupportedVersion    string `json:"min_supported_version"`
@@ -65,6 +70,8 @@ func (s *GatewayServer) registerAdminConsoleRoutes(router *gin.Engine) {
 	group.GET("/daily-active", s.adminDailyActiveHandler)
 	group.GET("/registrations", s.adminRegistrationsHandler)
 	group.GET("/feedback", s.adminFeedbackHandler)
+	group.GET("/client-sync-failures", s.adminClientSyncFailuresHandler)
+	group.POST("/client-sync-failures/:id/resolve", s.adminResolveClientSyncFailureHandler)
 	group.GET("/onboarding-profiles", s.adminOnboardingProfilesHandler)
 	group.GET("/friend-profiles", s.adminFriendProfilesHandler)
 	group.GET("/feature-adoption", s.adminFeatureAdoptionHandler)
@@ -308,6 +315,52 @@ func (s *GatewayServer) adminFeedbackHandler(c *gin.Context) {
 		return
 	}
 	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminClientSyncFailuresHandler(c *gin.Context) {
+	query, err := adminPageQueryFromContext(c, false)
+	if err != nil {
+		adminError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, total, err := mysqlmodel.ListAdminClientSyncFailures(query, c.Query("status"))
+	if err != nil {
+		adminError(c, http.StatusInternalServerError, "查询丢弃任务失败")
+		return
+	}
+	adminPageOK(c, items, total, query)
+}
+
+func (s *GatewayServer) adminResolveClientSyncFailureHandler(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		adminError(c, http.StatusBadRequest, "任务 ID 无效")
+		return
+	}
+	var req adminResolveClientSyncFailureRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		adminError(c, http.StatusBadRequest, "处理参数无效")
+		return
+	}
+	resolvedAt := time.Now()
+	err = mysqlmodel.ResolveAdminClientSyncFailure(id, req.Operator, req.Note, resolvedAt)
+	if err != nil {
+		switch {
+		case errors.Is(err, mysqlmodel.ErrAdminSyncFailureOperatorEmpty):
+			adminError(c, http.StatusBadRequest, "处理人不能为空")
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			adminError(c, http.StatusNotFound, "没有找到该丢弃任务")
+		default:
+			adminError(c, http.StatusInternalServerError, "标记丢弃任务失败")
+		}
+		return
+	}
+	adminOK(c, gin.H{
+		"id":          id,
+		"status":      mysqlmodel.AdminClientSyncFailureStatusResolved,
+		"resolved_at": resolvedAt,
+		"resolved_by": strings.TrimSpace(req.Operator),
+	})
 }
 
 func (s *GatewayServer) adminOnboardingProfilesHandler(c *gin.Context) {

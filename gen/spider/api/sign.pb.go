@@ -475,9 +475,11 @@ type SignInResponse struct {
 	// gateway token
 	JwtToken string `protobuf:"bytes,12,opt,name=jwt_token,json=jwtToken,proto3" json:"jwt_token,omitempty"`
 	// ws Url
-	WsUrl         string `protobuf:"bytes,18,opt,name=ws_url,json=wsUrl,proto3" json:"ws_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	WsUrl string `protobuf:"bytes,18,opt,name=ws_url,json=wsUrl,proto3" json:"ws_url,omitempty"`
+	// 当前服务端 session 的绝对过期时间，秒级 Unix 时间戳。
+	SessionExpiresAt int64 `protobuf:"varint,19,opt,name=session_expires_at,json=sessionExpiresAt,proto3" json:"session_expires_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *SignInResponse) Reset() {
@@ -545,6 +547,13 @@ func (x *SignInResponse) GetWsUrl() string {
 	return ""
 }
 
+func (x *SignInResponse) GetSessionExpiresAt() int64 {
+	if x != nil {
+		return x.SessionExpiresAt
+	}
+	return 0
+}
+
 var File_primary_sign_proto protoreflect.FileDescriptor
 
 const file_primary_sign_proto_rawDesc = "" +
@@ -581,13 +590,14 @@ const file_primary_sign_proto_rawDesc = "" +
 	"\tfull_name\x18\x05 \x01(\tR\bfullName\x12!\n" +
 	"\fdevice_model\x18\x06 \x01(\tR\vdeviceModel\x12\x1f\n" +
 	"\vios_version\x18\a \x01(\tR\n" +
-	"iosVersion\"\x8a\x01\n" +
+	"iosVersion\"\xb8\x01\n" +
 	"\x0eSignInResponse\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x04R\x03uid\x12\x19\n" +
 	"\buc_token\x18\x02 \x01(\tR\aucToken\x12\x17\n" +
 	"\aapp_key\x18\v \x01(\tR\x06appKey\x12\x1b\n" +
 	"\tjwt_token\x18\f \x01(\tR\bjwtToken\x12\x15\n" +
-	"\x06ws_url\x18\x12 \x01(\tR\x05wsUrl2\xe4\x02\n" +
+	"\x06ws_url\x18\x12 \x01(\tR\x05wsUrl\x12,\n" +
+	"\x12session_expires_at\x18\x13 \x01(\x03R\x10sessionExpiresAt2\xe4\x02\n" +
 	"\aSignApi\x129\n" +
 	"\vsignUpMixed\x12\x11.uc.SignInRequest\x1a\x17.uc.SignUpMixedResponse\x12/\n" +
 	"\x06signIn\x12\x11.uc.SignInRequest\x1a\x12.uc.SignInResponse\x12=\n" +

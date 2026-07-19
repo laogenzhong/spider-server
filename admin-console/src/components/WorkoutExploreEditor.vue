@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Download, FileUp, Plus, Search, Trash2, UploadCloud, X } from 'lucide-vue-next'
+import { Download, FileUp, Plus, RefreshCw, Search, Trash2, UploadCloud, X } from 'lucide-vue-next'
 
 const locales = [
   { id: 'zh-Hans', label: '简体中文' },
@@ -13,14 +13,11 @@ const levels = [{ id: 'beginner', label: '初学者' }, { id: 'intermediate', la
 const goals = [{ id: 'muscle_gain', label: '增肌' }, { id: 'strength', label: '力量' }, { id: 'weight_loss', label: '减重' }]
 const equipment = [{ id: 'gym', label: '健身房' }, { id: 'dumbbell', label: '哑铃' }, { id: 'none', label: '无' }]
 const categoryOptions = [
-  { id: 'home', label: '居家' },
-  { id: 'travel', label: '旅行' },
   { id: 'dumbbell', label: '哑铃' },
   { id: 'resistance_band', label: '弹力带' },
   { id: 'cardio_hiit', label: '有氧运动和高强度间歇' },
   { id: 'gym', label: '健身房' },
   { id: 'bodyweight', label: '自重' },
-  { id: 'suspension', label: '悬挂带' },
 ]
 const blankText = () => Object.fromEntries(locales.map(({ id }) => [id, '']))
 const blankPlan = () => ({ id: `plan-${Date.now()}`, name: blankText(), description: blankText(), defaultSetCount: 3, exercises: [] })
@@ -35,7 +32,7 @@ const blankDocument = () => ({
 const documentModel = reactive(blankDocument())
 const mode = ref('schemes')
 const selectedSchemeIndex = ref(0)
-const selectedCategoryID = ref('home')
+const selectedCategoryID = ref('dumbbell')
 const selectedPlanIndex = ref(0)
 const editingLocale = ref('zh-Hans')
 const catalog = ref([])
@@ -46,6 +43,7 @@ const status = reactive({ type: '', message: '' })
 const configInput = ref(null)
 const catalogInput = ref(null)
 const syncingClient = ref(false)
+const loadingClientConfig = ref(false)
 
 const selectedScheme = computed(() => documentModel.schemes[selectedSchemeIndex.value] || null)
 const selectedCategory = computed(() => documentModel.categories.find(item => item.id === selectedCategoryID.value) || null)
@@ -76,6 +74,7 @@ onMounted(async () => {
   if (saved) {
     try { replaceDocument(JSON.parse(saved)) } catch { /* Ignore corrupt browser draft. */ }
   }
+  await loadClientConfig({ silent: true })
   try {
     const response = await fetch(`${import.meta.env.BASE_URL}exercise-catalog.json`)
     if (response.ok) catalog.value = normalizeCatalog(await response.json())
@@ -98,7 +97,7 @@ function replaceDocument(value) {
   Object.keys(documentModel).forEach(key => delete documentModel[key])
   Object.assign(documentModel, normalized)
   selectedSchemeIndex.value = 0
-  selectedCategoryID.value = 'home'
+  selectedCategoryID.value = 'dumbbell'
   selectedPlanIndex.value = 0
 }
 
@@ -252,6 +251,14 @@ function addAction(action) {
   selectedPlan.value.exercises.push({ exerciseID: action.id, setCount: selectedPlan.value.defaultSetCount || 3 })
 }
 
+function actionTargetSummary(action, plan) {
+  const values = [`${action.setCount || plan.defaultSetCount || 0} 组`]
+  if (action.weightKg != null && action.weightKg !== '') values.push(`${action.weightKg} kg`)
+  if (action.durationMinutes != null && action.durationMinutes !== '') values.push(`${action.durationMinutes} 分钟`)
+  else if (action.reps != null && action.reps !== '') values.push(`${action.reps} 次`)
+  return values.join(' · ')
+}
+
 function actionName(actionOrID) {
   const action = typeof actionOrID === 'string' ? catalog.value.find(item => item.id === actionOrID) : actionOrID
   if (!action) return typeof actionOrID === 'string' ? actionOrID : ''
@@ -293,6 +300,10 @@ function validatePlans(plans, owner, errors) {
     plan.exercises?.forEach(action => {
       if (!catalog.value.some(item => item.id === action.exerciseID)) errors.push(`${label}动作 ID 不在当前目录：${action.exerciseID}`)
       if (action.setCount != null && (Number(action.setCount) < 1 || Number(action.setCount) > 99)) errors.push(`${label}动作组数应为 1–99`)
+      if (action.weightKg != null && (!Number.isFinite(Number(action.weightKg)) || Number(action.weightKg) < 0)) errors.push(`${label}动作重量必须为非负数`)
+      if (action.reps != null && (!Number.isInteger(Number(action.reps)) || Number(action.reps) < 1 || Number(action.reps) > 999)) errors.push(`${label}动作次数应为 1–999`)
+      if (action.durationMinutes != null && (!Number.isInteger(Number(action.durationMinutes)) || Number(action.durationMinutes) < 1 || Number(action.durationMinutes) > 999)) errors.push(`${label}动作时长应为 1–999 分钟`)
+      if (action.reps != null && action.durationMinutes != null) errors.push(`${label}动作不能同时配置次数和时长`)
     })
   })
 }
@@ -334,6 +345,26 @@ function exportConfig() {
   flash('配置已导出')
 }
 
+async function loadClientConfig({ silent = false } = {}) {
+  if (loadingClientConfig.value) return false
+  if (!silent && !window.confirm('将用客户端当前探索配置覆盖本浏览器的草稿，是否继续？')) return false
+  loadingClientConfig.value = true
+  try {
+    const response = await fetch('/local-client-sync/workout-explore', { cache: 'no-store' })
+    const result = await response.json()
+    if (!response.ok || result.code !== 0 || !result.document) throw new Error(result.message || '客户端探索配置读取失败')
+    replaceDocument(result.document)
+    localStorage.setItem('spider-workout-explore-draft-v1', JSON.stringify(documentModel))
+    if (!silent) flash(`已加载客户端当前配置：${result.filename}`)
+    return true
+  } catch (error) {
+    if (!silent) flash(error.message || '客户端探索配置读取失败', 'error')
+    return false
+  } finally {
+    loadingClientConfig.value = false
+  }
+}
+
 async function syncToClient() {
   const errors = validateDocument()
   if (errors.length) return flash(`更新前请修复：${errors.slice(0, 3).join('；')}`, 'error')
@@ -365,6 +396,7 @@ async function syncToClient() {
       <div><h2>训练计划探索配置</h2><p>本地制作、预览并更新客户端的 *.workout-explore.json；不写入服务端数据库</p></div>
       <div class="explore-actions">
         <input ref="configInput" hidden type="file" accept=".json,.workout-explore.json" @change="importJSON($event, 'config')" />
+        <button class="secondary-button" type="button" :disabled="loadingClientConfig" @click="loadClientConfig()"><RefreshCw :size="16" />{{ loadingClientConfig ? '正在读取…' : '读取客户端当前配置' }}</button>
         <button class="secondary-button" type="button" @click="configInput.click()"><FileUp :size="16" />导入配置</button>
         <button class="secondary-button" type="button" @click="validateAndReport">验证</button>
         <button class="primary-button" type="button" @click="exportConfig"><Download :size="16" />导出配置</button>
@@ -376,7 +408,7 @@ async function syncToClient() {
 
     <div class="explore-meta-card">
       <label>配置 ID<input v-model.trim="documentModel.configID" placeholder="lifttags-default" /></label>
-      <div><strong>固定格式</strong><span>schemaVersion 1 · 五种语言 · 8 个分类</span></div>
+      <div><strong>固定格式</strong><span>schemaVersion 1 · 五种语言 · 5 个分类</span></div>
       <div><strong>客户端索引</strong><span>动作 ID 对应 ExerciseGIFItem.id</span></div>
     </div>
 
@@ -384,7 +416,7 @@ async function syncToClient() {
       <aside class="explore-outline">
         <div class="segmented">
           <button type="button" :class="{ selected: mode === 'schemes' }" @click="mode = 'schemes'">方案</button>
-          <button type="button" :class="{ selected: mode === 'categories' }" @click="mode = 'categories'">8 类计划</button>
+          <button type="button" :class="{ selected: mode === 'categories' }" @click="mode = 'categories'">5 类计划</button>
         </div>
 
         <template v-if="mode === 'schemes'">
@@ -456,7 +488,12 @@ async function syncToClient() {
               <div v-for="(action, index) in selectedPlan.exercises" :key="action.exerciseID" class="selected-action-row">
                 <span class="selected-gif-frame"><span class="gif-fallback">GIF</span><img v-if="actionGIFURL(action.exerciseID)" :src="actionGIFURL(action.exerciseID)" :alt="actionName(action.exerciseID)" loading="lazy" @error="$event.currentTarget.style.display = 'none'" /><b>{{ index + 1 }}</b></span>
                 <div class="selected-action-copy"><strong>{{ actionName(action.exerciseID) }}</strong><small>{{ action.exerciseID }}</small></div>
-                <label class="set-count-field"><span>组数</span><input v-model.number="action.setCount" type="number" min="1" max="99" /></label>
+                <div class="action-target-fields">
+                  <label><span>组数</span><input v-model.number="action.setCount" type="number" min="1" max="99" /></label>
+                  <label><span>重量 kg</span><input v-model.number="action.weightKg" type="number" min="0" step="0.5" /></label>
+                  <label v-if="action.durationMinutes != null"><span>时长 分钟</span><input v-model.number="action.durationMinutes" type="number" min="1" max="999" /></label>
+                  <label v-else><span>次数</span><input v-model.number="action.reps" type="number" min="1" max="999" /></label>
+                </div>
                 <button class="remove-action-button" type="button" title="移除动作" @click="selectedPlan.exercises.splice(index, 1)"><X :size="16" /></button>
               </div>
               <div v-if="!selectedPlan.exercises.length" class="empty-cell">从左侧动作库添加动作</div>
@@ -470,7 +507,7 @@ async function syncToClient() {
         <span class="preview-kicker">客户端预览 · {{ locales.find(item => item.id === editingLocale)?.label }}</span>
         <div class="preview-phone">
           <div v-if="mode === 'schemes' && selectedScheme" class="preview-scheme"><strong>{{ selectedScheme.name[editingLocale] || '方案名' }}</strong><p>{{ selectedScheme.description[editingLocale] || '方案介绍' }}</p><small>{{ levels.find(item => item.id === selectedScheme.level)?.label }} · {{ goals.find(item => item.id === selectedScheme.goal)?.label }} · {{ equipment.find(item => item.id === selectedScheme.equipment)?.label }}</small></div>
-          <div v-if="selectedPlan" class="preview-plan"><h3>{{ previewName || '计划名' }}</h3><p>{{ previewDescription || '计划介绍' }}</p><div v-for="action in selectedPlan.exercises" :key="action.exerciseID"><span class="preview-action"><span class="preview-gif-frame"><img v-if="actionGIFURL(action.exerciseID)" :src="actionGIFURL(action.exerciseID)" :alt="actionName(action.exerciseID)" loading="lazy" /></span><span>{{ actionName(action.exerciseID) }}</span></span><b>{{ action.setCount || selectedPlan.defaultSetCount }} 组</b></div></div>
+          <div v-if="selectedPlan" class="preview-plan"><h3>{{ previewName || '计划名' }}</h3><p>{{ previewDescription || '计划介绍' }}</p><div v-for="action in selectedPlan.exercises" :key="action.exerciseID"><span class="preview-action"><span class="preview-gif-frame"><img v-if="actionGIFURL(action.exerciseID)" :src="actionGIFURL(action.exerciseID)" :alt="actionName(action.exerciseID)" loading="lazy" /></span><span>{{ actionName(action.exerciseID) }}</span></span><b>{{ actionTargetSummary(action, selectedPlan) }}</b></div></div>
           <div v-else class="empty-cell">暂无计划</div>
         </div>
       </aside>
@@ -479,6 +516,6 @@ async function syncToClient() {
 </template>
 
 <style scoped>
-.explore-editor{max-width:1600px;padding:24px 28px 40px}.explore-actions,.editor-heading,.catalog-filters{display:flex;align-items:center;gap:10px}.explore-status{margin:0 0 14px;padding:11px 14px;border-radius:10px;background:#e8f7ee;color:#17633a}.explore-status.error{background:#fff0ef;color:#a82c24}.explore-status.warning{background:#fff7df;color:#7a5710}.explore-meta-card{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;padding:16px;margin-bottom:16px;border:1px solid #dce1e4;border-radius:16px;background:#fff}.explore-meta-card label,.explore-meta-card div{display:flex;flex-direction:column;gap:6px}.explore-meta-card span,.editor-heading p{color:#7e8992;font-size:12px}.explore-workspace{display:grid;grid-template-columns:220px minmax(560px,1fr) 300px;gap:16px;align-items:start}.explore-outline,.explore-main,.explore-preview{border:1px solid #dce1e4;border-radius:16px;background:#fff;padding:14px}.explore-outline{display:flex;flex-direction:column;gap:8px;position:sticky;top:18px}.outline-item{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid transparent;background:transparent;border-radius:11px;padding:10px;color:inherit}.outline-item span{font-size:11px;color:#7e8992}.outline-item:hover,.outline-item.active{background:#f4f6f7;border-color:#dce1e4}.wide-button{width:100%;justify-content:center;margin-top:4px}.explore-main{min-width:0}.editor-heading{justify-content:space-between;margin:4px 0 12px}.editor-heading h3,.editor-heading p{margin:0}.danger-link{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#c2413a}.form-grid.compact{margin-bottom:14px}.locale-tabs,.plan-tabs{display:flex;gap:6px;overflow-x:auto;margin:12px 0}.locale-tabs button,.plan-tabs button{white-space:nowrap;border:1px solid #dce1e4;background:transparent;border-radius:9px;padding:7px 10px;color:inherit}.locale-tabs button.active,.plan-tabs button.active{background:#1d2939;color:#fff;border-color:#1d2939}.plan-tabs .add-tab{display:flex;align-items:center;gap:4px;border-style:dashed}.exercise-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:16px}.exercise-catalog-panel,.selected-exercises-panel{min-width:0;border:1px solid #dce1e4;border-radius:13px;padding:12px}.catalog-filters{flex-wrap:wrap}.catalog-filters .compact-search{flex:1 1 220px}.catalog-filters select{max-width:150px}.catalog-results{display:grid;gap:6px;max-height:500px;overflow:auto;margin-top:10px}.catalog-results button{display:flex;justify-content:space-between;align-items:center;text-align:left;border:1px solid #dce1e4;background:transparent;border-radius:9px;padding:9px;color:inherit}.catalog-results button:disabled{opacity:.42}.catalog-results span,.selected-action-row>div{display:flex;flex-direction:column;min-width:0}.catalog-results small,.selected-action-row small{color:#7e8992;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.selected-action-row{display:grid;grid-template-columns:26px minmax(0,1fr) 62px 28px;gap:7px;align-items:center;padding:9px 0;border-bottom:1px solid #dce1e4}.selected-action-row label{display:flex;align-items:center;gap:4px;font-size:12px}.selected-action-row input{width:42px;padding:5px}.selected-action-row button{border:0;background:transparent;color:#7e8992}.action-order{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#f4f6f7;font-size:11px}.editor-empty{padding:54px 10px}.explore-preview{position:sticky;top:18px}.preview-kicker{display:block;color:#7e8992;font-size:11px;margin-bottom:10px}.preview-phone{min-height:430px;padding:14px;border-radius:22px;background:#101419;color:#fff}.preview-scheme{padding:12px;margin-bottom:10px;border-radius:14px;background:#ffffff12}.preview-scheme p,.preview-plan p{font-size:12px;color:#ffffffa6}.preview-scheme small{color:#74d4a3}.preview-plan{padding:14px;border:1px solid #ffffff1c;border-radius:16px;background:#ffffff0c}.preview-plan h3{margin:0}.preview-plan>div{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #ffffff12;font-size:12px}.preview-plan b{white-space:nowrap}.small{padding:7px 9px}@media(max-width:1200px){.explore-workspace{grid-template-columns:200px 1fr}.explore-preview{grid-column:1/-1;position:static}.preview-phone{min-height:240px}}@media(max-width:800px){.explore-meta-card,.explore-workspace,.exercise-layout{grid-template-columns:1fr}.explore-outline,.explore-preview{position:static}.explore-actions{flex-wrap:wrap}}
-.exercise-layout{grid-template-columns:minmax(0,1fr)}.exercise-catalog-panel,.selected-exercises-panel{padding:14px;background:#fbfcfc}.catalog-results{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:620px;padding-right:4px}.catalog-results .catalog-action-card{display:grid;grid-template-columns:76px minmax(0,1fr) 30px;gap:10px;min-height:82px;padding:7px;background:#fff;text-align:left}.catalog-results .catalog-action-card:hover:not(:disabled){border-color:#91b9af;box-shadow:0 5px 15px rgb(29 41 57 / 7%);transform:translateY(-1px)}.exercise-gif-frame,.selected-gif-frame,.preview-gif-frame{position:relative;display:grid!important;place-items:center;overflow:hidden;background:#eef1f2;border:1px solid #e0e5e7}.exercise-gif-frame{width:76px;height:66px;border-radius:9px}.exercise-gif-frame img,.selected-gif-frame img,.preview-gif-frame img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;background:#fff}.gif-fallback{position:absolute;color:#9aa3aa;font-size:10px;font-weight:800;letter-spacing:.08em}.catalog-results .action-copy{display:flex;min-width:0;flex-direction:column;align-self:center;gap:3px}.catalog-results .action-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.catalog-results .action-copy small{font-size:10px}.catalog-results .action-copy em{overflow:hidden;color:#9aa3aa;font-size:9px;font-style:normal;text-overflow:ellipsis;white-space:nowrap}.add-action-icon{display:grid!important;place-items:center;width:28px;height:28px;align-self:center;border-radius:50%;color:#217d69;background:#e6f3ef}.catalog-action-card:disabled .add-action-icon{color:#6f7981;background:#edf0f2}.selected-exercises-panel{padding-bottom:8px}.selected-action-row{display:grid;grid-template-columns:68px minmax(0,1fr) 100px 34px;gap:12px;min-height:76px;align-items:center;padding:9px 4px;border-bottom:1px solid #e1e6e8}.selected-gif-frame{width:64px;height:56px;border-radius:10px}.selected-gif-frame>b{position:absolute;z-index:2;left:4px;top:4px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;background:rgb(24 30 35 / 82%);font-size:10px}.selected-action-copy{display:flex!important;min-width:0;flex-direction:column;gap:4px}.selected-action-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.selected-action-copy small{font-size:10px}.set-count-field{display:grid!important;grid-template-columns:auto 54px;align-items:center;gap:7px!important;margin:0!important;color:#69747d!important}.set-count-field input{width:54px!important;height:34px!important;text-align:center}.remove-action-button{display:grid!important;place-items:center;width:32px;height:32px;border:0;border-radius:50%;color:#8b959d;background:transparent}.remove-action-button:hover{color:#b13e38;background:#fbeaea}.preview-action{display:flex;align-items:center;gap:7px;min-width:0}.preview-gif-frame{flex:0 0 auto;width:36px;height:32px;border:0;border-radius:6px;background:#ffffff12}.preview-action>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.preview-plan>div{align-items:center}.explore-editor input,.explore-editor select,.explore-editor textarea{min-width:0;border:1px solid #d5dbdf;border-radius:6px;color:#252b30;background:#fff;outline:none}.explore-editor input,.explore-editor select{height:36px;padding:0 10px}.explore-editor textarea{padding:9px 10px;resize:vertical}.explore-editor input:focus,.explore-editor select:focus,.explore-editor textarea:focus{border-color:#91b9af;box-shadow:0 0 0 3px rgb(33 125 105 / 8%)}@media(max-width:1450px){.explore-workspace{grid-template-columns:200px minmax(0,1fr)}.explore-preview{grid-column:1/-1;position:static}.preview-phone{min-height:240px}}@media(max-width:900px){.catalog-results{grid-template-columns:1fr}.selected-action-row{grid-template-columns:60px minmax(0,1fr) 88px 32px}.selected-gif-frame{width:56px;height:50px}.set-count-field{grid-template-columns:auto 48px}.set-count-field input{width:48px!important}}
+.explore-editor{max-width:1600px;padding:24px 28px 40px}.explore-actions,.editor-heading,.catalog-filters{display:flex;align-items:center;gap:10px}.explore-status{margin:0 0 14px;padding:11px 14px;border-radius:10px;background:#e8f7ee;color:#17633a}.explore-status.error{background:#fff0ef;color:#a82c24}.explore-status.warning{background:#fff7df;color:#7a5710}.explore-meta-card{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;padding:16px;margin-bottom:16px;border:1px solid #dce1e4;border-radius:16px;background:#fff}.explore-meta-card label,.explore-meta-card div{display:flex;flex-direction:column;gap:6px}.explore-meta-card span,.editor-heading p{color:#7e8992;font-size:12px}.explore-workspace{display:grid;grid-template-columns:220px minmax(560px,1fr) 300px;gap:16px;align-items:start}.explore-outline,.explore-main,.explore-preview{border:1px solid #dce1e4;border-radius:16px;background:#fff;padding:14px}.explore-outline{display:flex;flex-direction:column;gap:8px;position:sticky;top:18px}.outline-item{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid transparent;background:transparent;border-radius:11px;padding:10px;color:inherit}.outline-item span{font-size:11px;color:#7e8992}.outline-item:hover,.outline-item.active{background:#f4f6f7;border-color:#dce1e4}.wide-button{width:100%;justify-content:center;margin-top:4px}.explore-main{min-width:0}.editor-heading{justify-content:space-between;margin:4px 0 12px}.editor-heading h3,.editor-heading p{margin:0}.danger-link{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#c2413a}.form-grid.compact{margin-bottom:14px}.locale-tabs,.plan-tabs{display:flex;gap:6px;overflow-x:auto;margin:12px 0}.locale-tabs button,.plan-tabs button{white-space:nowrap;border:1px solid #dce1e4;background:transparent;border-radius:9px;padding:7px 10px;color:inherit}.locale-tabs button.active,.plan-tabs button.active{background:#1d2939;color:#fff;border-color:#1d2939}.plan-tabs .add-tab{display:flex;align-items:center;gap:4px;border-style:dashed}.category-plan-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 16px}.category-plan-list .editor-heading{grid-column:1/-1;margin-bottom:0}.category-plan-list button{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid #dce1e4;border-radius:10px;background:#fff;padding:10px;color:inherit}.category-plan-list button span{font-size:12px;color:#7e8992}.category-plan-list button:hover,.category-plan-list button.active{border-color:#1d2939;background:#f4f6f7}.category-plan-list .add-category-plan{align-items:center;justify-content:center;flex-direction:row;border-style:dashed;color:#52616e}.exercise-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:16px}.exercise-catalog-panel,.selected-exercises-panel{min-width:0;border:1px solid #dce1e4;border-radius:13px;padding:12px}.catalog-filters{flex-wrap:wrap}.catalog-filters .compact-search{flex:1 1 220px}.catalog-filters select{max-width:150px}.catalog-results{display:grid;gap:6px;max-height:500px;overflow:auto;margin-top:10px}.catalog-results button{display:flex;justify-content:space-between;align-items:center;text-align:left;border:1px solid #dce1e4;background:transparent;border-radius:9px;padding:9px;color:inherit}.catalog-results button:disabled{opacity:.42}.catalog-results span,.selected-action-row>div{display:flex;flex-direction:column;min-width:0}.catalog-results small,.selected-action-row small{color:#7e8992;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.selected-action-row{display:grid;grid-template-columns:26px minmax(0,1fr) 62px 28px;gap:7px;align-items:center;padding:9px 0;border-bottom:1px solid #dce1e4}.selected-action-row label{display:flex;align-items:center;gap:4px;font-size:12px}.selected-action-row input{width:42px;padding:5px}.selected-action-row button{border:0;background:transparent;color:#7e8992}.action-order{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#f4f6f7;font-size:11px}.editor-empty{padding:54px 10px}.explore-preview{position:sticky;top:18px}.preview-kicker{display:block;color:#7e8992;font-size:11px;margin-bottom:10px}.preview-phone{min-height:430px;padding:14px;border-radius:22px;background:#101419;color:#fff}.preview-scheme{padding:12px;margin-bottom:10px;border-radius:14px;background:#ffffff12}.preview-scheme p,.preview-plan p{font-size:12px;color:#ffffffa6}.preview-scheme small{color:#74d4a3}.preview-plan{padding:14px;border:1px solid #ffffff1c;border-radius:16px;background:#ffffff0c}.preview-plan h3{margin:0}.preview-plan>div{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #ffffff12;font-size:12px}.preview-plan b{white-space:nowrap}.small{padding:7px 9px}@media(max-width:1200px){.explore-workspace{grid-template-columns:200px 1fr}.explore-preview{grid-column:1/-1;position:static}.preview-phone{min-height:240px}}@media(max-width:800px){.explore-meta-card,.explore-workspace,.exercise-layout{grid-template-columns:1fr}.explore-outline,.explore-preview{position:static}.explore-actions{flex-wrap:wrap}}
+.exercise-layout{grid-template-columns:minmax(0,1fr)}.exercise-catalog-panel,.selected-exercises-panel{padding:14px;background:#fbfcfc}.catalog-results{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:620px;padding-right:4px}.catalog-results .catalog-action-card{display:grid;grid-template-columns:76px minmax(0,1fr) 30px;gap:10px;min-height:82px;padding:7px;background:#fff;text-align:left}.catalog-results .catalog-action-card:hover:not(:disabled){border-color:#91b9af;box-shadow:0 5px 15px rgb(29 41 57 / 7%);transform:translateY(-1px)}.exercise-gif-frame,.selected-gif-frame,.preview-gif-frame{position:relative;display:grid!important;place-items:center;overflow:hidden;background:#eef1f2;border:1px solid #e0e5e7}.exercise-gif-frame{width:76px;height:66px;border-radius:9px}.exercise-gif-frame img,.selected-gif-frame img,.preview-gif-frame img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;background:#fff}.gif-fallback{position:absolute;color:#9aa3aa;font-size:10px;font-weight:800;letter-spacing:.08em}.catalog-results .action-copy{display:flex;min-width:0;flex-direction:column;align-self:center;gap:3px}.catalog-results .action-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.catalog-results .action-copy small{font-size:10px}.catalog-results .action-copy em{overflow:hidden;color:#9aa3aa;font-size:9px;font-style:normal;text-overflow:ellipsis;white-space:nowrap}.add-action-icon{display:grid!important;place-items:center;width:28px;height:28px;align-self:center;border-radius:50%;color:#217d69;background:#e6f3ef}.catalog-action-card:disabled .add-action-icon{color:#6f7981;background:#edf0f2}.selected-exercises-panel{padding-bottom:8px}.selected-action-row{display:grid;grid-template-columns:68px minmax(0,1fr) minmax(210px,250px) 34px;gap:12px;min-height:76px;align-items:center;padding:9px 4px;border-bottom:1px solid #e1e6e8}.selected-gif-frame{width:64px;height:56px;border-radius:10px}.selected-gif-frame>b{position:absolute;z-index:2;left:4px;top:4px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;background:rgb(24 30 35 / 82%);font-size:10px}.selected-action-copy{display:flex!important;min-width:0;flex-direction:column;gap:4px}.selected-action-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.selected-action-copy small{font-size:10px}.action-target-fields{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px!important;min-width:0}.action-target-fields label{display:flex!important;flex-direction:column;align-items:stretch!important;gap:3px!important;margin:0!important;color:#69747d!important;font-size:11px!important}.action-target-fields input{width:100%!important;height:34px!important;padding:0 5px!important;text-align:center}.remove-action-button{display:grid!important;place-items:center;width:32px;height:32px;border:0;border-radius:50%;color:#8b959d;background:transparent}.remove-action-button:hover{color:#b13e38;background:#fbeaea}.preview-action{display:flex;align-items:center;gap:7px;min-width:0}.preview-gif-frame{flex:0 0 auto;width:36px;height:32px;border:0;border-radius:6px;background:#ffffff12}.preview-action>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.preview-plan>div{align-items:center}.explore-editor input,.explore-editor select,.explore-editor textarea{min-width:0;border:1px solid #d5dbdf;border-radius:6px;color:#252b30;background:#fff;outline:none}.explore-editor input,.explore-editor select{height:36px;padding:0 10px}.explore-editor textarea{padding:9px 10px;resize:vertical}.explore-editor input:focus,.explore-editor select:focus,.explore-editor textarea:focus{border-color:#91b9af;box-shadow:0 0 0 3px rgb(33 125 105 / 8%)}@media(max-width:1450px){.explore-workspace{grid-template-columns:200px minmax(0,1fr)}.explore-preview{grid-column:1/-1;position:static}.preview-phone{min-height:240px}}@media(max-width:900px){.catalog-results{grid-template-columns:1fr}.selected-action-row{grid-template-columns:60px minmax(0,1fr) 190px 32px}.selected-gif-frame{width:56px;height:50px}.action-target-fields{gap:4px!important}.action-target-fields input{font-size:12px}}
 </style>

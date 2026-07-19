@@ -86,6 +86,15 @@ const (
 	// FeedbackSaveFailed 保存反馈失败。
 	FeedbackSaveFailed int = 90004
 
+	// ClientSyncFailureTaskIDEmpty 客户端失败队列任务 ID 为空。
+	ClientSyncFailureTaskIDEmpty int = 91001
+
+	// ClientSyncFailurePathEmpty 客户端失败队列原始 RPC 路径为空。
+	ClientSyncFailurePathEmpty int = 91002
+
+	// ClientSyncFailureArchiveFailed 客户端失败队列任务归档失败。
+	ClientSyncFailureArchiveFailed int = 91003
+
 	// WeightRecordDateEmpty 体重记录日期为空。
 	WeightRecordDateEmpty int = 20001
 

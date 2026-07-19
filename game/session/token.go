@@ -446,6 +446,14 @@ func (u *SessionUser) UIDOrDefault() uint64 {
 	return u.entity.UID
 }
 
+// ExpiresAtUnix 返回本次签发 session 的绝对过期时间。
+func (u *SessionUser) ExpiresAtUnix() int64 {
+	if u == nil || u.entity == nil || u.entity.ExpiresAt.IsZero() {
+		return 0
+	}
+	return u.entity.ExpiresAt.Unix()
+}
+
 // ScopeID 获取当前会话作用域 ID。
 // 如果当前是匿名用户，返回 ErrSessionAnonymous。
 func (u *SessionUser) ScopeID() (uint64, error) {
