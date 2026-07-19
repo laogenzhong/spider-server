@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import {
   Activity,
   ArrowLeft,
@@ -32,7 +32,7 @@ import {
   UserRoundCheck,
   UsersRound,
 } from 'lucide-vue-next'
-import { localOfferReplyRequest, queryString, request } from './api'
+import { localOfferReplyRequest, queryString, request, subscribeAdminRoute } from './api'
 import ExerciseLibraryImportTool from './components/ExerciseLibraryImportTool.vue'
 import Pagination from './components/Pagination.vue'
 import WorkoutExploreEditor from './components/WorkoutExploreEditor.vue'
@@ -69,6 +69,7 @@ const navItems = navGroups.flatMap((group) => group.items)
 const current = ref('overview')
 const expandedNavGroup = ref('')
 const connected = ref(false)
+const routeStatus = reactive({ mode: 'automatic', current_route: '', routes: [] })
 const loading = reactive({})
 const toast = reactive({ visible: false, type: 'success', message: '' })
 const today = localDateString(new Date())
@@ -158,6 +159,9 @@ const appUpdate = reactive({
 
 const currentTitle = computed(() => navItems.find((item) => item.id === current.value)?.label || '管理后台')
 const isRequesting = computed(() => Object.values(loading).some(Boolean))
+const currentRouteLabel = computed(() => routeStatus.current_route === 'line2' ? '线路二' : '线路一')
+const currentRouteURL = computed(() => routeStatus.routes.find((route) => route.id === routeStatus.current_route)?.url || '')
+const hasConfiguredRoute = (routeID) => routeStatus.routes.some((route) => route.id === routeID)
 const activeUserFilters = computed(() => {
   if (current.value === 'activity') return activityFilters
   if (current.value === 'todayRegistrations') return todayRegistrationFilters
@@ -204,12 +208,29 @@ async function checkConnection() {
 	loading.health = true
   try {
     await request('/health')
+    Object.assign(routeStatus, await request('/route-status'))
     connected.value = true
   } catch (error) {
     connected.value = false
     notify(error.message, 'error')
 	} finally {
 		loading.health = false
+  }
+}
+
+async function changeRouteMode(mode) {
+  if (routeStatus.mode === mode) return
+  loading.route = true
+  try {
+    Object.assign(routeStatus, await request('/route-mode', { method: 'PUT', body: { mode } }))
+    await checkConnection()
+    if (connected.value) {
+      notify(mode === 'automatic' ? `已恢复自动选线：${currentRouteLabel.value}` : `已固定使用${currentRouteLabel.value}`)
+    }
+  } catch (error) {
+    notify(error.message || '切换线路失败', 'error')
+  } finally {
+    loading.route = false
   }
 }
 
@@ -644,10 +665,17 @@ function pageCount(data) {
   return Math.max(1, Math.ceil(data.total / data.page_size))
 }
 
+let unsubscribeAdminRoute = () => {}
+
 onMounted(async () => {
+  unsubscribeAdminRoute = subscribeAdminRoute((routeID) => {
+    routeStatus.current_route = routeID
+  })
   await checkConnection()
   if (connected.value) await loadOverview()
 })
+
+onUnmounted(() => unsubscribeAdminRoute())
 </script>
 
 <template>
@@ -694,12 +722,23 @@ onMounted(async () => {
           <p class="eyebrow">SPIDER SERVER</p>
           <h1>{{ currentTitle }}</h1>
         </div>
-        <div class="connection-state" :class="{ online: connected }">
-          <span class="status-dot"></span>
-          {{ connected ? '远程服务已连接' : '远程服务未连接' }}
-          <button class="icon-button" type="button" title="重新连接" @click="checkConnection">
-            <RefreshCw :size="16" :class="{ spin: loading.health }" />
-          </button>
+        <div class="topbar-status">
+          <div class="route-state" :title="routeStatus.mode === 'automatic' ? '系统会测量两条线路并自动选择可用且更快的线路' : '已固定使用当前线路'">
+            <span>{{ routeStatus.mode === 'automatic' ? '自动选线' : (routeStatus.mode === 'single' ? '单线路' : '手动选线') }} · {{ currentRouteLabel }}</span>
+            <a v-if="currentRouteURL" class="route-url" :href="currentRouteURL" target="_blank" rel="noopener noreferrer">{{ currentRouteURL }}</a>
+          </div>
+          <div class="segmented route-switch" aria-label="远程线路选择">
+            <button type="button" :class="{ selected: routeStatus.mode === 'automatic' || routeStatus.mode === 'single' }" :disabled="loading.route" @click="changeRouteMode('automatic')">自动</button>
+            <button type="button" :class="{ selected: routeStatus.mode === 'line1' }" :disabled="loading.route || !hasConfiguredRoute('line1')" @click="changeRouteMode('line1')">线路一</button>
+            <button type="button" :class="{ selected: routeStatus.mode === 'line2' }" :disabled="loading.route || !hasConfiguredRoute('line2')" @click="changeRouteMode('line2')">线路二</button>
+          </div>
+          <div class="connection-state" :class="{ online: connected }">
+            <span class="status-dot"></span>
+            {{ connected ? '远程服务已连接' : '远程服务未连接' }}
+            <button class="icon-button" type="button" title="重新连接并重新检测线路" @click="checkConnection">
+              <RefreshCw :size="16" :class="{ spin: loading.health }" />
+            </button>
+          </div>
         </div>
       </header>
 

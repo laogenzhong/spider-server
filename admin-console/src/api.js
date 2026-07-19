@@ -1,9 +1,18 @@
+const routeListeners = new Set()
+
+export function subscribeAdminRoute(listener) {
+  routeListeners.add(listener)
+  return () => routeListeners.delete(listener)
+}
+
 export async function request(path, options = {}) {
   const response = await fetch(`/admin-api${path}`, {
     method: options.method || 'GET',
     headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
     body: options.body ? JSON.stringify(options.body) : undefined,
   })
+  const routeID = response.headers.get('X-Admin-Route')
+  if (routeID) routeListeners.forEach((listener) => listener(routeID))
   let payload
   try {
     payload = await response.json()

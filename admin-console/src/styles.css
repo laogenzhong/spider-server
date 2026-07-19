@@ -43,6 +43,12 @@ button:disabled { cursor: not-allowed; opacity: .48; }
 .eyebrow { margin: 0 0 3px; color: #77818a; font-size: 10px; font-weight: 700; }
 h1, h2, h3, p { margin-top: 0; }
 .topbar h1 { margin-bottom: 0; font-size: 21px; line-height: 1.25; }
+.topbar-status { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 9px 13px; }
+.route-state { min-height: 25px; display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 7px; padding: 4px 9px; border: 1px solid #c6dfd7; border-radius: 999px; color: #286e5e; background: #eff8f5; font-size: 11px; font-weight: 700; }
+.route-url { overflow: hidden; max-width: 230px; color: #286e5e; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; font-weight: 600; text-decoration: underline; text-overflow: ellipsis; white-space: nowrap; }
+.route-url:hover { color: #145648; }
+.route-switch { flex: 0 0 auto; }
+.route-switch button { min-width: 48px; }
 .connection-state { display: flex; align-items: center; gap: 7px; color: #8a4a4a; font-size: 12px; }
 .connection-state.online { color: #317463; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
@@ -285,6 +291,9 @@ td small { color: #8a949b; font-size: 10px; }
   .nav-item { width: auto; min-width: max-content; }
   .sidebar-footer { display: none; }
   .topbar { min-height: 72px; padding: 12px 16px; }
+  .topbar-status { gap: 6px; }
+  .route-state { padding: 4px 7px; font-size: 10px; }
+  .route-url { max-width: 130px; }
   .connection-state { font-size: 0; }
   .connection-state .icon-button { font-size: initial; }
   .page-section { padding: 18px 14px 34px; }

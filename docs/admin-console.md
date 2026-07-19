@@ -64,7 +64,9 @@ cp .env.example .env.local
 编辑 `.env.local`：
 
 ```dotenv
-ADMIN_SERVER_URL=https://jjai.top
+# 两条公开 HTTPS 线路；本地代理自动探测 /ping 并选择更快、可用的一条。
+ADMIN_SERVER_URL_LINE1=https://xajk.top
+ADMIN_SERVER_URL_LINE2=https://jjai.top
 ADMIN_CONSOLE_SECRET=与服务端相同的随机密钥
 # 可选；客户端目录不在默认相对位置时填写。
 EXERCISE_GIF_ROOT=/absolute/path/to/spider/Resources/ExerciseGIFs
@@ -78,6 +80,12 @@ npm run dev
 ```
 
 默认地址为 `http://127.0.0.1:4178`。如果端口被占用，Vite 会自动选择下一个可用端口。
+
+## 双线路自动切换
+
+本地安全代理维护“线路一”和“线路二”，密钥始终只留在本机。首次请求会同时探测两条线路的 `/ping`，使用可用且延迟更低的一条；之后每分钟后台复测。读取请求在连接失败或收到 `502`、`503`、`504` 时会自动尝试另一条线路，成功后将其设为当前线路。写入请求不会自动重放，避免网络超时后重复修改远程数据；失败后会切换后续请求的线路，由管理员确认后手动重试。
+
+顶部状态栏会显示当前线路及其完整网址，并可手动选择“自动 / 线路一 / 线路二”。手动模式固定使用选择的线路，不会自动故障切换；切回“自动”后会立即重新测速并恢复自动切换。旧的 `ADMIN_SERVER_URL` 仍可用于单线路兼容，但不会启用自动切换。
 
 ## 功能
 

@@ -4,15 +4,16 @@ import { stat } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { AdminRouteManager, configuredAdminRoutes, isRetryableRouteResponse } from './admin-route-manager.js'
 import { createLocalClientSyncPlugin } from './local-client-sync.js'
 import { createLocalOfferReplyPlugin } from './local-offer-reply.js'
 
 const MAX_BODY_BYTES = 1024 * 1024
 
-function writeJSON(res, status, message) {
+function writeJSON(res, status, message, data) {
   res.statusCode = status
   res.setHeader('Content-Type', 'application/json; charset=utf-8')
-  res.end(JSON.stringify({ code: status, message }))
+  res.end(JSON.stringify(data === undefined ? { code: status, message } : { code: 0, data }))
 }
 
 function isAllowedOrigin(origin) {
@@ -32,8 +33,45 @@ function canonicalSignature(secret, method, requestURI, timestamp, nonce, body) 
 }
 
 function adminAPIPlugin(env) {
-  const serverURLText = (env.ADMIN_SERVER_URL || '').trim()
   const secret = (env.ADMIN_CONSOLE_SECRET || '').trim()
+  let routeManager = null
+  let routeConfigurationError = ''
+  try {
+    const routes = configuredAdminRoutes(env)
+    if (routes.length === 0) throw new Error('请在 admin-console/.env.local 配置至少一条远程管理线路')
+    routeManager = new AdminRouteManager(routes)
+  } catch (error) {
+    routeConfigurationError = error?.message || '远程管理线路配置无效'
+  }
+
+  async function forwardRequest(route, req, body, incomingURL) {
+    const remotePath = incomingURL.pathname.replace(/^\/admin-api/, '/admin-console') + incomingURL.search
+    const remoteURL = new URL(remotePath, route.url)
+    const timestamp = String(Math.floor(Date.now() / 1000))
+    const nonce = crypto.randomBytes(24).toString('hex')
+    const signature = canonicalSignature(secret, req.method || 'GET', remoteURL.pathname + remoteURL.search, timestamp, nonce, body)
+    const headers = {
+      Accept: 'application/json',
+      'X-Admin-Timestamp': timestamp,
+      'X-Admin-Nonce': nonce,
+      'X-Admin-Signature': signature,
+    }
+    if (body.length > 0) {
+      headers['Content-Type'] = req.headers['content-type'] || 'application/json'
+    }
+
+    const response = await fetch(remoteURL, {
+      method: req.method,
+      headers,
+      body: body.length > 0 ? body : undefined,
+      signal: AbortSignal.timeout(15000),
+    })
+    return {
+      route,
+      response,
+      responseBody: Buffer.from(await response.arrayBuffer()),
+    }
+  }
 
   return {
     name: 'spider-admin-secure-proxy',
@@ -47,21 +85,15 @@ function adminAPIPlugin(env) {
           writeJSON(res, 403, '本地管理代理拒绝了跨站请求')
           return
         }
-        if (!serverURLText || secret.length < 32) {
-          writeJSON(res, 503, '请先在 admin-console/.env.local 配置远程地址和管理密钥')
+        if (!routeManager || secret.length < 32) {
+          writeJSON(res, 503, routeConfigurationError || '请先在 admin-console/.env.local 配置两条远程地址和管理密钥')
           return
         }
 
-        let serverURL
-        try {
-          serverURL = new URL(serverURLText)
-        } catch {
-          writeJSON(res, 503, 'ADMIN_SERVER_URL 格式无效')
-          return
-        }
-        const isLocalRemote = serverURL.hostname === '127.0.0.1' || serverURL.hostname === 'localhost'
-        if (serverURL.protocol !== 'https:' && !isLocalRemote) {
-          writeJSON(res, 503, '远程管理接口必须使用 HTTPS')
+        const incomingURL = new URL(req.url, 'http://127.0.0.1')
+        if (incomingURL.pathname === '/admin-api/route-status') {
+          await routeManager.routeForRequest()
+          writeJSON(res, 200, '', routeManager.status())
           return
         }
 
@@ -82,38 +114,72 @@ function adminAPIPlugin(env) {
         }
 
         const body = Buffer.concat(chunks)
-        const incomingURL = new URL(req.url, 'http://127.0.0.1')
-        const remotePath = incomingURL.pathname.replace(/^\/admin-api/, '/admin-console') + incomingURL.search
-        const remoteURL = new URL(remotePath, serverURL)
-        const timestamp = String(Math.floor(Date.now() / 1000))
-        const nonce = crypto.randomBytes(24).toString('hex')
-        const signature = canonicalSignature(secret, req.method || 'GET', remoteURL.pathname + remoteURL.search, timestamp, nonce, body)
+        if (incomingURL.pathname === '/admin-api/route-mode') {
+          if ((req.method || 'GET').toUpperCase() !== 'PUT') {
+            writeJSON(res, 405, '线路模式仅支持 PUT 请求')
+            return
+          }
+          let mode
+          try {
+            mode = JSON.parse(body.toString('utf8')).mode
+          } catch {
+            writeJSON(res, 400, '线路模式请求无效')
+            return
+          }
+          try {
+            writeJSON(res, 200, '', await routeManager.setMode(mode))
+          } catch (error) {
+            writeJSON(res, 400, error?.message || '线路模式无效')
+          }
+          return
+        }
 
-        const headers = {
-          Accept: 'application/json',
-          'X-Admin-Timestamp': timestamp,
-          'X-Admin-Nonce': nonce,
-          'X-Admin-Signature': signature,
-        }
-        if (body.length > 0) {
-          headers['Content-Type'] = req.headers['content-type'] || 'application/json'
-        }
+        const isSafeToRetry = (req.method || 'GET').toUpperCase() === 'GET'
+        const selectedRoute = await routeManager.routeForRequest()
+        const attemptedRouteIDs = new Set([selectedRoute.id])
+        let result
 
         try {
-          const response = await fetch(remoteURL, {
-            method: req.method,
-            headers,
-            body: body.length > 0 ? body : undefined,
-            signal: AbortSignal.timeout(15000),
-          })
-          const responseBody = Buffer.from(await response.arrayBuffer())
-          res.statusCode = response.status
-          res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json; charset=utf-8')
-          res.setHeader('Cache-Control', 'no-store')
-          res.end(responseBody)
+          result = await forwardRequest(selectedRoute, req, body, incomingURL)
         } catch (error) {
-          writeJSON(res, 502, error?.name === 'TimeoutError' ? '远程服务响应超时' : '无法连接远程管理接口')
+          routeManager.markFailure(selectedRoute.id)
+          const fallbackRoute = isSafeToRetry ? routeManager.alternateRoute(selectedRoute.id) : null
+          if (fallbackRoute) {
+            try {
+              attemptedRouteIDs.add(fallbackRoute.id)
+              result = await forwardRequest(fallbackRoute, req, body, incomingURL)
+              routeManager.markSuccess(fallbackRoute.id)
+            } catch {
+              routeManager.markFailure(fallbackRoute.id)
+            }
+          }
+          if (!result) {
+            writeJSON(res, 502, error?.name === 'TimeoutError' ? '两条远程线路均响应超时' : '无法连接远程管理线路')
+            return
+          }
         }
+
+        if (isSafeToRetry && isRetryableRouteResponse(result.response.status)) {
+          routeManager.markFailure(result.route.id)
+          const fallbackRoute = routeManager.alternateRoute(result.route.id)
+          if (fallbackRoute && !attemptedRouteIDs.has(fallbackRoute.id)) {
+            try {
+              attemptedRouteIDs.add(fallbackRoute.id)
+              result = await forwardRequest(fallbackRoute, req, body, incomingURL)
+              routeManager.markSuccess(fallbackRoute.id)
+            } catch {
+              routeManager.markFailure(fallbackRoute.id)
+            }
+          }
+        } else if (!isRetryableRouteResponse(result.response.status)) {
+          routeManager.markSuccess(result.route.id)
+        }
+
+        res.statusCode = result.response.status
+        res.setHeader('Content-Type', result.response.headers.get('content-type') || 'application/json; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-store')
+        res.setHeader('X-Admin-Route', result.route.id)
+        res.end(result.responseBody)
       })
     },
   }
